@@ -1,0 +1,74 @@
+<Project>
+  <!-- Dev upload trust token -->
+  <!--
+  <PropertyGroup>
+    <SaberRankDevelopmentUploadToken></SaberRankDevelopmentUploadToken>
+  </PropertyGroup>
+  -->
+
+  <!-- (Optional) Used by ./build.sh -->
+  <!--
+  <PropertyGroup>
+    <SaberRankSshTarget>user@host</SaberRankSshTarget>
+    <SaberRankSshBeatSaberDir>C:\Path\To\Beat Saber</SaberRankSshBeatSaberDir>
+  </PropertyGroup>
+  -->
+
+  <!-- (Optional) per target local/remote installs. If you're using VS + BSMT you probably don't need to worry about this -->
+  <!--
+  <PropertyGroup>
+    <SaberRankGameDirectory1_29_0>C:\Path\To\Beat Saber 1.29.1</SaberRankGameDirectory1_29_0>
+    <SaberRankGameDirectory1_37_1>C:\Path\To\Beat Saber 1.37.1</SaberRankGameDirectory1_37_1>
+    <SaberRankGameDirectory1_38_0>C:\Path\To\Beat Saber 1.38.0</SaberRankGameDirectory1_38_0>
+    <SaberRankGameDirectory1_40_0>C:\Path\To\Beat Saber 1.40.8</SaberRankGameDirectory1_40_0>
+    <SaberRankGameDirectory1_42_0>C:\Path\To\Beat Saber 1.42.0</SaberRankGameDirectory1_42_0>
+
+    <SaberRankSshBeatSaberDir1_29_0>C:\Path\To\Beat Saber 1.29.1</SaberRankSshBeatSaberDir1_29_0>
+    <SaberRankSshBeatSaberDir1_37_1>C:\Path\To\Beat Saber 1.37.1</SaberRankSshBeatSaberDir1_37_1>
+    <SaberRankSshBeatSaberDir1_38_0>C:\Path\To\Beat Saber 1.38.0</SaberRankSshBeatSaberDir1_38_0>
+    <SaberRankSshBeatSaberDir1_40_0>C:\Path\To\Beat Saber 1.40.8</SaberRankSshBeatSaberDir1_40_0>
+    <SaberRankSshBeatSaberDir1_42_0>C:\Path\To\Beat Saber 1.42.0</SaberRankSshBeatSaberDir1_42_0>
+  </PropertyGroup>
+  -->
+
+  <!-- (Optional) use stripped refs. Normal Visual Studio + BSMT builds should use BeatSaberDir instead -->
+  <!--
+  <PropertyGroup>
+    <SaberRankUseLocalRefs>true</SaberRankUseLocalRefs>
+  </PropertyGroup>
+  -->
+
+  <!-- (Optional) Admin only auth override settings -->
+  <!--
+  <PropertyGroup>
+    <SaberRankDevelopmentAuthNonce></SaberRankDevelopmentAuthNonce>
+    <SaberRankDevelopmentPlayerId></SaberRankDevelopmentPlayerId>
+    <SaberRankDevelopmentPlayerName></SaberRankDevelopmentPlayerName>
+  </PropertyGroup>
+  -->
+
+  <!-- (Optional) Ludus ludus URL. Host-only, http(s), and ws(s) values are normalized at runtime -->
+  <!--
+  <PropertyGroup>
+    <SaberRankLudusUrl>wss://brutus-ludus.YOUR-SABERRANK-DOMAIN/v1/connect</SaberRankLudusUrl>
+  </PropertyGroup>
+  -->
+
+  <!-- (Optional) SaberRank endpoint overrides. Defaults use production -->
+  <!--
+  <PropertyGroup>
+    <SaberRankWebsiteBaseUrl>https://YOUR-SABERRANK-DOMAIN</SaberRankWebsiteBaseUrl>
+    <SaberRankApiBaseUrl>https://api.scoresaber.local</SaberRankApiBaseUrl>
+    <SaberRankCdnBaseUrl>https://cdn.YOUR-SABERRANK-DOMAIN</SaberRankCdnBaseUrl>
+  </PropertyGroup>
+  -->
+
+  <!-- Official build metadata. Used for CI -->
+  <!--
+  <PropertyGroup>
+    <SaberRankOfficialBuildId></SaberRankOfficialBuildId>
+    <SaberRankOfficialBuildCredential></SaberRankOfficialBuildCredential>
+    <SaberRankOfficialArtifactSha256></SaberRankOfficialArtifactSha256>
+  </PropertyGroup>
+  -->
+</Project>

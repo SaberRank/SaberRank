@@ -1,0 +1,667 @@
+<script>
+	import {createEventDispatcher} from 'svelte';
+	import {navigate} from 'svelte-routing';
+	import {fade} from 'svelte/transition';
+	import createAccountStore from '../../stores/saberrank/account';
+	import Button from '../../components/Common/Button.svelte';
+	import Error from '../Common/Error.svelte';
+	import Spinner from '../Common/Spinner.svelte';
+	import {SsrHttpResponseError} from '../../network/errors';
+	import {
+		playersTitle,
+		rankLabel,
+		accLabel,
+		ppLabel,
+		capturesLabel,
+		rankedPoolPercentLabel,
+		rankValue,
+		accValue,
+		ppValue,
+		capturesValue,
+		rankedPoolPercentValue,
+		ppIcon,
+	} from '../../utils/clans';
+	import createClanService from '../../services/saberrank/clan';
+	import Confirmation from '../Common/Confirmation.svelte';
+	import Badge from '../Common/Badge.svelte';
+
+	export let clan;
+	export let enableCreateMode = false;
+	export let noButtons = false;
+	export let noBio = false;
+
+	document.body.classList.remove('slim');
+
+	const dispatch = createEventDispatcher();
+	const account = createAccountStore();
+	const clanService = createClanService();
+
+	let editMode = enableCreateMode;
+
+	let boxEl = null;
+
+	let confirmedOperation = null;
+	let pendingText = null;
+	let error = null;
+
+	let name = '';
+	let tag = '';
+	let color = '';
+	let description = '';
+	let bio = '';
+	let playerChangesCallback = [];
+	let clanRankingDiscordHook = [];
+	let iconUrl = null;
+	let iconData = null;
+
+	let showCallbackDetails = false;
+
+	const changeImage = e => {
+		let image = e.target.files[0];
+
+		const dataArrayReader = new FileReader();
+		dataArrayReader.onload = e => (iconData = e.target.result);
+		dataArrayReader.readAsArrayBuffer(image);
+
+		const dataUrlReader = new FileReader();
+		dataUrlReader.onload = e => (iconUrl = e.target.result);
+		dataUrlReader.readAsDataURL(image);
+	};
+
+	async function executeOperation(operation) {
+		if (!operation) throw 'Internal error';
+
+		try {
+			error = null;
+
+			return await operation();
+		} catch (err) {
+			console.error(err);
+
+			if (err instanceof SsrHttpResponseError) {
+				const htmlError = await err.getResponse().text();
+				error = htmlError?.length ? htmlError : err;
+			} else {
+				error = err;
+			}
+		} finally {
+			pendingText = null;
+		}
+	}
+
+	async function onSave() {
+		if (name.length > 25) {
+			error = 'Clan name should be no more than 25 characters long';
+			return;
+		}
+		if (!name.length) {
+			error = 'Clan name is required';
+			return;
+		}
+
+		if (!tag.length) {
+			error = 'Clan tag is required';
+			return;
+		}
+
+		if (tag.length < 2 || tag.length > 5) {
+			error = 'Clan tag should be 2 to 5 characters long';
+			return;
+		}
+
+		if (!color.length) {
+			error = 'Clan color is required';
+			return;
+		}
+
+		if (!iconData) {
+			error = 'Icon is required';
+			return;
+		}
+
+		error = null;
+		pendingText = 'Saving a clan...';
+
+		await executeOperation(async () => {
+			let updatedClan = null;
+
+			const clanData = {
+				...clan,
+				name,
+				tag,
+				description,
+				bio,
+				color,
+				playerChangesCallback,
+				clanRankingDiscordHook,
+				icon: iconData ?? iconUrl,
+			};
+			if (clan?.id) updatedClan = await clanService.update(clanData);
+			else updatedClan = await clanService.create(clanData);
+
+			editMode = false;
+
+			dispatch('added', {...updatedClan});
+		});
+	}
+
+	async function onAccept() {
+		if (!clan?.id) return;
+
+		error = null;
+		pendingText = 'Accepting an invitation...';
+
+		await executeOperation(async () => clanService.accept(clan));
+
+		dispatch('accepted', {...clan});
+	}
+
+	async function onReject() {
+		if (!clan?.id) return;
+
+		error = null;
+		pendingText = 'Rejecting an invitation...';
+
+		await executeOperation(async () => clanService.reject(clan, false));
+
+		dispatch('rejected', {...clan});
+	}
+
+	async function onBan() {
+		if (!clan?.id) return;
+
+		error = null;
+		pendingText = 'Banning a clan...';
+
+		await executeOperation(async () => clanService.reject(clan, true));
+
+		dispatch('banned', {...clan});
+	}
+
+	async function onRemove() {
+		if (!clan?.id) return;
+
+		error = null;
+		pendingText = 'Removing a clan...';
+
+		await executeOperation(async () => clanService.remove(clan));
+
+		dispatch('removed', {...clan});
+	}
+
+	async function onLeave() {
+		if (!clan?.id) return;
+
+		error = null;
+		pendingText = 'Leaving a clan...';
+
+		await executeOperation(async () => clanService.leave(clan));
+
+		dispatch('left', {...clan});
+	}
+
+	async function onUnban() {
+		if (!clan?.id) return;
+
+		error = null;
+		pendingText = 'Unbanning a clan...';
+
+		await executeOperation(async () => clanService.unban(clan));
+
+		dispatch('unbanned', {...clan});
+	}
+
+	async function onConfirm() {
+		if (!confirmedOperation) return;
+
+		error = null;
+		await confirmedOperation();
+
+		confirmedOperation = null;
+	}
+
+	function onCancelPendingOperation() {
+		confirmedOperation = null;
+		error = null;
+	}
+
+	function updateFields(clan) {
+		name = clan?.name ?? '';
+		tag = clan?.tag ?? '';
+		color = clan?.color ?? '#ff0000';
+		iconUrl = clan?.icon ?? 'https://cdn.assets.saberrank.com/NTG.png';
+		iconData = clan?.icon ?? null;
+		description = clan?.description ?? '';
+
+		playerChangesCallback = clan?.playerChangesCallback ? clan?.playerChangesCallback.split(',') : [];
+		if (!Array.isArray(playerChangesCallback)) {
+			playerChangesCallback = [playerChangesCallback];
+		}
+		clanRankingDiscordHook = clan?.clanRankingDiscordHook ? clan?.clanRankingDiscordHook.split(',') : [];
+		if (!Array.isArray(clanRankingDiscordHook)) {
+			clanRankingDiscordHook = [clanRankingDiscordHook];
+		}
+
+		bio = clan?.bio ?? '';
+	}
+
+	function hoverStats() {
+		if (tag) {
+			clanAverageRank = rankValue(tag, clanAverageRank);
+			clanAverageAccuracy = accValue(tag, clanAverageAccuracy);
+			clanPp = ppValue(tag, clanPp);
+			clanCapturedMaps = capturesValue(tag, clanCapturedMaps);
+			rankedPoolPercent = rankedPoolPercentValue(tag, rankedPoolPercent);
+		}
+	}
+
+	$: updateFields(clan);
+	$: iconInput = null;
+	$: playersCount = clan?.playersCount ?? 0;
+
+	$: hasInvitation = clan?.id && $account?.clanRequest?.length && !!$account.clanRequest.find(r => r.id === clan.id);
+	$: isFounder = clan?.id && clan?.leaderID === $account?.player?.playerId;
+	$: canLeave =
+		clan?.id && clan?.leaderID !== $account?.player?.playerId && !!$account.player?.playerInfo.clans?.find(c => c.id === clan.id);
+	$: isBanned = clan?.id && $account?.bannedClans?.length && !!$account.bannedClans.find(b => b.id === clan.id);
+
+	$: clanAverageAccuracy = clan?.averageAccuracy ? clan.averageAccuracy * 100 : null;
+	$: clanAverageRank = clan?.averageRank ?? null;
+	$: clanCapturedMaps = clan?.captureLeaderboardsCount ?? null;
+	$: rankedPoolPercent = clan?.rankedPoolPercentCaptured && clanCapturedMaps ? clan?.rankedPoolPercentCaptured * 100 : 0;
+	$: clanPp = clan?.pp ?? null;
+</script>
+
+{#if enableCreateMode || clan?.id}
+	<section class="clan-info" transition:fade|global>
+		<div class="clanData">
+			<div
+				class="imageInput"
+				on:click={() => {
+					if (editMode) iconInput.click();
+				}}>
+				<img class="clanImage" src={iconUrl} alt="ClanIcon" />
+
+				{#if editMode}
+					<input style="display:none" type="file" accept=".jpg, .jpeg, .png, .gif" on:change={e => changeImage(e)} bind:this={iconInput} />
+					<span class="imageChange">Change</span>
+				{/if}
+			</div>
+
+			<section class="form">
+				<section class="title is-5">
+					{#if editMode}
+						<input type="text" placeholder="Clan Name" bind:value={name} disabled={!!pendingText} />
+					{:else}
+						<span class="clanName {tag == 'GAY' ? 'rainbow' : ''}">{name}</span>
+					{/if}
+				</section>
+
+				<section class="title is-6" style="--clan-color: {color}">
+					{#if editMode}
+						<input
+							type="text"
+							placeholder="Clan tag; 2-4 characters, cannot be changed later"
+							bind:value={tag}
+							disabled={!!pendingText || clan?.id}
+							minlength="2"
+							maxlength="4"
+							style={!!pendingText || clan?.id ? 'cursor: not-allowed; color: var(--faded)' : 'cursor: text'} />
+						<input type="color" bind:value={color} disabled={!!pendingText} />
+					{:else}
+						<span class="clanTag">{tag}</span>
+					{/if}
+				</section>
+
+				{#if !editMode}
+					<section class="title is-5">
+						<section class="title is-7">
+							{playersCount}
+							{playersTitle(tag, playersCount)}
+						</section>
+					</section>
+
+					{#if clan}
+						<section class="clan-stats" on:pointerover={() => hoverStats()}>
+							<a href={`/clansmap/clan/${tag}`} on:click|preventDefault|stopPropagation={() => navigate(`/clansmap/clan/${tag}`)}>
+								<Badge
+									label={rankedPoolPercentLabel(tag)}
+									value={rankedPoolPercent}
+									suffix="%"
+									withZeroSuffix={true}
+									digits={1}
+									fluid={true}
+									bgColor="var(--rankedPoolColor)"
+									styling="clanInfo" />
+							</a>
+							<Badge
+								label={capturesLabel(tag)}
+								value={clanCapturedMaps}
+								digits={0}
+								fluid={true}
+								bgColor="var(--capturedColor)"
+								styling="clanInfo" />
+							<Badge
+								label={rankLabel(tag)}
+								value={clanAverageRank}
+								prefix="#"
+								digits={0}
+								fluid={true}
+								bgColor="var(--decrease)"
+								styling="clanInfo" />
+							<Badge
+								label={accLabel(tag)}
+								value={clanAverageAccuracy}
+								suffix="%"
+								fluid={true}
+								bgColor="var(--selected)"
+								styling="clanInfo" />
+							<Badge
+								label={ppLabel(tag)}
+								iconClass={ppIcon(tag)}
+								value={clanPp}
+								suffix="pp"
+								fluid={true}
+								bgColor="var(--ppColour)"
+								styling="clanInfo" />
+						</section>
+					{/if}
+
+					<section class="info">
+						<small>{description}</small>
+					</section>
+
+					{#if !noBio}
+						<section class="bio">
+							<small>{bio}</small>
+						</section>
+					{/if}
+				{:else}
+					<section class="info">
+						<input type="text" placeholder="Clan short description (optional)" bind:value={description} disabled={!!pendingText} />
+					</section>
+					{#if !noBio}
+						<section class="bio">
+							<input type="text" placeholder="Clan bio (optional)" bind:value={bio} disabled={!!pendingText} />
+						</section>
+					{/if}
+
+					<div class="hooks">
+						<span><b>Hooks for global map updates:</b></span>
+						{#each clanRankingDiscordHook as redirectUrl, idx}
+							<div>
+								<input type="text" placeholder="Discord hook" bind:value={clanRankingDiscordHook[idx]} disabled={!!pendingText} />
+								<button
+									class="remove-type"
+									title="Remove"
+									on:click={() => (clanRankingDiscordHook = clanRankingDiscordHook.filter((_, index) => index !== idx))}
+									><i class="fas fa-xmark" /></button>
+							</div>
+						{/each}
+						<Button
+							label="Add new hook"
+							iconFa="fas fa-plus-square"
+							on:click={() => {
+								clanRankingDiscordHook.push('');
+								clanRankingDiscordHook = clanRankingDiscordHook;
+							}} />
+					</div>
+
+					<div class="hooks">
+						<span><b>Player changes callback URLs:</b></span>
+						{#each playerChangesCallback as redirectUrl, idx}
+							<div>
+								<input type="text" placeholder="Your url" bind:value={playerChangesCallback[idx]} disabled={!!pendingText} />
+								<button
+									class="remove-type"
+									title="Remove"
+									on:click={() => (playerChangesCallback = playerChangesCallback.filter((_, index) => index !== idx))}
+									><i class="fas fa-xmark" /></button>
+							</div>
+						{/each}
+						<Button
+							label="Add new URL"
+							iconFa="fas fa-plus-square"
+							on:click={() => {
+								playerChangesCallback.push('');
+								playerChangesCallback = playerChangesCallback;
+							}} />
+						<div class="score-options-section">
+							<span
+								class="beat-savior-reveal clickable"
+								class:opened={showCallbackDetails}
+								on:click={() => (showCallbackDetails = !showCallbackDetails)}
+								title="Show average stats and ranking changes">
+								{#if showCallbackDetails}
+									Hide details
+								{:else}
+									How this works?
+								{/if}
+
+								<i class="fas fa-chevron-down" />
+							</span>
+						</div>
+						{#if showCallbackDetails}
+							<span>This Url will be called on clan changes. It's usefull if you have a custom webserver for your clan.</span>
+							<span
+								>The format is <b>?action=&player=</b> where action could be <b>kick, join, leave, reject</b> and <b>player</b> is ID of the
+								player.</span>
+							<span
+								>For example callback url <b>https://myclan.com/blcallback</b> will be called as
+								<b>https://myclan.com/blcallback?action=join&player=76561198059961776</b> when NSGolova accepts your invitation.</span>
+						{/if}
+					</div>
+				{/if}
+
+				{#if editMode}
+					<section>
+						{#if !pendingText}
+							<Button label="Save clan" type="primary" on:click={onSave} />
+							<Button
+								label="Cancel"
+								on:click={() => {
+									editMode = false;
+									confirmedOperation = null;
+									dispatch('cancel');
+								}} />
+						{:else}
+							<Spinner />
+							{pendingText}
+						{/if}
+					</section>
+				{/if}
+
+				{#if hasInvitation && !noButtons}
+					<section>
+						<Confirmation {pendingText} {confirmedOperation}>
+							<Button label="Accept invitation" iconFa="fas fa-check" type="primary" on:click={onAccept} />
+							<Button
+								label="Reject invitation"
+								iconFa="fas fa-trash-alt"
+								type="lessdanger"
+								on:click={() => {
+									confirmedOperation = onReject;
+								}} />
+							<Button
+								label="Block invitations from this clan"
+								iconFa="fas fa-ban"
+								type="danger"
+								on:click={() => {
+									confirmedOperation = onBan;
+								}} />
+						</Confirmation>
+					</section>
+				{/if}
+
+				{#if isFounder && !noButtons && !editMode}
+					<section>
+						<Confirmation {pendingText} {confirmedOperation}>
+							<Button label="Edit clan" iconFa="fas fa-edit" type="primary" on:click={() => (editMode = true)} />
+							<Button label="Delete clan" iconFa="fas fa-trash-alt" type="danger" on:click={() => (confirmedOperation = onRemove)} />
+						</Confirmation>
+					</section>
+				{/if}
+
+				{#if canLeave && !noButtons}
+					<section>
+						<Confirmation {pendingText} {confirmedOperation}>
+							<Button
+								label="Leave clan"
+								iconFa="fab fa-accessible-icon"
+								type="lessdanger"
+								on:click={() => (confirmedOperation = onLeave)} />
+						</Confirmation>
+					</section>
+				{/if}
+
+				{#if isBanned && !noButtons}
+					<section>
+						<Confirmation {pendingText} {confirmedOperation}>
+							<Button
+								label="Unblock invitations from this clan"
+								iconFa="fas fa-user-friends"
+								type="lessdanger"
+								on:click={() => (confirmedOperation = onUnban)} />
+						</Confirmation>
+					</section>
+				{/if}
+
+				{#if error}
+					<Error {error} />
+				{/if}
+			</section>
+		</div>
+	</section>
+{/if}
+
+<style>
+	.clan-info {
+		width: 100%;
+	}
+
+	.clanData {
+		display: flex;
+		gap: 1rem;
+	}
+
+	.clanData .form {
+		flex-grow: 1;
+		padding: 1rem;
+		max-width: 80%;
+	}
+
+	.clanData .form > section:not(:last-child) {
+		margin-bottom: 1rem;
+	}
+
+	input[type='text'] {
+		width: 70%;
+		font-size: inherit;
+		padding: 0;
+		color: var(--textColor);
+		background-color: transparent;
+		border: none;
+		border-bottom: solid 1px var(--dimmed);
+		outline: none;
+	}
+
+	input[type='color'] {
+		margin-left: 0.5rem;
+	}
+
+	input::placeholder {
+		color: var(--faded) !important;
+	}
+
+	.imageInput {
+		cursor: pointer;
+		display: flex;
+		align-items: flex-start;
+		position: relative;
+	}
+
+	.clanImage {
+		width: 10em;
+		border-radius: 0.25em;
+	}
+
+	.clanTag {
+		color: var(--clan-color, 'red');
+	}
+
+	.clanName.rainbow {
+		color: #00ffbc;
+		-webkit-background-clip: text;
+		background-image: -webkit-linear-gradient(180deg, #f35626, #feab3a);
+		-webkit-animation: rainbow 0.9s infinite linear;
+		animation: rainbow 0.9s infinite linear;
+	}
+
+	.imageChange {
+		transition: opacity 0.2s ease-in-out;
+		background-color: rgba(32, 33, 36, 0.6);
+		bottom: 0;
+		height: 33%;
+		left: 0;
+		opacity: 0;
+		position: absolute;
+		right: 0;
+		display: flex;
+		justify-content: center;
+	}
+
+	.imageInput:hover .imageChange {
+		opacity: 1;
+	}
+
+	.clan-stats :global(> *) {
+		margin-bottom: 0 !important;
+	}
+
+	.info {
+		overflow: hidden;
+		word-break: break-word;
+	}
+
+	.bio {
+		overflow: hidden;
+		word-break: break-word;
+	}
+
+	.discordHooks {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.beat-savior-reveal {
+		align-self: end;
+		cursor: pointer;
+	}
+
+	.beat-savior-reveal > i {
+		transition: transform 500ms;
+		transform-origin: 0.42em 0.5em;
+	}
+
+	.beat-savior-reveal.opened > i {
+		transform: rotateZ(180deg);
+	}
+
+	.score-options-section {
+		margin-top: -0.5em;
+		margin-bottom: 0.8em;
+	}
+
+	@media screen and (max-width: 500px) {
+		.clanData {
+			flex-direction: column;
+			align-items: center;
+			gap: 0;
+		}
+
+		.clan-stats {
+			display: flex;
+			flex-direction: column;
+		}
+	}
+</style>

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nike4613/ModSaber-MetadataFileSchema/master/Schema.json",
+  "author": "SaberRank",
+  "description": "Allows you to upload scores to an online leaderboard, earn PP from ranked maps and compare scores with others.",
+  "gameVersion": "1.40.0",
+  "icon": "SaberRank.logo.png",
+  "id": "SaberRank",
+  "name": "SaberRank",
+  "version": "1.0.0",
+  "dependsOn": {
+    "BSIPA": "^4.3.6",
+    "BeatSaberMarkupLanguage": "^1.12.5",
+    "SiraUtil": "^3.2.1",
+    "SongCore": "^3.15.2",
+    "protobuf-net": "^3.0.102"
+  },
+  "loadBefore": [
+    "LeaderboardCore"
+  ],
+  "links": {
+    "website": "https://YOUR-SABERRANK-API-DOMAIN"
+  }
+}

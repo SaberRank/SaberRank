@@ -1,0 +1,235 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100;300;400;500;700;900&display=swap');
+
+* {
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+body {
+    padding: 0;
+}
+
+
+:root {
+    --ppColour: #8992e8 !important;
+    --foreground: var(--customizable-color-2);
+    --faded: var(--customizable-color-2) !important;
+    --dimmed: var(--customizable-color-2) !important;
+}
+
+.main-background {
+    position: fixed;
+    display: block;
+	background: var(--background-image)  !important;
+    backdrop-filter: blur(10px);
+	background-size: cover !important;
+}
+
+.main-background::before{
+    background-color: var(--customizable-color-1);
+    content: '';
+    display: block;
+    height: 100%;
+    position: absolute;
+    width: 100%;
+  }
+
+// Navigator
+nav.ssr-page-container {
+    padding: .5rem;
+    height: 4rem !important;
+    box-shadow: 2px 3px 9px rgba(0, 0, 0, 0.11) !important;
+    border-bottom: none !important;
+    background: rgb(36, 36, 36) !important;
+    max-width: none !important;
+
+    a,
+    div {
+        transition: all 0.1s;
+        border-radius: 4px;
+        // margin: 5px;
+    }
+}
+
+div.ssr-page-container {
+    min-height: calc(100vh - 9rem) !important;
+  }
+
+// All Player grids
+.ranking-grid,
+.players {
+
+    grid-gap: 0rem !important;
+
+    .ranking-grid-row {
+        padding: .2rem 0;
+        border-bottom: 1px rgba(189, 189, 189, 0.164) solid;
+
+        .player-card {
+            padding: 0.4rem .8rem;
+            margin: 0 !important;
+            background: rgba(50, 50, 50, 0);
+            border-radius: 0;
+            font-size: .8rem;
+            border: none !important;
+
+            .rank {
+                background: none;
+                font-weight: 600;
+            }
+
+            .player-avatar {
+                .image {
+                    overflow: hidden;
+                    border-radius: 3rem;
+                    background: rgb(70, 70, 70);
+                }
+            }
+
+            .clan-badges .badge{
+                background: rgba(255, 255, 255, 0.123);
+                border-bottom: 2px solid var(--background-color);
+                border-radius: .1rem;
+                padding: .2rem !important;
+                cursor: pointer;
+                filter: saturate(.5) brightness(1.4);
+                font-size: .3rem;
+                font-weight: 400 !important;
+                color:white !important;
+                margin: 0 .2rem;
+                // opacity: 0.8;
+            }            
+
+            .steam-and-pp {
+                * {
+                    font-size: .86rem;
+                    color: rgb(175, 203, 255) !important;
+                }
+            }
+
+            &.current{
+                background: rgba(240, 240, 240, 0.164);
+            }
+        }
+
+        .player-card:hover {
+            background-color: transparent;
+        }
+
+        .fa-user-plus {
+            background: transparent !important;
+            transition: all 0.1s;
+            border-radius: .2rem !important;
+            color: rgba(255, 255, 255, 0.425);
+
+            &:hover {
+                color: rgb(255, 255, 255);
+            }
+        }
+        .fa-user-minus {
+            background: none !important;
+            transition: all 0.1s;
+            border-radius: .2rem !important;
+            color: rgb(255, 255, 255);
+
+            &:hover {
+                color: rgb(255, 255, 255);
+            }
+        }
+    }
+
+}
+
+
+
+// Content Box
+.content-box {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.content-box.festive {
+    background-image: url(/assets/lights2.gif) !important;
+    background-size: cover !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+}
+.content-box.legacy-warning {
+    background-color: #863a00 !important;
+  }
+
+// User profile page
+.page-content.svelte-qnwlci {
+    .badge {
+        font-size: 0.8rem !important;
+        color: white !important;
+        background: rgba(255, 255, 255, 0.13) !important;
+        border-bottom: 2px solid var(--background-color);
+        border-radius: 0.25rem;
+        padding: 0.4rem 0.3rem;
+    }
+
+    .rank {
+        .badge {
+            border-radius: 0;
+            background: none !important;
+            border: none;
+        }
+    }
+
+    .player-score {
+        height: 3rem;
+        border: none !important;
+        &.highlight{
+            background: #ffffff33;
+            margin: .4rem 0;
+            padding: 0;
+            .badge{
+                border: none;
+                background: none !important;
+            }
+        }
+    }
+    .scores-grid{
+        *{
+            color:white !important;
+        }
+    }
+}
+
+// Remove some strange backgrounds&shadows
+.leaderboard,
+.chart,
+.details-box {
+    background: none !important;
+    box-shadow: none !important;
+}
+
+// Clan Tag Color limit
+.clanTag {
+    filter: saturate(0.5) brightness(1.1);
+    font-size: .5rem;
+    font-weight: 500 !important;
+    border-bottom: 2px rgba(255, 255, 255, 0.315) solid;
+    padding: 0 .3rem;
+}
+
+
+.ranking.global.sspl{
+    *{
+        background: transparent;
+    }
+}
+
+.dropdown-menu {
+    background-color: var(--customizable-color-1);
+    border: none;
+    border-radius: 0.4em;
+}
+
+.dropdown-menu .dropdown-item {
+    background-color: #0000007a;
+}
+
+.pp-container {
+    background-color: transparent !important;
+}

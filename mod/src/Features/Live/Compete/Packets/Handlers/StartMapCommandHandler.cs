@@ -1,0 +1,64 @@
+using SaberRank.Core;
+using SaberRank.Features.Live.Compete.Domain;
+using SaberRank.Features.Live.Compete.Packets;
+using SaberRank.Features.Live.Compete.Services;
+using SaberRank.Live.V1;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+    internal sealed class StartMapCommandHandler : ILudusServerCommandHandler {
+        public LudusCommandType Type => LudusCommandType.LudusCommandTypeStartMap;
+
+        public void Handle(ILudusServerCommandSession session, ServerCommand command) {
+            StartMap(session, command).RunTask();
+        }
+
+        private static async Task StartMap(ILudusServerCommandSession session, ServerCommand command) {
+            if (!HasTournamentRoom(session, command.MatchId)) {
+                return;
+            }
+
+            CancellationToken cancellationToken = session.ConnectionCancellationToken;
+            bool countdownBegun = false;
+            try {
+                if (session.TournamentRoom.Song == null || session.TournamentRoom.Song.BeatmapLevel == null) {
+                    LiveSongCommand song = command.Song ?? LoadSongCommandHandler.SongCommandFromSelection(session.TournamentRoom.Song);
+                    if (song != null) {
+                        await LoadSongCommandHandler.EnsureSongReady(session, song);
+                    }
+                }
+
+                if (session.TournamentRoom?.Song?.BeatmapLevel == null) {
+                    throw new InvalidOperationException("Live room song is not ready");
+                }
+
+                CompeteRoom room = session.TournamentRoom;
+                int delayMs = session.GameplayLauncher.StartDelayMs(command);
+                cancellationToken = session.BeginMapStartCountdown(command.MatchId, delayMs, cancellationToken);
+                countdownBegun = true;
+                session.NotifyStatusChanged(delayMs > 0 ? "Map starting soon..." : "Starting map...");
+                Plugin.Log.Info($"Ludus: Starting room map {room.Song.Name} for {room.Id}.");
+                await session.GameplayLauncher.Start(room, delayMs, cancellationToken);
+                if (!await session.GameplayLauncher.WaitForMapStartReady(room.Id, room.Song.MapHash, cancellationToken)) {
+                    return;
+                }
+
+                session.SendPresence(LudusPlayState.LudusPlayStateInGame, LudusDownloadState.LudusDownloadStateNone, room.Song.MapHash);
+            } catch (OperationCanceledException) {
+            } catch (Exception ex) {
+                session.NotifyStatusChanged($"Failed to start map: {ex.Message}");
+                Plugin.Log.Warn($"Ludus: Failed to start map: {ex.Message}");
+            } finally {
+                if (countdownBegun) {
+                    session.CompletePendingMapStart(command.MatchId, cancellationToken);
+                }
+            }
+        }
+
+        private static bool HasTournamentRoom(ILudusServerCommandSession session, string matchId) {
+            return session.TournamentRoom != null && (string.IsNullOrEmpty(matchId) || string.Equals(matchId, session.TournamentRoom.Id, StringComparison.Ordinal));
+        }
+    }
+}

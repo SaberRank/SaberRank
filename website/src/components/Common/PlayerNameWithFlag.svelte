@@ -1,0 +1,74 @@
+<script>
+	import Flag from './Flag.svelte';
+	import {isSelectionInsideElement} from '../../utils/js';
+	import Popover from './Popover.svelte';
+	import {fade} from 'svelte/transition';
+	import MiniProfile from '../Player/Mini/MiniProfile.svelte';
+	import {createEventDispatcher} from 'svelte';
+
+	const dispatch = createEventDispatcher();
+
+	export let player;
+	export let type = null;
+	export let hideFlag = false;
+	export let withCrown = false;
+	export let playerClickFilterFull = null;
+	export let playerClickFilter = null;
+	export let disablePopover = false;
+
+	let referenceElement;
+
+	$: country = player?.playerInfo?.country?.country ?? player?.country;
+	$: name = player?.name;
+	$: playerId = player?.alias ?? player?.playerId ?? player?.id;
+</script>
+
+<a
+	href={playerClickFilterFull ?? `/u/${playerId}${type ? '/' + type : ''}/1${playerClickFilter ? '?' + playerClickFilter : ''}`}
+	class="player-name clickable has-pointer-events"
+	bind:this={referenceElement}
+	on:click|preventDefault={e => {
+		if (isSelectionInsideElement(referenceElement, window.getSelection())) return;
+		dispatch('click', e);
+	}}>
+	{#if !hideFlag}
+		<Flag {country} on:flag-click />
+	{/if}
+	<span class="name"
+		>{#if withCrown}<span class="crown">👑</span>{/if}{name ?? 'Unknown'}</span>
+</a>
+
+{#if !disablePopover && player && player.playerInfo}
+	<Popover triggerEvents={['hover', 'focus']} {referenceElement} placement="auto" spaceAway={10}>
+		<div class="popover-contents" transition:fade|global={{duration: 250}}>
+			<MiniProfile {player} />
+		</div>
+	</Popover>
+{/if}
+
+<style>
+	a {
+		color: inherit !important;
+	}
+
+	.player-name {
+		white-space: normal;
+		overflow-x: hidden;
+		overflow: hidden;
+		word-break: break-all;
+		max-height: 2em;
+	}
+
+	.player-name :global(> img) {
+		margin-right: 0.125rem;
+	}
+
+	.crown {
+		position: relative;
+		top: -0.125em;
+	}
+
+	.popover-contents {
+		max-width: 40em;
+	}
+</style>

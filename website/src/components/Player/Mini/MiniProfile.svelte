@@ -1,0 +1,190 @@
+<script>
+	import processPlayerData from '../utils/mini-profile';
+	import Avatar from '../Avatar.svelte';
+	import AvatarOverlayIcons from '../AvatarOverlayIcons.svelte';
+	import ProfileHeaderInfo from './MiniProfileHeaderInfo.svelte';
+	import ContentBox from '../../Common/ContentBox.svelte';
+	import RoleIcon from '../RoleIcon.svelte';
+	import AvatarOverlay from '../Overlay/AvatarOverlay.svelte';
+	import createPlayerService from '../../../services/saberrank/player';
+
+	export let player;
+
+	const playerService = createPlayerService();
+
+	let hydratedPlayer = null;
+	let fullAvatarReady = false;
+
+	function upgradeAvatar(data) {
+		const fullAvatar = data?.playerInfo?.avatar;
+		if (!fullAvatar || fullAvatar === player?.playerInfo?.avatar) {
+			fullAvatarReady = true;
+			return;
+		}
+
+		const image = new Image();
+		image.onload = () => (fullAvatarReady = true);
+		image.onerror = () => (fullAvatarReady = true);
+		image.src = fullAvatar;
+	}
+
+	if (player?.playerId) {
+		playerService
+			.fetchHydratedPlayer(player.alias ?? player.playerId)
+			.then(data => {
+				hydratedPlayer = data;
+				upgradeAvatar(data);
+			})
+			.catch(() => {});
+	}
+
+	$: playerData = hydratedPlayer?.name ? hydratedPlayer : player;
+
+	let roles = null;
+	function updateRoles(role) {
+		roles =
+			role
+				?.split(',')
+				?.reverse()
+				?.filter(r => r?.length) ?? [];
+	}
+
+	$: playerId = playerData && playerData.playerId ? playerData.playerId : null;
+	$: name = playerData && playerData.name ? playerData.name : null;
+	$: ({playerInfo, scoresStats, accBadges, ssBadges} = processPlayerData(playerData));
+	$: avatarPlayerInfo =
+		hydratedPlayer?.name && !fullAvatarReady && player?.playerInfo?.avatar ? {...playerInfo, avatar: player.playerInfo.avatar} : playerInfo;
+	$: updateRoles(playerInfo?.role ?? null);
+
+	$: cover = playerData?.profileSettings?.profileCover;
+</script>
+
+<div class="mini-profile-box" class:content-box={!cover}>
+	{#if cover}
+		<div class="cover-image" style="background-image: url({cover})" />
+	{/if}
+	<AvatarOverlay data={playerData?.profileSettings} />
+
+	<div class="player-general-info" class:withCover={cover}>
+		<div class="avatar-and-roles">
+			<div class="avatar-cell">
+				<Avatar playerInfo={avatarPlayerInfo} />
+
+				{#if playerInfo}
+					<AvatarOverlayIcons {playerData} />
+				{/if}
+			</div>
+			{#if roles}
+				<div class="role-icons">
+					{#each roles as role, idx}
+						<RoleIcon
+							{role}
+							allRoles={roles}
+							mapperId={playerInfo?.mapperId}
+							profileAppearance={playerData?.profileSettings?.profileAppearance ?? null} />
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<div class="rank-and-stats-cell">
+			<ProfileHeaderInfo
+				{name}
+				{roles}
+				{playerInfo}
+				{playerId}
+				{playerData}
+				profileAppearance={playerData?.profileSettings?.profileAppearance ?? null} />
+		</div>
+	</div>
+</div>
+
+<style>
+	.player-general-info {
+		display: flex;
+		flex-wrap: nowrap;
+		grid-gap: 0.5em;
+		align-items: flex-start;
+	}
+
+	.mini-profile-box {
+		padding: 0.4em !important;
+		border-radius: 12px !important;
+	}
+
+	:global(.mini-profile-box .avatar-overlay) {
+		top: -31px !important;
+		left: -31px !important;
+	}
+
+	.avatar-cell {
+		position: relative;
+		width: 150px;
+		min-width: 150px;
+		height: 150px;
+	}
+
+	.rank-and-stats-cell {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		grid-gap: 0.4em;
+		flex-grow: 1;
+		margin-top: -1.25em;
+	}
+
+	.role-icons {
+		display: flex;
+		position: relative;
+		z-index: 5;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.5rem;
+		width: 100%;
+		min-height: 1.5rem;
+	}
+
+	.role-icons:empty {
+		display: none;
+	}
+
+	.avatar-and-roles {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.cover-image {
+		position: absolute;
+		display: flex;
+		background-size: cover;
+		background-position: 50%;
+		top: 0;
+		left: 0;
+		height: 100%;
+		z-index: -1;
+		width: 100%;
+		flex-direction: column-reverse;
+		border-radius: 12px;
+	}
+
+	.summary {
+		margin: -1em;
+	}
+
+	@media screen and (max-width: 767px) {
+		.player-general-info {
+			flex-direction: column;
+			align-items: center;
+			grid-gap: 0.4em;
+		}
+
+		.rank-and-stats-cell {
+			align-items: center;
+		}
+
+		:global(.mini-profile-box .avatar-overlay) {
+			left: calc(50% - 112px) !important;
+		}
+	}
+</style>

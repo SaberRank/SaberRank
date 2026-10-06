@@ -1,0 +1,363 @@
+using SaberRank_Server.Bot;
+using SaberRank_Server.Extensions;
+using SaberRank_Server.Models;
+using SaberRank_Server.Services;
+using SaberRank_Server.Utils;
+using Microsoft.EntityFrameworkCore;
+
+namespace SaberRank_Server.ControllerHelpers {
+    public class SongControllerHelper {
+        public static async Task<Song?> AddNewSong(Song song, string hash, AppContext dbContext) {
+            string songId = song.Id;
+            Song? existingSong = await dbContext
+                .Songs
+                .Include(s => s.Difficulties)
+                .ThenInclude(d => d.ModifierValues)
+                .FirstOrDefaultAsync(i => i.Id == songId);
+            Song? baseSong = existingSong;
+
+            List<Song> songsToMigrate = new List<Song>();
+            while (existingSong != null)
+            {
+                if (song.LowerHash == hash.ToLower())
+                {
+                    songsToMigrate.Add(existingSong);
+                }
+                songId += "x";
+                existingSong = await dbContext.Songs.Include(s => s.Difficulties).FirstOrDefaultAsync(i => i.Id == songId);
+            }
+
+            song.Id = songId;
+            song.Hash = hash;
+            song.LowerHash = hash.ToLower();
+
+            try {
+                dbContext.Songs.Add(song);
+                await dbContext.SaveChangesAsync();
+                SongSearchService.AddNewSong(song);
+
+                foreach (var oldSong in songsToMigrate)
+                {
+                    foreach (var item in oldSong.Difficulties)
+                    {
+                        await MigrateLeaderboards(dbContext, song, oldSong, baseSong, item);
+                        item.Status = DifficultyStatus.outdated;
+                        item.Stars = 0;
+                    }
+                }
+            } catch (Exception e) {
+                Console.WriteLine($"ADD SONG EXCEPTION: {e.Message}");
+                dbContext.RejectChanges();
+            }
+                    
+            try {
+                await dbContext.SaveChangesAsync();
+            } catch (Exception e) {
+                Console.WriteLine($"ADD SONG EXCEPTION: {e.Message}");
+                dbContext.RejectChanges();
+            }
+
+            return await GetSongWithDiffsFromHash(dbContext, hash);
+        }
+
+        public static async Task<Song?> GetOrAddSong(AppContext dbContext, string hash)
+        {
+            Song? song = await GetSongWithDiffsFromHash(dbContext, hash);
+
+            if (song == null)
+            {
+                (var map, _) = await SongUtils.GetSongFromBeatSaver(hash);
+
+                if (map == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    song = new Song();
+                    song.FromMapDetails(map);
+                    song = await AddNewSong(song, hash, dbContext);
+                    if (song != null) {
+                        await UpdateFromMap(dbContext, song, map);
+                    }
+                }
+            }
+
+            return song;
+        }
+
+        public static async Task<Leaderboard?> NewLeaderboard(AppContext dbContext, Song song, Song? baseSong, string diff, string mode)
+        {
+            IEnumerable<DifficultyDescription> difficulties = song.Difficulties.Where(el => el.DifficultyName.ToLower() == diff.ToLower());
+            DifficultyDescription? difficulty = difficulties.FirstOrDefault(x => x.ModeName.ToLower() == mode.ToLower());
+   
+            if (difficulty == null)
+            {
+                string defaultMode = "Standard";
+                if (mode.StartsWith(ReBeatUtils.MODE_IDENTIFIER)) {
+                    defaultMode = mode.Replace(ReBeatUtils.MODE_IDENTIFIER, "");
+                }
+
+                difficulty = difficulties.FirstOrDefault(x => x.ModeName == defaultMode);
+                if (difficulty == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    CustomMode? customMode = await dbContext.CustomModes.FirstOrDefaultAsync(m => m.Name == mode);
+                    if (customMode == null)
+                    {
+                        customMode = new CustomMode
+                        {
+                            Name = mode
+                        };
+                        dbContext.CustomModes.Add(customMode);
+                        await dbContext.SaveChangesAsync();
+                    }
+
+                    ModifiersMap? modifiersMap = null;
+                    int maxScore = difficulty.MaxScore;
+                    if (mode.StartsWith(ReBeatUtils.MODE_IDENTIFIER)) {
+                        maxScore = ReBeatUtils.MaxScoreForNote(difficulty.Notes + difficulty.Chains);
+                        modifiersMap = ModifiersMap.ReBeatMap();
+                    }
+
+                    difficulty = new DifficultyDescription
+                    {
+                        Value = difficulty.Value,
+                        Mode = customMode.Id + 10,
+                        DifficultyName = difficulty.DifficultyName,
+                        MaxScore = maxScore,
+                        ModifierValues = modifiersMap,
+                        MaxScoreGraph = difficulty.MaxScoreGraph,
+                        ModeName = mode,
+                        Hash = song.LowerHash,
+
+                        Njs = difficulty.Njs,
+                        Nps = difficulty.Nps,
+                        Notes = difficulty.Notes,
+                        Chains = difficulty.Chains,
+                        Sliders = difficulty.Sliders,
+                        Bombs = difficulty.Bombs,
+                        Walls = difficulty.Walls,
+                        Requirements = difficulty.Requirements,
+
+                        RequiresChroma = difficulty.RequiresChroma,
+                        RequiresNoodles = difficulty.RequiresNoodles,
+                        RequiresMappingExtensions = difficulty.RequiresMappingExtensions,
+                        RequiresCinema  = difficulty.RequiresCinema,
+                        RequiresV3 = difficulty.RequiresV3,
+                        RequiresOptionalProperties = difficulty.RequiresOptionalProperties,
+                        RequiresVNJS = difficulty.RequiresVNJS,
+                        RequiresVivify = difficulty.RequiresVivify,
+                        RequiresV3Pepega = difficulty.RequiresV3Pepega,
+                        RequiresGroupLighting = difficulty.RequiresGroupLighting,
+                        RequiresAudioLink = difficulty.RequiresAudioLink
+                    };
+                    song.Difficulties.Add(difficulty);
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+
+            string newLeaderboardId = $"{song.Id}{difficulty.Value}{difficulty.Mode}";
+            var leaderboard = await GetLeaderboardWithDiffs(dbContext, newLeaderboardId);
+
+            if (leaderboard == null) {
+                leaderboard = new Leaderboard();
+                leaderboard.SongId = song.Id;
+
+                leaderboard.Difficulty = difficulty;
+                leaderboard.Scores = new List<Score>();
+                leaderboard.Id = newLeaderboardId;
+                leaderboard.Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+
+                dbContext.Leaderboards.Add(leaderboard);
+                try {
+                    await dbContext.SaveChangesAsync();
+                } catch (Exception e) {
+                    Console.WriteLine($"ADD LEADERBOARD EXCEPTION: {e.Message}");
+                    dbContext.RejectChanges();
+                }
+            }
+
+            if (baseSong != null) {
+                var baseId = $"{baseSong.Id}{difficulty.Value}{difficulty.Mode}";
+                var baseLeaderboard = await dbContext.Leaderboards
+                    .Include(lb => lb.LeaderboardGroup)
+                    .ThenInclude(lbg => lbg.Leaderboards)
+                    .FirstOrDefaultAsync(lb => lb.Id == baseId);
+
+                if (baseLeaderboard != null) {
+                    var group = baseLeaderboard.LeaderboardGroup ?? new LeaderboardGroup {
+                        Leaderboards = new List<Leaderboard>()
+                    };
+
+                    if (baseLeaderboard.LeaderboardGroup == null) {
+                        group.Leaderboards.Add(baseLeaderboard);
+                        baseLeaderboard.LeaderboardGroup = group;
+                    }
+
+                    if (group.Leaderboards.FirstOrDefault(lb => lb.Id == leaderboard.Id) == null) {
+                        group.Leaderboards.Add(leaderboard);
+
+                        leaderboard.LeaderboardGroup = group;
+                    }
+                }
+            }
+
+            try {
+                await dbContext.SaveChangesAsync();
+            } catch (Exception e) {
+                Console.WriteLine($"ADD LEADERBOARD EXCEPTION: {e.Message}");
+                dbContext.RejectChanges();
+            }
+
+            return await GetLeaderboardWithDiffs(dbContext, newLeaderboardId) ?? leaderboard;
+        }
+
+        public static async Task MigrateLeaderboards(AppContext dbContext, Song newSong, Song oldSong, Song? baseSong, DifficultyDescription diff)
+        {
+            var newLeaderboard = await NewLeaderboard(dbContext, newSong, baseSong, diff.DifficultyName, diff.ModeName);
+            if (newLeaderboard != null && diff.Status != DifficultyStatus.ranked && diff.Status != DifficultyStatus.outdated) {
+                await RatingUtils.UpdateFromExMachina(newLeaderboard.Difficulty, newSong, null);
+                newLeaderboard.Difficulty.Status = diff.Status;
+                newLeaderboard.Difficulty.Type = diff.Type;
+                newLeaderboard.Difficulty.NominatedTime = diff.NominatedTime;
+                newLeaderboard.Difficulty.QualifiedTime = diff.QualifiedTime;
+                newLeaderboard.Difficulty.ModifierValues = diff.ModifierValues;
+            }
+
+            var oldLeaderboardId = $"{oldSong.Id}{diff.Value}{diff.Mode}";
+            var oldLeaderboard = await dbContext.Leaderboards.Where(lb => lb.Id == oldLeaderboardId).Include(lb => lb.Qualification).FirstOrDefaultAsync();
+
+            if (oldLeaderboard?.Qualification != null) {
+                newLeaderboard.Qualification = oldLeaderboard.Qualification;
+                newLeaderboard.NegativeVotes = oldLeaderboard.NegativeVotes;
+                newLeaderboard.PositiveVotes = oldLeaderboard.PositiveVotes;
+                if (oldLeaderboard.Qualification.DiscordRTChannelId.Length > 0 && diff.Status.WithRating()) {
+                    await RTNominationsForum.NominationReuploaded(dbContext, oldLeaderboard.Qualification, newLeaderboard.Id);
+                }
+                oldLeaderboard.Qualification = null;
+            }
+        }
+
+        public static async Task UpdateFromMap(AppContext dbContext, Song song, MapDetail? map, bool save = true) {
+
+            if (map == null || map.Versions[0].State != "Published") {
+                if (song.Difficulties.FirstOrDefault(d => d.Status == DifficultyStatus.unranked) != null) {
+                    foreach (var diff in song.Difficulties) {
+                        if (diff.Status == DifficultyStatus.unranked) {
+                            diff.Status = DifficultyStatus.outdated;
+                        }
+                    }
+                    if (save) {
+                        dbContext.SaveChanges();
+                    }
+                }
+            } else {
+                if (map.Versions[0].Hash.ToLower() == song.LowerHash && song.Difficulties.FirstOrDefault(d => d.Status == DifficultyStatus.outdated) != null) {
+                    foreach (var diff in song.Difficulties) {
+                        if (diff.Status == DifficultyStatus.outdated) {
+                            diff.Status = DifficultyStatus.unranked;
+                        }
+                    }
+                    if (save) {
+                        dbContext.SaveChanges();
+                    }
+                }
+            }
+
+            if (map != null) {
+                var mappers = (map.Collaborators ?? new List<UserDetail>()).Append(map.Uploader);
+
+                if (string.Join(",", song.Mappers?.Select(m => m.Id) ?? []) != string.Join(",", mappers.Select(m => m.Id) ?? [])) {
+                    song.Mappers = new List<Mapper>();
+                    foreach (var mapper in mappers) {
+                        var dbMapper = await dbContext.Mappers.FindAsync(mapper.Id);
+                        if (dbMapper == null) {
+                            dbMapper = Mapper.MapperFromBeatSaverUser(mapper);
+                            dbMapper.Status = await PlayerControllerHelper.GetMapperStatus(dbContext, "", mapper);
+                            dbContext.Mappers.Add(dbMapper);
+                        }
+
+                        song.Mappers.Add(dbMapper);
+                        dbMapper.UpdateFromBeatSaverUser(mapper);
+                    }
+                    if (save) {
+                        await dbContext.SaveChangesAsync();
+                    }
+                }
+
+                if (map.Nsfw && !song.Explicity.HasFlag(SongExplicitStatus.Cover)) {
+                    song.Explicity |= SongExplicitStatus.Cover;
+
+                    song.CoverImage = System.Text.RegularExpressions.Regex.Replace(
+                        song.CoverImage, 
+                        @"https?://(?:[a-z]{2}\.)?cdn\.beatsaver\.com/",
+                        $"https://api.saberrank.com/cover/processed/{song.Id}/"
+                    );
+                    if (song.FullCoverImage != null) {
+                        song.FullCoverImage = System.Text.RegularExpressions.Regex.Replace(song.FullCoverImage, "https?://cdn.assets.saberrank.(?:[a-z]{3})?/", $"https://api.saberrank.com/cover/processed/{song.Id}/");
+                    }
+                    if (save) {
+                        await dbContext.SaveChangesAsync();
+                    }
+                } else if (song.Explicity.HasFlag(SongExplicitStatus.Cover)) {
+                    song.Explicity &= ~SongExplicitStatus.Cover;
+
+                    song.CoverImage = song.CoverImage.Replace($"https://api.saberrank.com/cover/processed/{song.Id}/", "https://cdn.beatsaver.com/");
+                    if (song.FullCoverImage != null) {
+                        song.FullCoverImage = song.FullCoverImage.Replace($"https://api.saberrank.com/cover/processed/{song.Id}/", "https://cdn.assets.saberrank.xyz/");
+                    }
+                    if (save) {
+                        await dbContext.SaveChangesAsync();
+                    }
+                }
+
+                if (map.Automapper && song.MapCreator == SongCreator.Human) {
+                    song.MapCreator = Song.BotName(song.Mapper, map.DeclatedAi);
+                }
+
+                if (map.CuratedAt == null && song.Status.HasFlag(SongStatus.Curated)) {
+                    if (song.ExternalStatuses != null) {
+                        var curatedStatus = song.ExternalStatuses.FirstOrDefault(es => es.Status == SongStatus.Curated);
+                        if (curatedStatus != null) {
+                            song.ExternalStatuses.Remove(curatedStatus);
+                        }
+                        song.Status &= ~SongStatus.Curated;
+                        song.IsCurated = false;
+                    }
+                }
+            }
+        }
+
+        private static async Task<Song?> GetSongWithDiffsFromHash(AppContext dbContext, string hash)
+        {
+            return await dbContext
+                .Songs
+                .TagWithCallerS()
+                .Where(el => el.LowerHash == hash.ToLower())
+                .Include(song => song.Difficulties)
+                .ThenInclude(d => d.ModifierValues)
+                .Include(song => song.Difficulties)
+                .ThenInclude(d => d.ModifiersRating)
+                .FirstOrDefaultAsync();
+        }
+
+        private static async Task<Leaderboard?> GetLeaderboardWithDiffs(AppContext dbContext, string leaderboardId)
+        {
+            return await dbContext
+                .Leaderboards
+                .Where(lb => lb.Id == leaderboardId)
+                .Include(lb => lb.Song)
+                .Include(lb => lb.Difficulty)
+                .ThenInclude(d => d.ModifierValues)
+                .Include(lb => lb.Difficulty)
+                .ThenInclude(d => d.ModifiersRating)
+                .Include(lb => lb.Difficulty)
+                .ThenInclude(d => d.MaxScoreGraph)
+                .FirstOrDefaultAsync();
+        }
+    }
+}

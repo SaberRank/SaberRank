@@ -1,0 +1,12 @@
+.idea
+.vscode
+node_modules
+public/build
+public/index.html
+public/assets/ss-bulma.*.css
+build-info.js
+forreload
+.yarn
+.yarnrc.yml
+# Local Netlify folder
+.netlify

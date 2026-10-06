@@ -1,0 +1,176 @@
+using SaberRank_Server.ControllerHelpers;
+using SaberRank_Server.Enums;
+using SaberRank_Server.Extensions;
+using SaberRank_Server.Models;
+using SaberRank_Server.Utils;
+using Microsoft.EntityFrameworkCore;
+using Prometheus.Client;
+using System.Net;
+using static SaberRank_Server.ControllerHelpers.LeaderboardControllerHelper;
+
+namespace SaberRank_Server.Services
+{
+    public class MinuteRefresh : BackgroundService
+    {
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IConfiguration _configuration;
+
+        private readonly IGauge _rankedPlayerCounter;
+        private readonly IGauge _rankedScoreCounter;
+
+        private readonly IGauge _playerCounter;
+        private readonly IGauge _scoreCounter;
+
+        public static string CurrentHost = "";
+
+        public static int ScoresCount = 0;
+        public static int PpScoresCount = 0;
+
+        public static List<MassLeaderboardsInfoResponse> massLeaderboards = new List<MassLeaderboardsInfoResponse>();
+
+        public MinuteRefresh(IServiceScopeFactory serviceScopeFactory, IMetricFactory metricFactory, IConfiguration configuration)
+        {
+            _serviceScopeFactory = serviceScopeFactory;
+            _configuration = configuration;
+
+            _rankedPlayerCounter = metricFactory.CreateGauge("ranked_player_count", "Ranked player count in the last 3 month");
+            _rankedScoreCounter = metricFactory.CreateGauge("ranked_score_count", "Ranked score count");
+            _playerCounter = metricFactory.CreateGauge("player_count", "Total player count");
+            _scoreCounter = metricFactory.CreateGauge("score_count", "Total score count");
+        }
+        
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            do {
+                try {
+                    
+                    await RefreshMaps();
+                    await RefreshPrometheus();
+                    await RefreshAllContextsPp();
+                    await RefreshMainCLan();
+                } catch (Exception e) {
+                    Console.WriteLine($"EXCEPTION MinuteRefresh {e}");
+                }
+
+                await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+            }
+            while (!stoppingToken.IsCancellationRequested);
+        }
+
+        public async Task RefreshMaps() {
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var _context = scope.ServiceProvider.GetRequiredService<AppContext>();
+
+                massLeaderboards = await _context.Leaderboards.FilterRanking(_context, MapSortBy.None, Order.Asc)
+                    .TagWithCallerS()
+                    .AsNoTracking()
+                    .Include(lb => lb.Difficulty)
+                    .ThenInclude(d => d.ModifierValues)
+                    .Include(lb => lb.Difficulty)
+                    .ThenInclude(d => d.ModifiersRating)
+                    .Select(lb => new MassLeaderboardsInfoResponse {
+                        Id = lb.Id,
+                        Song = new SongInfo {
+                            Id = lb.Song.Id,
+                            Hash = lb.Song.LowerHash,
+                            UploadTime = lb.Song.UploadTime
+                        },
+                        Difficulty = new MassLeaderboardsDiffInfo {
+                            Id = lb.Difficulty.Id,
+                            Value = lb.Difficulty.Value,
+                            Mode = lb.Difficulty.Mode,
+                            DifficultyName = lb.Difficulty.DifficultyName,
+                            ModeName = lb.Difficulty.ModeName,
+                            Status = lb.Difficulty.Status,
+                            ModifierValues = lb.Difficulty.ModifierValues,
+                            ModifiersRating = lb.Difficulty.ModifiersRating,
+                            NominatedTime  = lb.Difficulty.NominatedTime,
+                            QualifiedTime  = lb.Difficulty.QualifiedTime,
+                            RankedTime = lb.Difficulty.RankedTime,
+
+                            Stars  = lb.Difficulty.Stars,
+                            PassRating  = lb.Difficulty.PassRating,
+                            AccRating  = lb.Difficulty.AccRating,
+                            TechRating  = lb.Difficulty.TechRating,
+                            Type  = lb.Difficulty.Type,
+                            MaxScore = lb.Difficulty.MaxScore,
+                        },
+                        Qualification = lb.Qualification != null ? new QualificationInfo {
+                            Id = lb.Qualification.Id,
+                            Timeset = lb.Qualification.Timeset,
+                            RTMember = lb.Qualification.RTMember,
+                            CriteriaMet = lb.Qualification.CriteriaMet,
+                            CriteriaTimeset = lb.Qualification.CriteriaTimeset,
+                            CriteriaChecker = lb.Qualification.CriteriaChecker,
+                            CriteriaCommentary = lb.Qualification.CriteriaCommentary,
+                            MapperAllowed = lb.Qualification.MapperAllowed,
+                            MapperId = lb.Qualification.MapperId,
+                            MapperQualification = lb.Qualification.MapperQualification,
+                            ApprovalTimeset = lb.Qualification.ApprovalTimeset,
+                            Approved = lb.Qualification.Approved,
+                            Approvers = lb.Qualification.Approvers,
+                        } : null
+                    })
+                    .ToListAsync();
+            }
+        }
+
+        public async Task RefreshPrometheus()
+        {
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                CurrentHost = scope.ServiceProvider.GetApplicationUrls().FirstOrDefault(s => s.Contains("https")) ?? "";
+                var _context = scope.ServiceProvider.GetRequiredService<AppContext>();
+
+                int timeset = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds - 60 * 60 * 24 * 30 * 3;
+
+                _rankedPlayerCounter.Set(await _context.Players.Where(p => !p.Banned && p.ScoreStats.LastRankedScoreTime >= timeset).CountAsync());
+                _playerCounter.Set(await _context.Players.CountAsync());
+
+                ScoresCount = await _context.Scores.Where(s => s.ValidForGeneral && !s.Banned).TagWithCaller().CountAsync();
+                PpScoresCount = await _context.Scores.Where(s => s.Pp > 0 && s.ValidForGeneral && !s.Banned).TagWithCaller().CountAsync();
+
+                _rankedScoreCounter.Set(await _context.Scores.TagWithCaller().Where(s => s.Pp > 0 && !s.Qualification && !s.Banned).CountAsync());
+                _scoreCounter.Set(ScoresCount);
+            }
+        }
+
+        public async Task RefreshAllContextsPp() {
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var _context = scope.ServiceProvider.GetRequiredService<AppContext>();
+                await PlayerRefreshControllerHelper.RefreshAllContextsPp(_context);
+            }
+        }
+
+        public async Task RefreshMainCLan() {
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var _context = scope.ServiceProvider.GetRequiredService<AppContext>();
+
+                var players = await _context.Players.Where(p => p.Clans.Count() > 0).Select(p => new {
+                    Clans = p.Clans.Select(c => new { c.Tag, c.Id }).ToList(),
+                    Id = p.Id,
+                    p.ClanOrder
+                }).ToListAsync();
+
+                var updates = new List<Player>();
+
+                foreach (var item in players) {
+                    if (item.Clans.Count > 0) {
+                        var clansInOrder = item.Clans
+                        .OrderBy(c => ("," + item.ClanOrder + ",").IndexOf("," + c.Tag + ",") >= 0 ? ("," + item.ClanOrder + ",").IndexOf("," + c.Tag + ",") : 1000)
+                        .ToList();
+
+                        updates.Add(new Player { Id = item.Id, TopClanId = clansInOrder.FirstOrDefault()?.Id });
+                    }
+                }
+
+                await _context.BulkUpdateAsync(updates, options => options.ColumnInputExpression = c => new { c.TopClanId });
+
+                await _context.BulkSaveChangesAsync();
+            }
+        }
+    }
+}

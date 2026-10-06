@@ -1,0 +1,49 @@
+using SaberRank_Server.Models;
+using Lucene.Net.Documents;
+
+namespace SaberRank_Server.Services;
+
+public class SongMetadata
+{
+    public string Id   { get; set; }
+
+    public string Hash { get; set; }
+
+    public string Name { get; set; }
+
+    public string Author { get; set; }
+
+    public string Mapper { get; set; }
+
+    public int Score { get; set; }
+
+    public static explicit operator SongMetadata(Song song) =>
+        new()
+        {
+            Id = song.Id.ToLower(),
+            Hash = song.LowerHash,
+            Name = song.Name.ToLower(),
+            Author = song.Author.ToLower(),
+            Mapper = song.Mapper.ToLower(),
+        };
+
+    public static explicit operator SongMetadata(Document doc) =>
+        new()
+        {
+            Id = doc.Get(nameof(Id)),
+            Hash = doc.Get(nameof(Hash)),
+            Name = doc.Get(nameof(Name)),
+            Author = doc.Get(nameof(Author)),
+            Mapper = doc.Get(nameof(Mapper)),
+        };
+
+    public static explicit operator Document(SongMetadata songMetadata) =>
+        new()
+        {
+            new StringField(nameof(Id), songMetadata.Id, Field.Store.YES),
+            new StringField(nameof(Hash), songMetadata.Hash, Field.Store.YES),
+            new TextField(nameof(Name), songMetadata.Name, Field.Store.YES),
+            new TextField(nameof(Author), songMetadata.Author, Field.Store.YES),
+            new TextField(nameof(Mapper), songMetadata.Mapper, Field.Store.YES),
+        };
+}
