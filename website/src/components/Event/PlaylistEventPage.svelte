@@ -154,7 +154,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Event / {currentPage} - {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">
@@ -169,7 +169,7 @@
 			<ContentBox cls={modalShown ? 'inner-modal' : ''}>
 				<span>
 					Have you ever wondered how Beat Saber would feel with timing based scoring instead of accuracy based? Wonder no more!<br />
-					Limited time offer from SnoreSaber. Install the mods and play custom mode to try our attempt at reimagining the game.<br />
+					Limited time offer from SaberRank. Install the mods and play custom mode to try our attempt at reimagining the game.<br />
 					No preswing, postswing or accuracy, only you and cubes. <br /><br />
 				</span>
 				<div class="downloadButtons">
@@ -328,7 +328,7 @@
 					</span>
 
 					<div class="downloadButtons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 						<a href="https://cube.community/tournaments/bswc-2024" target="_blank">
@@ -360,7 +360,7 @@
 					</span>
 
 					<div class="downloadButtons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 						<a href="https://cube.community/tournaments/bswc-2024" target="_blank">
@@ -391,7 +391,7 @@
 					</span>
 
 					<div class="downloadButtons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 						<a href="https://cube.community/tournaments/bswc-2024" target="_blank">
@@ -423,7 +423,7 @@
 					</span>
 
 					<div class="downloadButtons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 
@@ -541,7 +541,7 @@
 					</span>
 
 					<div class="downloadButtons bswc-2025-buttons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 						<a href="https://cube.community/tournaments/bswc-2025" target="_blank">
@@ -573,7 +573,7 @@
 					</span>
 
 					<div class="downloadButtons bswc-2025-buttons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 						<a href="https://cube.community/tournaments/bswc-2025" target="_blank">
@@ -604,7 +604,7 @@
 					</span>
 
 					<div class="downloadButtons bswc-2025-buttons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 						<a href="https://cube.community/tournaments/bswc-2025" target="_blank">
@@ -668,7 +668,7 @@
 					</span>
 
 					<div class="downloadButtons bswc-2025-buttons">
-						<a href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber" target="_blank">
+						<a href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank" target="_blank">
 							<Button iconFa="fab fa-twitch" type="twitch" label="Watch matches" />
 						</a>
 

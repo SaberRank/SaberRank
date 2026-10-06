@@ -284,7 +284,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{clan?.name ?? ''} / {currentPage} - {ssrConfig.name}</title>
 </svelte:head>
 
 {#if clan?.tag == 'BSFR' || clan?.tag == 'BB'}

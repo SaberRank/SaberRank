@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{browserTitle}</title>
 </svelte:head>
 
 <article class="page-content" transition:fade|global>

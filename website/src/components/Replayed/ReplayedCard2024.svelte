@@ -860,11 +860,11 @@
 </div>
 
 <MetaTags
-	title="SnoreSaber rePlayed 2024"
-	description="View your SnoreSaber player rePlayed 2024"
+	title="SaberRank rePlayed 2024"
+	description="View your SaberRank player rePlayed 2024"
 	openGraph={{
-		title: 'SnoreSaber rePlayed 2024',
-		description: 'View your SnoreSaber player rePlayed 2024',
+		title: 'SaberRank rePlayed 2024',
+		description: 'View your SaberRank player rePlayed 2024',
 		images: CURRENT_URL + '/assets/logo-small.png',
 		siteName: ssrConfig.name,
 	}}
@@ -872,10 +872,10 @@
 		handle: '@handle',
 		site: '@saberrank_',
 		cardType: 'summary',
-		title: 'SnoreSaber rePlayed 2024',
-		description: 'View your SnoreSaber player rePlayed 2024',
+		title: 'SaberRank rePlayed 2024',
+		description: 'View your SaberRank player rePlayed 2024',
 		image: CURRENT_URL + '/assets/logo-small.png',
-		imageAlt: 'SnoreSaber rePlayed 2024',
+		imageAlt: 'SaberRank rePlayed 2024',
 	}} />
 
 <style>

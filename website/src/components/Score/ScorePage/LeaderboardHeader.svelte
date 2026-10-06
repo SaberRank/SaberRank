@@ -1,5 +1,5 @@
 <script>
-	// import MapTypeDescription from '../../Leaderboard/MapTypeDescription.svelte';
+	// import MapTypeDescription from './MapTypeDescription.svelte';
 	import MapTriangle from '../../Common/MapTriangle.svelte';
 	import {createEventDispatcher, getContext} from 'svelte';
 	import {fade} from 'svelte/transition';

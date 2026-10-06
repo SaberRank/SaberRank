@@ -27,7 +27,7 @@
 	$: loading = $account?.loading;
 
 	const metaDescription =
-		'Download Tibytes Presets - A special version of ReeSabers with legendary presets included. Exclusive to SnoreSaber Patreon supporters.';
+		'Download Tibytes Presets - A special version of ReeSabers with legendary presets included. Exclusive to SaberRank Patreon supporters.';
 </script>
 
 <svelte:window bind:scrollY />
@@ -137,8 +137,8 @@
 											<Button icon={steamSvg} label="Log In with Steam" type="green" />
 										</form>
 										<br />
-										<span>or Log In with SnoreSaber account from the Quest mod.<br /></span>
-										<span>If you never used SnoreSaber you need to sign up in the mod</span>
+										<span>or Log In with BL account from the Quest mod.<br /></span>
+										<span>If you never used SaberRank you need to sign up in the mod</span>
 										<div class="input-container">
 											<div class="cat">Login</div>
 											<input bind:value={login} placeholder="Login" />

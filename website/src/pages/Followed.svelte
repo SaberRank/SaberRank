@@ -86,7 +86,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Followed - {ssrConfig.name}</title>
 </svelte:head>
 
 <article>

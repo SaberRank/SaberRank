@@ -79,7 +79,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{metaTitle} - {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">

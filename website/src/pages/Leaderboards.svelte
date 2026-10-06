@@ -579,7 +579,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Maps / {currentPage} - {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">

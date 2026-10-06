@@ -102,7 +102,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Developer Portal / {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">

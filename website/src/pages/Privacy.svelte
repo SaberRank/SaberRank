@@ -13,23 +13,23 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Privacy policy - {ssrConfig.name}</title>
 </svelte:head>
 
 <article bind:this={articleEl} transition:fade|global>
 	<ContentBox>
 		<h1 class="title is-3">Privacy policy</h1>
 
-		By using SnoreSaber, you agree to the following privacy policy.<br /> This policy may change at any time, so please check it regularly.<br />
+		By using SaberRank, you agree to the following privacy policy.<br /> This policy may change at any time, so please check it regularly.<br />
 		<a href="https://github.com/SaberRank/saberrank-website/commits/master/src/pages/Privacy.svelte">Click here</a> to see the changes in
 		the history of the terms of service.<br /><br />
 
-		<br /><b>SnoreSaber general data policy</b><br />
-		SnoreSaber is a service that collects data about Beat Saber players and their plays.<br /> The main purpose of this service is to
+		<br /><b>SaberRank general data policy</b><br />
+		SaberRank is a service that collects data about Beat Saber players and their plays.<br /> The main purpose of this service is to
 		provide a leaderboard for Beat Saber players.<br /> The service is free to use.<br /> The service is not affiliated with Beat Games,
 		Oculus, or Steam.
 
-		<br /><b>All the data collected by SnoreSaber is public.</b><br />
+		<br /><b>All the data collected by SaberRank is public.</b><br />
 		With an exception for sensitive data like your auth info, IP address, or private data by design (for example, friends).
 
 		<br /><br /><b>How is your data protected?</b><br />
@@ -39,33 +39,33 @@
 		Please keep this always in mind: change your password regularly and use 2FA(link your profile to Steam).<br />
 
 		<br /><b>How is your data used?</b><br />
-		Your data is used to provide you with a leaderboard and other features of SnoreSaber.<br />
+		Your data is used to provide you with a leaderboard and other features of SaberRank.<br />
 		Being publicly available, it can also be used for any purpose by anyone.<br />
-		The main reason for it to be public is a mod nature of SnoreSaber service and decentralized development.<br />
+		The main reason for it to be public is a mod nature of SaberRank service and decentralized development.<br />
 		This way, we hope it will be used for the benefit of the whole community without any gatekeeping.<br />
 
-		<br />What data do SnoreSaber mods collect?<br />
+		<br />What data do SaberRank mods collect?<br />
 
 		<br /><b>1. Platform-specific ID</b><br />
 		In order to identify you as a Beat Saber player, we collect your personal ID from the platform on which you own the game. For example: Steam
-		ID, Oculus ID. This ID is then used as ID in SnoreSaber system.
+		ID, Oculus ID. This ID is then used as ID in SaberRank system.
 		<br /><b>2. Profile picture</b><br />
-		Your Oculus or Steam profile picture will be used as SnoreSaber profile picture.
+		Your Oculus or Steam profile picture will be used as SaberRank profile picture.
 		<br /><b>3. Profile name</b><br />
-		Your Oculus or Steam profile name will be used as SnoreSaber profile name.
+		Your Oculus or Steam profile name will be used as SaberRank profile name.
 		<br /><b>4. IP address</b><br />
 		Some requests will use your IP address to set a country for your profile or to protect sensitive endpoints (for example, "log in").
 
 		<br /><b>5. Replays</b><br />
 		The main purpose of this service is to collect your Beat Saber plays, so yes, we collect them.<br /> Replays may contain personally
 		identifiable information. Example being your movements, height or even your body shape. Your data, including associated personally
-		identifiable information, will be broadly publicly available to anyone with an internet connection via the SnoreSaber website. It will
+		identifiable information, will be broadly publicly available to anyone with an internet connection via the SaberRank website. It will
 		also be accessible to academic researchers, who may use it to conduct research topics such as VR security, privacy, and usability.
 		<br /><br />
 
-		On top of being publicly available using the SnoreSaber API, your data will be available to anyone who has a direct link to your replay.<br />
-		Also, SnoreSaber API is used by other services, so your data may be available to them as well.<br /> And SnoreSaber database dump is
-		publicly available in SnoreSaber discord for any purposes with stripped sensitive data as: login, password, IPs and social account
+		On top of being publicly available using the SaberRank API, your data will be available to anyone who has a direct link to your replay.<br />
+		Also, SaberRank API is used by other services, so your data may be available to them as well.<br /> And SaberRank database dump is
+		publicly available in SaberRank discord for any purposes with stripped sensitive data as: login, password, IPs and social account
 		tokens (data which is not otherwise available via API).
 
 		<br /><br /><b>Steam specific</b><br />
@@ -73,11 +73,11 @@
 		<br /><br /><b>Patreon specific</b><br />
 		The server will use your Patreon profile ID to ensure your pledge to grant the "Patron" role.
 		<br /><br /><b>Third-party social applications</b><br />
-		SnoreSaber uses third-party social applications to provide additional features. These applications may collect additional data about you.
-		SnoreSaber will collect your social account ID and access token to use them with third-party social applications. You may delete this info
-		by unlinking your social account from SnoreSaber.
+		SaberRank uses third-party social applications to provide additional features. These applications may collect additional data about you.
+		SaberRank will collect your social account ID and access token to use them with third-party social applications. You may delete this info
+		by unlinking your social account from SaberRank.
 
-		<br /><br /><b>Can I delete all my data from SnoreSaber?</b><br />
+		<br /><br /><b>Can I delete all my data from SaberRank?</b><br />
 		Yes! <a href="/signin/autoban">Click here</a>
 
 		<br /><br />What data does this website collect?<br />
@@ -95,8 +95,8 @@
 		<br /><br />What data does the web replay player website collect?<br />
 		<b>No data is collected.</b>
 
-		<br /><br />What data do web SnoreSaber discord bots collect?<br />
-		<b>Your Discord user ID and data from the SnoreSaber API</b>
+		<br /><br />What data do web SaberRank discord bots collect?<br />
+		<b>Your Discord user ID and data from the SaberRank API</b>
 
 		<p class="back"><a href="/" on:click|preventDefault={() => navigate('/')}>Back to Home</a></p>
 	</ContentBox>

@@ -510,7 +510,7 @@
 
 			await playlists.create(null, {
 				playlistTitle: 'Map suggestions',
-				playlistAuthor: 'SnoreSaber',
+				playlistAuthor: 'SaberRank',
 				songs,
 				image: await imageToDataUrl('/assets/defaultplaylisticon.png'),
 			});
@@ -557,7 +557,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Map Suggestions</title>
 </svelte:head>
 
 <section class="align-content">

@@ -40,7 +40,7 @@
 		}
 	});
 
-	const metaDescription = 'A list of all badges that were received on SnoreSaber.';
+	const metaDescription = 'A list of all badges that were received on SaberRank.';
 
 	function showBadgeDetails(badge) {
 		modal.open(BadgeDetails, {badge});
@@ -48,7 +48,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Badges - {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">

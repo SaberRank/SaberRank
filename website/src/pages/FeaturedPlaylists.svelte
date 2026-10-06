@@ -83,7 +83,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{metaTitle}</title>
 </svelte:head>
 
 <div class="playlist-switcher">

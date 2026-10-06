@@ -266,7 +266,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Ranking / {currentPage} - {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">

@@ -33,7 +33,7 @@
 			case 'creator':
 				show = !profileAppearance || profileAppearance.includes('creator');
 				roleTitle = 'CREATOR';
-				roleDescription = 'SnoreSaber Creator';
+				roleDescription = 'SaberRank Creator';
 				break;
 			case 'admin':
 				show = !profileAppearance || profileAppearance.includes('admin');

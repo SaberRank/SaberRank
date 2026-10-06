@@ -388,7 +388,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Maps</title>
 </svelte:head>
 
 <section class="align-content">

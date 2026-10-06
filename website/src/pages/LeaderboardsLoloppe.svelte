@@ -517,7 +517,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Tagging Maps UI / {currentPage} - {ssrConfig.name}</title>
 </svelte:head>
 
 {#if $account.loading}

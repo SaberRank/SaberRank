@@ -36,7 +36,7 @@
 			<img class="header-image" src="/assets/buildingblockslogo.svg" alt="Building Blocks 2024 Logo" />
 			<div class="header-text">
 				<p>An anonymous Beat Saber mapping contest with a $1000 prize pool</p>
-				<p class="ranked-info">Top maps will be ranked on ScoreSaber and SnoreSaber!</p>
+				<p class="ranked-info">Top maps will be ranked on ScoreSaber and SaberRank!</p>
 			</div>
 		</ContentBox>
 
@@ -308,7 +308,7 @@
 			<h2>Normal map group prizes</h2>
 			<div class="darkened-background">
 				<ul>
-					<li><strong>🥇1st</strong> - $300 + Profile Badges + and their map gets RANKED on ScoreSaber AND SnoreSaber</li>
+					<li><strong>🥇1st</strong> - $300 + Profile Badges + and their map gets RANKED on ScoreSaber AND SaberRank</li>
 					<li><strong>🥈2nd</strong> - $150 + Profile Badges + map gets loved on ScoreSaber</li>
 					<li><strong>🥉3rd</strong> - $50 + Profile Badges</li>
 				</ul>
@@ -322,7 +322,7 @@
 					<li><strong>🥉3rd</strong> - $50 + Profile Badges</li>
 				</ul>
 			</div>
-			<p>+ all podium maps will get a badge and featured playlist on SnoreSaber</p>
+			<p>+ all podium maps will get a badge and featured playlist on SaberRank</p>
 		</ContentBox>
 	</article>
 </section>

@@ -10,11 +10,11 @@
 
 	$: metaDescription =
 		ssrConfig.name +
-		" is Beat Saber's leaderboard with open code and community. Track your scores, compare performances, and climb the SnoreSaber rankings.";
+		" is Beat Saber's leaderboard with open code and community. Start posting your scores to compete with others on more than 100,000 different maps.";
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{ssrConfig.name} - Beat Saber leaderboard</title>
 </svelte:head>
 
 <article class="page-content" transition:fade|global>
@@ -26,8 +26,8 @@
 				</div>
 			</div>
 			<div class="title-and-buttons">
-				<h1 class="big-title audiowide">SnoreSaber</h1>
-				<h3 class="big-description">A focused competitive leaderboard for Beat Saber.</h3>
+				<h1 class="big-title audiowide">Hello, future SaberRank!</h1>
+				<h3 class="big-description">Welcome to the most extensive Beat Saber leaderboard!</h3>
 
 				<div class="downloadButtons">
 					<a class="pc-download-button" href="https://github.com/SaberRank/saberrank-mod/releases" target="_blank" rel="noreferrer">
@@ -45,26 +45,28 @@
 		<ContentBox cls="landing-box">
 			<div class="container-element darkened-background">
 				<h3 class="description centered-title">
-					<b>Track your scores, compare performances, and climb the SnoreSaber rankings.</b>
+					<b>Start posting your scores to compete with others on more than 100,000 different maps.</b>
 				</h3>
 
 				<div class="features">
 					<div class="feature">
-						<h3 class="feature-description">One competitive ranking<br />across your scores.</h3>
+						<img src="/assets/leaderboard-landing.webp" class="feature-image" style="transform: rotate3d(0, 1, 0, 22deg);" />
+						<h3 class="feature-description">In-game leaderboards<br />for custom maps!</h3>
 					</div>
 					<div class="feature">
-						<h3 class="feature-description">Detailed score performance!</h3>
+						<img src="/assets/webreplays-landing.webp" class="feature-image" style="transform: rotate3d(0, 1, 0, -22deg);" />
+						<h3 class="feature-description">Gameplay replays!</h3>
 					</div>
 				</div>
 
 				<div class="table-container">
 					<ul>
-						<li>Built for competitive Beat Saber players</li>
-						<li>Clear rankings and performance data</li>
-						<li>Performance Points and global placement</li>
+						<li>Fully open-source project and community</li>
+						<li>Complexity ratings for all maps</li>
+						<li>Ranked maps to earn Performance Points</li>
 
 						<li>Detailed statistics for every score</li>
-						<li>Player profiles, scores, and rankings</li>
+						<li>Clans, events, and many more!</li>
 					</ul>
 				</div>
 				<div class="global-ranking-call">
@@ -72,35 +74,62 @@
 				</div>
 			</div>
 		</ContentBox>
-		<span class="event-promotion-title">SnoreSaber competitive updates</span>
+		<span class="event-promotion-title">Latest event - Beat The Heat 2026: 32 fresh summer themed maps!</span>
 		<!-- <EventBanner wideScreen={true} /> -->
-		<div class="snore-panels">
-			<ContentBox cls="landing-box snore-panel">
-				<span class="box-headline">Built around the scores that matter.</span>
-				<div class="snore-panel-grid">
-					<div><strong>RANK</strong><span>See where every score places you.</span></div>
-					<div><strong>PERFORM</strong><span>Understand accuracy, PP, and consistency.</span></div>
-					<div><strong>CLIMB</strong><span>Turn better plays into higher placement.</span></div>
+		<div class="two-boxes">
+			<ContentBox cls="landing-box">
+				<span class="box-headline">We aggregate the data from other cool projects to help you play better.</span>
+				<div class="container-element darkened-background">
+					<div class="sources">
+						<a class="source" href="https://beatsaver.com/" target="_blank" rel="noreferrer">
+							<img src="/assets/beatsaver-icon.png" class="icon" alt="BeatSaver" title="BeatSaver" />
+							<span>BeatSaver</span>
+						</a>
+						<a class="source" href="https://github.com/AllPoland/ArcViewer/" target="_blank" rel="noreferrer">
+							<img src="/assets/ArcViewerIcon.webp" title="ArcViewer" class="icon" alt="ArcViewer Logo" />
+							<span>ArcViewer</span>
+						</a>
+						<a class="source" href="https://accsaber.com/" target="_blank" rel="noreferrer">
+							<img src="/assets/accsaber-logo.webp" title="AccSaber" class="icon" alt="AccSaber Logo" />
+							<span>AccSaber</span>
+						</a>
+						<a class="source" href="https://bsaber.com/" target="_blank" rel="noreferrer">
+							<img src="/assets/beastsabericonbig.webp" title="BeastSaber" class="icon" alt="BeastSaber Logo" />
+							<span>BeastSaber</span>
+						</a>
+						<a class="source" href="https://cube.community/" target="_blank" rel="noreferrer">
+							<img src="/assets/cubecommunitylogo.webp" title="CubeCommunity" class="icon" alt="CubeCommunity Logo" />
+							<span>CubeCommunity</span>
+						</a>
+						<a class="source" href="https://beat-savior.herokuapp.com/" target="_blank" rel="noreferrer">
+							<span class="icon beatsavior-icon" title="BeatSavior" />
+							<span>BeatSavior</span>
+						</a>
+						<a class="source" href="https://github.com/Umbranoxio/chroviewer/" target="_blank" rel="noreferrer" style="align-self: center">
+							<span>ChroViewer</span>
+						</a>
+					</div>
 				</div>
 			</ContentBox>
+			<BlueSkyTimeline cls="landing-box" title={true} />
 		</div>
 	</div>
 </article>
 
 <MetaTags
-	title={ssrConfig.name + ' - Competitive Beat Saber Rankings'}
+	title={ssrConfig.name + ' - Beat Saber leaderboard'}
 	description={metaDescription}
 	openGraph={{
-		title: ssrConfig.name + ' - Competitive Beat Saber Rankings',
+		title: ssrConfig.name + ' - Beat Saber leaderboard',
 		description: metaDescription,
 		images: [{url: CURRENT_URL + '/assets/logo-small.png'}],
 		siteName: ssrConfig.name,
 	}}
 	twitter={{
 		handle: '@handle',
-		site: '@snoresaber',
+		site: '@saberrank_',
 		cardType: 'summary',
-		title: ssrConfig.name + ' - Competitive Beat Saber Rankings',
+		title: ssrConfig.name + ' - Beat Saber leaderboard',
 		description: metaDescription,
 		image: CURRENT_URL + '/assets/logo-small.png',
 		imageAlt: ssrConfig.name + "'s logo",
@@ -108,7 +137,10 @@
 
 <style>
 	.image-container {
-		background: radial-gradient(circle at 78% 35%, rgba(236,72,153,.35), transparent 30%), radial-gradient(circle at 20% 25%, rgba(124,58,237,.38), transparent 32%), linear-gradient(135deg, #090816 0%, #11102a 48%, #180d25 100%) !important;
+		background: url('/assets/Main/landing.webp') !important;
+		background-position-y: -2em !important;
+		background-position-x: 0% !important;
+		background-size: 100% !important;
 	}
 
 	.big-landing-box {
@@ -142,40 +174,6 @@
 
 	.mod-beatsaber {
 		margin-left: 0.3em;
-	}
-
-	.snore-panels {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1rem;
-	}
-
-	.snore-panel-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 1rem;
-		padding: 1rem;
-	}
-
-	.snore-panel-grid > div {
-		padding: 1.25rem;
-		border: 1px solid rgba(255,255,255,.08);
-		border-radius: 12px;
-		background: rgba(255,255,255,.025);
-		display: flex;
-		flex-direction: column;
-		gap: .45rem;
-	}
-
-	.snore-panel-grid strong {
-		letter-spacing: .12em;
-		color: #f472b6;
-	}
-
-	.snore-panel-grid span { color: #b8b4c9; }
-
-	@media (max-width: 800px) {
-		.snore-panel-grid { grid-template-columns: 1fr; }
 	}
 
 	.two-boxes {

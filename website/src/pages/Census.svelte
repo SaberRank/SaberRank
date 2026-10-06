@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{title} - {ssrConfig.name}</title>
 </svelte:head>
 
 <div>
@@ -31,7 +31,7 @@
 		</div>
 
 		<p class="survey-description">
-			SnoreSaber together with University of California, Berkeley conducted a large-scale comprehensive survey of 1,006 Beat Saber players
+			SaberRank together with University of California, Berkeley conducted a large-scale comprehensive survey of 1,006 Beat Saber players
 			that sheds light on several important aspects of playerbase, including their background, biometrics, demographics, health information,
 			behavioral patterns, and technical device specifications. This further provide insights into the ranking community and potential
 			correlation with player performance.

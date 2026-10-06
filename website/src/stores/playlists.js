@@ -69,7 +69,7 @@ export default () => {
 			? inputPlaylist
 			: {
 					playlistTitle: 'New playlist',
-					playlistAuthor: 'SnoreSaber',
+					playlistAuthor: 'SaberRank',
 					songs: song ? [song] : [],
 					image: await toDataURL('/assets/defaultplaylisticon.png'),
 				};

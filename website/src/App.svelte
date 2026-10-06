@@ -651,32 +651,33 @@
 
 <link rel="stylesheet" href="/build/themes/{$configStore.preferences.theme}.css" />
 
-<footer>
-	<ContentBox cls="footer-box">
-		<p>
+<footer class="site-footer">
+	<div class="footer-inner">
+		<div class="footer-brand">
+			<div class="footer-brand-mark">
+				<img src="/assets/snoresaber-logo.png" alt="SnoreSaber" />
+			</div>
+			<div>
+				<strong>SnoreSaber</strong>
+				<span>Beat Saber scores, rankings, and player progress.</span>
+			</div>
+		</div>
+
+		<nav class="footer-links" aria-label="Footer navigation">
 			<a href="/about" on:click|preventDefault={() => navigate('/about')}>About</a>
-			|
-			<a href="/developer">Developer Portal</a>
-			|
-			<a href="https://saberrank.wiki/">Wiki</a>
-			|
-			<a href="https://github.com/SaberRank">Source</a>
-			|
-			<a href="/privacy" on:click|preventDefault={() => navigate('/privacy')}>Privacy policy</a>
-			|
+			<a href="/developer" on:click|preventDefault={() => navigate('/developer')}>Developer</a>
+			<a href="https://saberrank.wiki/" target="_blank" rel="noreferrer">Wiki</a>
+			<a href="https://github.com/SaberRank" target="_blank" rel="noreferrer">Source</a>
+			<a href="/privacy" on:click|preventDefault={() => navigate('/privacy')}>Privacy</a>
 			<a href="/help" on:click|preventDefault={() => navigate('/help')}>Help</a>
-			|
 			<a href="/socket" on:click|preventDefault={() => navigate('/socket')}>Scores feed</a>
-			|
-			<a href="https://twitter.com/saberrank_">Twitter</a>
-			|
-			<a href="https://discord.gg/2RG5YVqtG6">Discord</a>
-			|
-			<a href="https://patreon.com/SaberRank">Patreon</a>
-			|
-			<a href="/supporting-project/link">Claim rewards</a>
-		</p>
-	</ContentBox>
+		</nav>
+
+		<div class="footer-bottom">
+			<span>SnoreSaber</span>
+			<span>Built for Beat Saber players.</span>
+		</div>
+	</div>
 </footer>
 
 <style>
@@ -896,11 +897,6 @@
 		z-index: 1000;
 	}
 
-	:global(.footer-box) {
-		margin: 1em 0 0 0 !important;
-		border-radius: 0 !important;
-	}
-
 	main {
 		margin-top: 1em;
 	}
@@ -1025,8 +1021,23 @@
 			display: none;
 		}
 
-		footer {
-			display: none;
+		.site-footer {
+			padding: 1.25rem 1rem 1rem;
+		}
+
+		.footer-inner {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+		}
+
+		.footer-links {
+			justify-content: flex-start;
+		}
+
+		.footer-bottom {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.25rem;
 		}
 	}
 
@@ -1041,9 +1052,101 @@
 		grid-area: 1 / 1 / 1 / 1;
 	}
 
-	footer {
-		font-size: 0.75em;
-		text-align: center;
+	.site-footer {
+		margin-top: 2.5rem;
+		padding: 2rem 1.5rem 1rem;
+		background: linear-gradient(180deg, rgba(8, 9, 16, 0.55), rgba(5, 6, 12, 0.96));
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
+	}
+
+	.footer-inner {
+		max-width: 1200px;
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: minmax(240px, 1fr) minmax(360px, 1.6fr);
+		column-gap: 3rem;
+		row-gap: 1.5rem;
+	}
+
+	.footer-brand {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		min-width: 0;
+	}
+
+	.footer-brand-mark {
+		width: 2.7rem;
+		height: 2.7rem;
+		flex: 0 0 2.7rem;
+		display: grid;
+		place-items: center;
+		border-radius: 0.75rem;
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+	overflow: hidden;
+	}
+
+	.footer-brand-mark img {
+		width: 25px;
+		height: 26px;
+		image-rendering: auto;
+	}
+
+	.footer-brand strong {
+		display: block;
+		font-size: 1rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.footer-brand span {
+		display: block;
+		margin-top: 0.25rem;
+		font-size: 0.78rem;
+		color: rgba(255, 255, 255, 0.55);
+	}
+
+	.footer-links {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		align-content: center;
+		flex-wrap: wrap;
+		gap: 0.55rem;
+	}
+
+	.footer-links a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 2.1rem;
+		padding: 0.35rem 0.75rem;
+		border-radius: 0.6rem;
+		color: rgba(255, 255, 255, 0.72);
+		background: rgba(255, 255, 255, 0.035);
+		border: 1px solid rgba(255, 255, 255, 0.07);
+		font-size: 0.78rem;
+		text-decoration: none;
+		transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+	}
+
+	.footer-links a:hover {
+		color: #fff;
+		background: rgba(255, 255, 255, 0.09);
+		border-color: rgba(255, 255, 255, 0.16);
+		transform: translateY(-1px);
+	}
+
+	.footer-bottom {
+		grid-column: 1 / -1;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding-top: 1rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
+		font-size: 0.7rem;
+		color: rgba(255, 255, 255, 0.38);
 	}
 
 	.mobile-tooltip {

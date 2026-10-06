@@ -861,7 +861,10 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title
+		>{fixedBrowserTitle
+			? fixedBrowserTitle
+			: `${song?.name ? song.name + ' / ' : ''} ${currentDiff ? currentDiff.name + ' / ' : ''} ${page} - ${ssrConfig.name}`}</title>
 </svelte:head>
 
 <section class="align-content">

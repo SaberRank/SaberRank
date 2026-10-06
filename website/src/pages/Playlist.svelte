@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>{`Playlist / ${playlist?.playlistTitle} / ${ssrConfig.name}`}</title>
 </svelte:head>
 
 <ContentBox>

@@ -34,9 +34,9 @@
 
 <svelte:head>
 	{#if isSupporter}
-		<title>snoresaber</title>
+		<title>Supporting {ssrConfig.name}</title>
 	{:else}
-		<title>snoresaber</title>
+		<title>Thank you for supporting {ssrConfig.name}</title>
 	{/if}
 </svelte:head>
 
@@ -55,7 +55,7 @@
 				fallDistance="150vh" />
 		</div>
 		<div class="text-header">
-			<h1>Yay! Thank you for supporting SnoreSaber!❤️</h1>
+			<h1>Yay! Thank you for supporting SaberRank!❤️</h1>
 			Claim your benefits:
 		</div>
 	{:else if action == 'linkPatreon'}
@@ -76,8 +76,8 @@
 							<Button icon={steamSvg} label="Log In with Steam" type="green" />
 						</form>
 						<br />
-						<span>or Log In with SnoreSaber account from the Quest mod</span>
-						<span>if you never used SnoreSaber you need to sign up in mod</span>
+						<span>or Log In with BL account from the Quest mod</span>
+						<span>if you never used SaberRank you need to sign up in mod</span>
 						<div class="input-container">
 							<div class="cat">Login</div>
 							<input bind:value={login} placeholder="Login" />

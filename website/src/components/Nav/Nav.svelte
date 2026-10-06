@@ -10,13 +10,14 @@
 	import {clickOutside} from '../../svelte-utils/actions/click-outside';
 	import {isTouchDevice} from '../../utils/is-touch';
 	import {search} from '../../stores/search';
-	import Avatar from '../Common/Avatar.svelte';
 	import Dropdown from '../Common/Dropdown.svelte';
+	import Avatar from '../Common/Avatar.svelte';
 	import PlaylistMenuItem from './PlaylistMenuItem.svelte';
 	import MenuLine from '../Player/MenuLine.svelte';
 	import LinkMenuItem from './LinkMenuItem.svelte';
 	import PlaylistHeaderMenuItem from './PlaylistHeaderMenuItem.svelte';
 	import {globalHistory} from 'svelte-routing/src/history';
+	import {GLOBAL_LEADERBOARD_TYPE, setLeaderboardType} from '../../utils/format';
 	import LogOutConfirm from './LogOutConfirm.svelte';
 
 	let className = null;
@@ -37,6 +38,7 @@
 
 	let accountMenuShown = false;
 	let mobileMenuShown = false;
+	var currenturl;
 
 	onMount(async () => {
 		const settingsBadgeUnsubscribe = eventBus.on('settings-notification-badge', message => (settingsNotificationBadge = message));
@@ -51,6 +53,9 @@
 
 		document.addEventListener('keydown', keyDownHandler);
 
+		globalHistory.listen(({location, action}) => {
+			currenturl = location.href;
+		});
 
 		return () => {
 			settingsBadgeUnsubscribe();
@@ -74,9 +79,50 @@
 	const playlists = createPlaylistStore();
 	const account = createAccountStore();
 
+	let testMenuShown = false;
 
-	// SnoreSaber uses one leaderboard; there are no alternate game modes.
-	const leaderboardType = {name: 'SnoreSaber', id: ''};
+	var leaderboardTypeOptions = [
+		{
+			name: 'General',
+			id: '',
+			logoBig: '/assets/logo.webp',
+			logoSmall: '/assets/logo-small.webp',
+		},
+		{
+			name: 'LeftLeader',
+			id: 'leftleader',
+			logoBig: '/assets/logo.webp',
+			logoSmall: '/assets/logo-small.webp',
+		},
+		{
+			name: 'No modifiers',
+			id: 'nomods',
+			logoBig: '/assets/logo-no-pause.webp',
+			logoSmall: '/assets/logo-small-no-pause.webp',
+		},
+		{
+			name: 'No pauses',
+			id: 'nopause',
+			logoBig: '/assets/logo.webp',
+			logoSmall: '/assets/favicon-96x96.webp',
+		},
+		{
+			name: 'Golf',
+			id: 'golf',
+			logoBig: '/assets/logo.webp',
+			logoSmall: '/assets/favicon-96x96.webp',
+		},
+		{
+			name: 'SCPM',
+			id: 'scpm',
+			logoBig: '/assets/logo.webp',
+			logoSmall: '/assets/favicon-96x96.webp',
+		},
+	];
+
+	let leaderboardType = leaderboardTypeOptions.find(
+		t => t.id == GLOBAL_LEADERBOARD_TYPE || (GLOBAL_LEADERBOARD_TYPE == 'general' && t.id == '')
+	);
 
 	let signupOptions = [];
 
@@ -173,6 +219,13 @@
 		}
 	}
 
+	function normalizedId(id) {
+		return id != '' ? id + '.' : '';
+	}
+
+	function updateHref() {
+		currenturl = window.location.href;
+	}
 
 	const logOut = async () => {
 		openModal(LogOutConfirm, {
@@ -187,6 +240,7 @@
 		});
 	};
 
+	$: updateHref();
 	$: player = $account?.player;
 	$: starredFollowedIds = player?.profileSettings?.starredFriends ?? [];
 	$: starredFollowed =
@@ -202,34 +256,83 @@
 </script>
 
 <nav class={`ssr-page-container ${className ?? ''}`}>
-	<div class="nav-button">
+	<div
+		class="hovermenu nav-button"
+		on:mouseover={() => {
+			if (!isTouchDevice()) testMenuShown = true;
+		}}
+		on:focus={() => {
+			if (!isTouchDevice()) testMenuShown = true;
+		}}
+		on:mouseleave={() => {
+			if (!isTouchDevice()) testMenuShown = false;
+		}}>
 		<a
 			class="logo-link"
 			href="/"
 			on:click|preventDefault={() => {
-			navigate('/');
+				if (!isTouchDevice()) {
+					navigate('/');
+				} else {
+					testMenuShown = !testMenuShown;
+				}
 			}}>
 			<div class="logo-container desktop-and-up">
-				<div class="snore-mark">SS</div>
+				<img src="/assets/logo.webp" class="logo" alt="" />
 				<div class="logo-name">
-					<span class="name">SNORESABER</span>
-					<span class="leaderboard-type">BEAT SABER RANKINGS</span>
+					<span class="name">SABERRANK</span>
+					{#if leaderboardType.id != ''}
+						<span class="leaderboard-type">{leaderboardType.name}</span>
+					{/if}
 				</div>
 			</div>
 
 			<div class="logo-container tablet">
-				<div class="snore-mark">SS</div>
+				<img src="/assets/logo-small.webp" class="logo" alt="" />
 				<div class="logo-name">
-					<span class="name">SNORESABER</span>
+					<span class="name">BL</span>
+					{#if leaderboardType.id != ''}
+						<span class="leaderboard-type">{leaderboardType.name}</span>
+					{/if}
 				</div>
 			</div>
 
 			<div class="logo-container up-to-tablet">
-				<div class="snore-mark">SS</div>
-				<span class="leaderboard-type">SNORESABER</span>
+				<img src="/assets/logo-small.webp" class="logo" alt="" />
+				{#if leaderboardType.id != 'general'}
+					<span class="leaderboard-type">{leaderboardType.name}</span>
+				{/if}
 			</div>
 		</a>
-
+		<Dropdown
+			items={isTouchDevice()
+				? [
+						{
+							name: 'Dashboard',
+							id: 'dashboard',
+						},
+						...leaderboardTypeOptions,
+					]
+				: leaderboardTypeOptions}
+			bind:shown={testMenuShown}>
+			<svelte:fragment slot="row" let:item>
+				{#if item.id == 'dashboard'}
+					<a href="/">
+						{item.name}
+					</a>
+				{:else}
+					<a
+						style="display: block; width: 100%"
+						href={currenturl.replace(
+							location.protocol + '//' + normalizedId(leaderboardType.id),
+							location.protocol + '//' + normalizedId(item.id)
+						)}>
+						<i class={item.icon} />
+						{item.name}
+					</a>
+				{/if}
+			</svelte:fragment>
+		</Dropdown>
 	</div>
 
 	{#if player}
@@ -709,22 +812,6 @@
 		justify-content: space-between;
 		font-size: 0.875rem;
 		font-weight: 500;
-	}
-
-	.snore-mark {
-		width: 2rem;
-		height: 2rem;
-		margin: 0 0.45rem 0 0.15rem;
-		border-radius: 0.55rem;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		font-family: 'Audiowide';
-		font-size: 0.8rem;
-		letter-spacing: 0.08em;
-		color: white;
-		background: linear-gradient(135deg, #7c3aed, #ec4899);
-		box-shadow: 0 0 18px rgba(236, 72, 153, 0.35);
 	}
 
 	.name {

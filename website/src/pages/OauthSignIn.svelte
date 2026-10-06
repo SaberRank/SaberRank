@@ -71,7 +71,7 @@
 </script>
 
 <ContentBox cls="login-container login-page">
-	<div class="title">Login with SnoreSaber</div>
+	<div class="title">Login with SaberRank</div>
 	{#if loggedInPlayer}
 		<div class="pfp-and-greeting">
 			<img class="avatar" src={loggedInPlayer.playerInfo.avatar} />
@@ -83,7 +83,7 @@
 		{#if clientDetais}
 			<div class="client-icon-and-title">
 				<img class="client-icon" src={clientDetais.icon} />
-				<span class="client-title">{clientDetais.name} wants to access your SnoreSaber account</span>
+				<span class="client-title">{clientDetais.name} wants to access your SaberRank account</span>
 			</div>
 			<span>This will allow {clientDetais.name} to:</span>
 		{/if}

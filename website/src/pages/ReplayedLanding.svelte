@@ -55,7 +55,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>SaberRank rePlayed 2024</title>
 </svelte:head>
 
 <section class="align-content">
@@ -64,7 +64,7 @@
 			<div class="items">
 				{#if loggedInPlayer && playerReplayedAvailable != null && mapperReplayedAvailable != null}
 					<div class="centering-container" transition:fade|global>
-						<h2>SnoreSaber rePlayed 2024</h2>
+						<h2>SaberRank rePlayed 2024</h2>
 						{#if playerReplayedAvailable || mapperReplayedAvailable}
 							<div style="display: flex; gap: 1em; font-size: 1.5vh;">
 								<Button label="Player rePlayed" url="/replayed/player" type="primary" on:click={() => navigate('/replayed/player')} />
@@ -138,11 +138,11 @@
 </section>
 
 <MetaTags
-	title="SnoreSaber rePlayed 2024"
-	description="View your SnoreSaber rePlayed 2024"
+	title="SaberRank rePlayed 2024"
+	description="View your SaberRank rePlayed 2024"
 	openGraph={{
-		title: 'SnoreSaber rePlayed 2024',
-		description: 'View your SnoreSaber rePlayed 2024',
+		title: 'SaberRank rePlayed 2024',
+		description: 'View your SaberRank rePlayed 2024',
 		images: [{url: CURRENT_URL + '/assets/logo-small.png'}],
 		siteName: ssrConfig.name,
 	}}
@@ -150,10 +150,10 @@
 		handle: '@handle',
 		site: '@saberrank_',
 		cardType: 'summary',
-		title: 'SnoreSaber rePlayed 2024',
-		description: 'View your SnoreSaber rePlayed 2024',
+		title: 'SaberRank rePlayed 2024',
+		description: 'View your SaberRank rePlayed 2024',
 		image: CURRENT_URL + '/assets/logo-small.png',
-		imageAlt: 'SnoreSaber rePlayed 2024',
+		imageAlt: 'SaberRank rePlayed 2024',
 	}} />
 
 <style>

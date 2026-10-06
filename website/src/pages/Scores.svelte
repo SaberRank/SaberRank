@@ -598,7 +598,7 @@
 </script>
 
 <svelte:head>
-	<title>snoresaber</title>
+	<title>Scores / {currentPage} - {ssrConfig.name}</title>
 </svelte:head>
 
 <section class="align-content">
