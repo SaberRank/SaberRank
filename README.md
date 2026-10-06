@@ -10,7 +10,6 @@
 1. Set the SaberRank API domain in the mod endpoint configuration.
 2. Set `SABERRANK_API_URL` in the website deployment.
 3. Configure the server database, storage, authentication providers, and secrets using environment/appsettings values; never commit credentials.
-4. Review `THIRD-PARTY-NOTICES.md`.
 
 ## Beat Saber target
 The PC mod is configured around the ScoreSaber compatibility generation that supports Beat Saber 1.40.x, including 1.40.8.
