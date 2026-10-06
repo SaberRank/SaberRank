@@ -194,7 +194,7 @@
 	];
 
 	const webPlayerOptions = [
-		{name: 'SaberRank', value: DEFAULT_WEB_PLAYER},
+		{name: 'SnoreSaber', value: DEFAULT_WEB_PLAYER},
 		{name: 'ArcViewer', value: 'arcviewer'},
 		{name: 'ChroViewer', value: 'chroviewer'},
 	];

@@ -37,7 +37,7 @@
 
 		<div class="banner-center-text">
 			<img class="beatcancer-logo" src="/assets/beat-cancer.svg" alt="" />
-			<a class="center-content-in-a" href="https://www.twitch.tv/cubecommunity?utm_source=SaberRank">
+			<a class="center-content-in-a" href="https://www.twitch.tv/cubecommunity?utm_source=SnoreSaber">
 				<span class="replayed-link-text-desktop">{tournamentName}: {ongoing.currRound} is Live! 🔴</span>
 				<span class="replayed-link-text-mobile">{tournamentName}: {ongoing.currRound} is Live! 🔴</span>
 			</a>

@@ -89,7 +89,7 @@
 </script>
 
 <svelte:head>
-	<title>About - {ssrConfig.name}</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 {#snippet members(players)}
@@ -104,7 +104,7 @@
 
 <article bind:this={articleEl} transition:fade|global>
 	<ContentBox>
-		<h1 class="title is-3">People who keep SaberRank running</h1>
+		<h1 class="title is-3">People who keep SnoreSaber running</h1>
 		<h1 class="title is-4">Development Team</h1>
 		<section class="content center">
 			<div class="member">
@@ -238,15 +238,15 @@
 				<div class="member">
 					<img src={$account.player.playerInfo.avatar} alt={$account.player.name} /><a
 						href={`https://www.saberrank.com/u/${$account.player.playerId}`}>{$account.player.name}</a>
-					<p class="memberDescription">Thank you for using SaberRank and believing in the open-source!</p>
+					<p class="memberDescription">Thank you for using SnoreSaber and believing in the open-source!</p>
 				</div>
 			</section>
 		{/if}
 
 		<h1 class="title is-3">About</h1>
 		<span>
-			<b>SaberRank?</b><br />
-			SaberRank is an open-source leaderboard system for the Beat Saber. Our goal is to make an expandable, sustainable, and transparent system
+			<b>SnoreSaber?</b><br />
+			SnoreSaber is an open-source leaderboard system for the Beat Saber. Our goal is to make an expandable, sustainable, and transparent system
 			with zero bus factor and reliance on a specific person.
 
 			<br /><br /><b>What is done?</b><br />
@@ -254,7 +254,7 @@
 			for every score. You can even draft the web battle royale of replays. Maps are ranked every week after map voting and criteria check.
 
 			<br /><br /><b>What is not done?</b><br />
-			Not a lot, actually. The core part of the SaberRank is done, even the server is more or less sustainable. But we have a lot of plans for
+			Not a lot, actually. The core part of the SnoreSaber is done, even the server is more or less sustainable. But we have a lot of plans for
 			future features.
 
 			<br /><br /><b>How this is different from the ScoreSaber</b><br />

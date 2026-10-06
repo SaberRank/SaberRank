@@ -188,7 +188,7 @@
 					<section class="info">
 						<textarea
 							type="text"
-							placeholder="SaberRank, BeatSaver or HitBloq playlist page link. Example: https://saberrank.com/playlist/72345"
+							placeholder="SnoreSaber, BeatSaver or HitBloq playlist page link. Example: https://saberrank.com/playlist/72345"
 							bind:value={link}
 							disabled={!!pendingText} />
 					</section>

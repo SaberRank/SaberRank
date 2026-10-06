@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-	<title>{ssrConfig.name} - 2023 Census Achievement</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <ContentBox cls="login-container login-page">

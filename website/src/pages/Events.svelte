@@ -108,7 +108,7 @@
 </script>
 
 <svelte:head>
-	<title>Events / {currentPage} - {ssrConfig.name}</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <section class="align-content">

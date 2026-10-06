@@ -494,7 +494,7 @@
 		<Switch
 			value={showUnrankedMapsOnGraph}
 			label="Show unranked"
-			title={supporter ? 'Show all maps with stars on them' : 'Subscribe to SaberRank Patreon to have ratings on all maps'}
+			title={supporter ? 'Show all maps with stars on them' : 'Subscribe to SnoreSaber Patreon to have ratings on all maps'}
 			fontSize={12}
 			design="slider"
 			on:click={() => {

@@ -323,7 +323,7 @@
 
 			<Button iconFa="fas fa-plus-square" label="Try activate my account" on:click={() => account.unbanPlayer()} />
 		{:else}
-			You can suspend your SaberRank account. It will disappear in the leaderboards and ranking.<br />
+			You can suspend your SnoreSaber account. It will disappear in the leaderboards and ranking.<br />
 			And you won't be able to submit scores.<br /><br />
 
 			<b
@@ -417,7 +417,7 @@
 			}}
 			on:cancel={() => (suspendingDialogShown = false)}>
 			<div slot="content">
-				<div>Your SaberRank account will be suspended!</div>
+				<div>Your SnoreSaber account will be suspended!</div>
 			</div>
 		</Dialog>
 	{/if}

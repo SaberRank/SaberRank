@@ -64,7 +64,7 @@
 			props: {
 				title: 'Latest Map Of The Week',
 				body: 'No map of the week found :( Check back later',
-				imageUrl: '/assets/SaberRank/hero.webp',
+				imageUrl: '/assets/Main/landing.webp',
 				targetUrl: undefined,
 				linkName: 'Leaderboard',
 				forcedColor: 'rgba(0, 0, 0, 0)',
@@ -75,7 +75,7 @@
 		// 	props: {
 		// 		title: 'Latest Noodle Map Monday',
 		// 		body: 'No noodle map monday found :( Check back later',
-		// 		imageUrl: '/assets/SaberRank/hero.webp',
+		// 		imageUrl: '/assets/Main/landing.webp',
 		// 		targetUrl: undefined,
 		// 		linkName: 'Leaderboard',
 		// 		forcedColor: 'rgba(0, 0, 0, 0)',
@@ -388,7 +388,7 @@
 </script>
 
 <svelte:head>
-	<title>Maps</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <section class="align-content">
@@ -418,7 +418,7 @@
 				<!--<EventCard
 					text="Early 2024 Ranked event!"
 					body="Check out what was ranked and compete for a badge."
-					image="/assets/SaberRank/hero.webp"
+					image="/assets/Main/landing.webp"
 					button={{url: '/event/44', label: 'Event', icon: 'fas fa-rocket'}} />-->
 				<!-- <div style="margin-bottom: 1em;" /> -->
 				<HeaderCard text="Discover" />
@@ -427,7 +427,7 @@
 				<EventCard
 					text="Got something to share?"
 					body="DM Light Ai on Discord to get your map packs, events, tournaments, or announcement featured here!"
-					image="/assets/SaberRank/hero.webp" />
+					image="/assets/Main/landing.webp" />
 			</div>
 		</ContentBox>
 	</article>

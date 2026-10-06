@@ -50,7 +50,7 @@
 	];
 	const roleOptions = [
 		{id: 'admin', label: 'Administrator'},
-		{id: 'creator', label: 'SaberRank creator'},
+		{id: 'creator', label: 'BL creator'},
 		{id: 'rankedteam', label: 'Ranking Team'},
 		{id: 'qualityteam', label: 'Quality Team'},
 
@@ -266,7 +266,7 @@
 </script>
 
 <svelte:head>
-	<title>Ranking / {currentPage} - {ssrConfig.name}</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <section class="align-content">

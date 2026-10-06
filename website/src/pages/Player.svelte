@@ -369,7 +369,7 @@
 </script>
 
 <svelte:head>
-	<title>{browserTitle}</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <svelte:window bind:innerWidth bind:innerHeight />

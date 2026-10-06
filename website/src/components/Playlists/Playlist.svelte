@@ -105,7 +105,7 @@
 		var newOwners = [];
 		canModify = true;
 		if (playlist?.customData?.owner) {
-			if (playlist.customData.owner == 'SaberRank') {
+			if (playlist.customData.owner == 'SnoreSaber') {
 				canModify = false;
 				return;
 			}

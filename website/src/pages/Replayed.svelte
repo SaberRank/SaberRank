@@ -438,7 +438,7 @@
 </script>
 
 <svelte:head>
-	<title>SaberRank rePlayed 2024</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <section class="align-content">
@@ -533,11 +533,11 @@
 </section>
 
 <MetaTags
-	title="SaberRank rePlayed 2024"
-	description="View your SaberRank rePlayed 2024"
+	title="SnoreSaber rePlayed 2024"
+	description="View your SnoreSaber rePlayed 2024"
 	openGraph={{
-		title: 'SaberRank rePlayed 2024',
-		description: 'View your SaberRank rePlayed 2024',
+		title: 'SnoreSaber rePlayed 2024',
+		description: 'View your SnoreSaber rePlayed 2024',
 		images: CURRENT_URL + '/assets/logo-small.png',
 		siteName: ssrConfig.name,
 	}}
@@ -545,10 +545,10 @@
 		handle: '@handle',
 		site: '@saberrank_',
 		cardType: 'summary',
-		title: 'SaberRank rePlayed 2024',
-		description: 'View your SaberRank rePlayed 2024',
+		title: 'SnoreSaber rePlayed 2024',
+		description: 'View your SnoreSaber rePlayed 2024',
 		image: CURRENT_URL + '/assets/logo-small.png',
-		imageAlt: 'SaberRank rePlayed 2024',
+		imageAlt: 'SnoreSaber rePlayed 2024',
 	}} />
 
 <style>

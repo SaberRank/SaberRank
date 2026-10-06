@@ -967,7 +967,7 @@
 </script>
 
 <svelte:head>
-	<title>Maps / {currentPage} - {ssrConfig.name}</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <svelte:window on:scroll={onScroll} />

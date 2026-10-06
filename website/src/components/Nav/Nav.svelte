@@ -10,12 +10,13 @@
 	import {clickOutside} from '../../svelte-utils/actions/click-outside';
 	import {isTouchDevice} from '../../utils/is-touch';
 	import {search} from '../../stores/search';
-	import Dropdown from '../Common/Dropdown.svelte';
 	import Avatar from '../Common/Avatar.svelte';
+	import Dropdown from '../Common/Dropdown.svelte';
 	import PlaylistMenuItem from './PlaylistMenuItem.svelte';
 	import MenuLine from '../Player/MenuLine.svelte';
 	import LinkMenuItem from './LinkMenuItem.svelte';
 	import PlaylistHeaderMenuItem from './PlaylistHeaderMenuItem.svelte';
+	import {globalHistory} from 'svelte-routing/src/history';
 	import LogOutConfirm from './LogOutConfirm.svelte';
 
 	let className = null;
@@ -50,6 +51,7 @@
 
 		document.addEventListener('keydown', keyDownHandler);
 
+
 		return () => {
 			settingsBadgeUnsubscribe();
 			document.removeEventListener('keydown', keyDownHandler);
@@ -73,6 +75,8 @@
 	const account = createAccountStore();
 
 
+	// SnoreSaber uses one leaderboard; there are no alternate game modes.
+	const leaderboardType = {name: 'SnoreSaber', id: ''};
 
 	let signupOptions = [];
 
@@ -183,7 +187,6 @@
 		});
 	};
 
-	$: updateHref();
 	$: player = $account?.player;
 	$: starredFollowedIds = player?.profileSettings?.starredFriends ?? [];
 	$: starredFollowed =
@@ -199,26 +202,34 @@
 </script>
 
 <nav class={`ssr-page-container ${className ?? ''}`}>
-	<div class="nav-button brand-button">
+	<div class="nav-button">
 		<a
 			class="logo-link"
 			href="/"
-			on:click|preventDefault={() => navigate('/')}>
+			on:click|preventDefault={() => {
+			navigate('/');
+			}}>
 			<div class="logo-container desktop-and-up">
-				<img src="/assets/logo-small.webp" class="logo" alt="SaberRank" />
+				<div class="snore-mark">SS</div>
 				<div class="logo-name">
-					<span class="name">SABERRANK</span>
-					<span class="tagline">BEAT SABER RANKINGS</span>
+					<span class="name">SNORESABER</span>
+					<span class="leaderboard-type">BEAT SABER RANKINGS</span>
 				</div>
 			</div>
+
 			<div class="logo-container tablet">
-				<img src="/assets/logo-small.webp" class="logo" alt="SaberRank" />
-				<span class="name">SABERRANK</span>
+				<div class="snore-mark">SS</div>
+				<div class="logo-name">
+					<span class="name">SNORESABER</span>
+				</div>
 			</div>
+
 			<div class="logo-container up-to-tablet">
-				<img src="/assets/logo-small.webp" class="logo" alt="SaberRank" />
+				<div class="snore-mark">SS</div>
+				<span class="leaderboard-type">SNORESABER</span>
 			</div>
 		</a>
+
 	</div>
 
 	{#if player}
@@ -700,6 +711,22 @@
 		font-weight: 500;
 	}
 
+	.snore-mark {
+		width: 2rem;
+		height: 2rem;
+		margin: 0 0.45rem 0 0.15rem;
+		border-radius: 0.55rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: 'Audiowide';
+		font-size: 0.8rem;
+		letter-spacing: 0.08em;
+		color: white;
+		background: linear-gradient(135deg, #7c3aed, #ec4899);
+		box-shadow: 0 0 18px rgba(236, 72, 153, 0.35);
+	}
+
 	.name {
 		font-family: 'Audiowide';
 		letter-spacing: 0.2em;
@@ -1028,73 +1055,4 @@
 			display: block;
 		}
 	}
-	/* SaberRank navigation */
-	:global(nav.ssr-page-container) {
-		height: 4.5rem !important;
-		padding: 0 .9rem !important;
-		background: rgba(6, 9, 19, .94) !important;
-		border-bottom: 1px solid rgba(78, 210, 255, .12);
-		box-shadow: 0 12px 40px rgba(0,0,0,.22);
-		backdrop-filter: blur(18px);
-	}
-
-	.brand-button {
-		border-right: 1px solid rgba(255,255,255,.07);
-		padding-right: 1.2rem;
-	}
-
-	.brand-button .logo-link {
-		gap: .7rem;
-		align-items: center;
-	}
-
-	.brand-button .desktop-and-up .logo {
-		width: 2.8rem !important;
-		height: 2.8rem !important;
-		margin: 0 !important;
-	}
-
-	.brand-button .logo-name {
-		align-items: flex-start !important;
-	}
-
-	.brand-button .name {
-		font-size: 1rem;
-		letter-spacing: .22em;
-		color: #f8faff;
-	}
-
-	.brand-button .tagline {
-		font-size: .55rem;
-		letter-spacing: .18em;
-		color: #5fdcff;
-		font-weight: 800;
-		margin-top: .2rem;
-	}
-
-	:global(nav.ssr-page-container .nav-button > a:hover) {
-		background: rgba(255,255,255,.035) !important;
-	}
-
-	:global(nav.ssr-page-container .right > a),
-	:global(nav.ssr-page-container .me > a) {
-		border-radius: 10px;
-		margin: .55rem .15rem;
-		padding-left: .8rem;
-		padding-right: .8rem;
-		transition: background .15s ease, color .15s ease;
-	}
-
-	:global(nav.ssr-page-container .right > a:hover),
-	:global(nav.ssr-page-container .me > a:hover) {
-		background: rgba(255,42,191,.08);
-		color: #fff;
-	}
-
-	@media (max-width: 900px) {
-		.brand-button { padding-right: .4rem; border-right: 0; }
-		.brand-button .name { display: none; }
-		.brand-button .desktop-and-up .logo { width: 2.55rem !important; height: 2.55rem !important; }
-	}
-
 </style>

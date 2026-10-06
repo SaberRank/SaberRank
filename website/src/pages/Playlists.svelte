@@ -106,7 +106,7 @@
 </script>
 
 <svelte:head>
-	<title>{metaTitle}</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <div class="playlist-switcher">

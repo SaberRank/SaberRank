@@ -39,7 +39,7 @@ export const BL_RENDERER_API_URL = (() => {
 		return 'https://render.saberrank.com/';
 	}
 })();
-export const BL_SOCKET_URL = ''; // Configure a SaberRank websocket endpoint when the backend provides one.
+export const BL_SOCKET_URL = ''; // Configure a SnoreSaber websocket endpoint when the backend provides one.
 export const STEAM_API_URL = '/cors/steamapi';
 export const STEAM_KEY = 'B0A7AF33E804D0ABBDE43BA9DD5DAB48';
 

@@ -47,7 +47,7 @@
 			weeks more! ❤️
 
 			<br /><br />
-			Do you think we did well? Check out our anniversary poll where you can give feedback to almost any part of SaberRank and help us improve
+			Do you think we did well? Check out our anniversary poll where you can give feedback to almost any part of SnoreSaber and help us improve
 			the project for the greater good. (also we always open to feedback on Discord, so no need to wait another 100 weeks)
 
 			<br />
@@ -64,7 +64,7 @@
 					<Button icon={steamSvg} label="Log In with Steam" type="green" />
 				</form>
 				<br />
-				<span>or Log In with SaberRank account from the Quest mod</span>
+				<span>or Log In with SnoreSaber account from the Quest mod</span>
 				<div class="input-container">
 					<div class="cat">Login</div>
 					<input bind:value={login} placeholder="Login" />

@@ -41,7 +41,7 @@ export let censusData = [
 			},
 			{
 				name: 'Using Mods',
-				question: 'Have you ever played BeatSaber with the ScoreSaber and/or SaberRank mods installed?',
+				question: 'Have you ever played BeatSaber with the ScoreSaber and/or SnoreSaber mods installed?',
 				effects: false,
 				values: [
 					{
@@ -50,7 +50,7 @@ export let censusData = [
 						percentage: 79.42345924453281,
 					},
 					{
-						name: 'SaberRank Only',
+						name: 'SnoreSaber Only',
 						count: 119,
 						percentage: 11.829025844930417,
 					},
@@ -68,7 +68,7 @@ export let censusData = [
 			},
 			{
 				name: 'Secondary Account',
-				question: 'Have you ever submitted a score using a SaberRank or ScoreSaber account not listed above?',
+				question: 'Have you ever submitted a score using a SnoreSaber or ScoreSaber account not listed above?',
 				effects: false,
 				values: [
 					{
@@ -85,7 +85,7 @@ export let censusData = [
 			},
 			{
 				name: 'Multiple Users',
-				question: 'Has any person other than yourself ever submitted a score to any of the SaberRank or ScoreSaber accounts listed above?',
+				question: 'Has any person other than yourself ever submitted a score to any of the SnoreSaber or ScoreSaber accounts listed above?',
 				effects: false,
 				values: [
 					{

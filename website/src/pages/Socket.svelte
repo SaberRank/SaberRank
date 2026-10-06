@@ -31,7 +31,7 @@
 		<div class="song-scores grid-transition-helper">
 			{#each scores.slice(totalItems > itemsPerPage ? page * itemsPerPage : 0, (page + 1) * itemsPerPage < totalItems ? (page + 1) * itemsPerPage : totalItems) as songScore, idx ((songScore?.id ?? '') + (songScore?.score?.id ?? ''))}
 				<ContentBox>
-					<SongScore playerId={songScore.player.id} {songScore} {idx} inList={false} service="SaberRank" withPlayers="true" />
+					<SongScore playerId={songScore.player.id} {songScore} {idx} inList={false} service="SnoreSaber" withPlayers="true" />
 				</ContentBox>
 			{/each}
 		</div>

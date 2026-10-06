@@ -499,11 +499,11 @@
 </div>
 
 <MetaTags
-	title="SaberRank rePlayed 2023"
-	description="View your SaberRank player rePlayed 2023"
+	title="SnoreSaber rePlayed 2023"
+	description="View your SnoreSaber player rePlayed 2023"
 	openGraph={{
-		title: 'SaberRank rePlayed 2023',
-		description: 'View your SaberRank player rePlayed 2023',
+		title: 'SnoreSaber rePlayed 2023',
+		description: 'View your SnoreSaber player rePlayed 2023',
 		images: CURRENT_URL + '/assets/logo-small.png',
 		siteName: ssrConfig.name,
 	}}
@@ -511,10 +511,10 @@
 		handle: '@handle',
 		site: '@saberrank_',
 		cardType: 'summary',
-		title: 'SaberRank rePlayed 2023',
-		description: 'View your SaberRank player rePlayed 2023',
+		title: 'SnoreSaber rePlayed 2023',
+		description: 'View your SnoreSaber player rePlayed 2023',
 		image: CURRENT_URL + '/assets/logo-small.png',
-		imageAlt: 'SaberRank rePlayed 2023',
+		imageAlt: 'SnoreSaber rePlayed 2023',
 	}} />
 
 <style>
