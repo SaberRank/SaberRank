@@ -653,30 +653,17 @@
 
 <footer class="site-footer">
 	<div class="footer-inner">
-		<div class="footer-brand">
-			<div class="footer-brand-mark">
-				<img src="/assets/snoresaber-logo.png" alt="SnoreSaber" />
-			</div>
-			<div>
-				<strong>SnoreSaber</strong>
-				<span>Beat Saber scores, rankings, and player progress.</span>
-			</div>
-		</div>
-
-		<nav class="footer-links" aria-label="Footer navigation">
-			<a href="/about" on:click|preventDefault={() => navigate('/about')}>About</a>
-			<a href="/developer" on:click|preventDefault={() => navigate('/developer')}>Developer</a>
-			<a href="https://saberrank.wiki/" target="_blank" rel="noreferrer">Wiki</a>
-			<a href="https://github.com/SaberRank" target="_blank" rel="noreferrer">Source</a>
+		<a class="footer-brand" href="/" on:click|preventDefault={() => navigate('/')}>
+			<img src="/assets/snoresaber-logo-hd.png" alt="snoresaber" />
+			<span>snoresaber</span>
+		</a>
+		<div class="footer-links" aria-label="Footer navigation">
 			<a href="/privacy" on:click|preventDefault={() => navigate('/privacy')}>Privacy</a>
 			<a href="/help" on:click|preventDefault={() => navigate('/help')}>Help</a>
 			<a href="/socket" on:click|preventDefault={() => navigate('/socket')}>Scores feed</a>
-		</nav>
-
-		<div class="footer-bottom">
-			<span>SnoreSaber</span>
-			<span>Built for Beat Saber players.</span>
+			<a href="https://github.com/SaberRank" target="_blank" rel="noreferrer">Source</a>
 		</div>
+		<span class="footer-copy">snoresaber</span>
 	</div>
 </footer>
 
@@ -1163,4 +1150,22 @@
 		font-size: 0.75rem;
 		padding: 0.125rem;
 	}
+
+	.site-footer {
+		margin-top: 3rem;
+		padding: 1rem 1.25rem 1.5rem;
+		background: transparent;
+	}
+	.footer-inner {
+		max-width: 1320px; margin:0 auto; min-height:4.2rem; padding:.7rem 1rem;
+		display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:1.5rem;
+		border-top:1px solid rgba(255,255,255,.08);
+	}
+	.footer-brand { display:flex; align-items:center; gap:.65rem; color:inherit !important; text-decoration:none; font-family:'Audiowide',sans-serif; letter-spacing:.12em; }
+	.footer-brand img { width:2rem; height:2rem; object-fit:contain; }
+	.footer-links { display:flex; justify-content:center; align-items:center; gap:.35rem; flex-wrap:wrap; }
+	.footer-links a { color:inherit !important; text-decoration:none; opacity:.72; padding:.45rem .7rem; border-radius:.55rem; }
+	.footer-links a:hover { opacity:1; background:rgba(255,255,255,.06); }
+	.footer-copy { opacity:.38; font-size:.75rem; letter-spacing:.08em; }
+	@media (max-width: 700px) { .footer-inner { grid-template-columns:1fr; gap:.6rem; text-align:center; } .footer-brand, .footer-links { justify-content:center; } }
 </style>
