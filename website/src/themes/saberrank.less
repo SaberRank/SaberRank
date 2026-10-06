@@ -1,0 +1,103 @@
+:root {
+    --sr-bg: #070a12;
+    --sr-panel: #0d1220;
+    --sr-panel-2: #121a2b;
+    --sr-border: rgba(255, 255, 255, 0.09);
+    --sr-text: #f4f7fb;
+    --sr-muted: #8d9ab0;
+    --sr-accent: #62e6c7;
+    --sr-accent-2: #7b8cff;
+    --sr-danger: #ff667d;
+    --sr-glow: rgba(98, 230, 199, 0.16);
+    --foreground: var(--sr-panel);
+    --background: var(--sr-bg);
+}
+
+html, body {
+    background: var(--sr-bg) !important;
+    color: var(--sr-text);
+}
+
+body {
+    background-image:
+        radial-gradient(circle at 15% 0%, rgba(123, 140, 255, 0.10), transparent 32em),
+        radial-gradient(circle at 85% 10%, rgba(98, 230, 199, 0.08), transparent 28em) !important;
+}
+
+.main-background {
+    opacity: 0 !important;
+}
+
+nav.ssr-page-container {
+    background: rgba(7, 10, 18, 0.90) !important;
+    border-bottom: 1px solid var(--sr-border) !important;
+    backdrop-filter: blur(18px);
+}
+
+.logo-container .name {
+    color: var(--sr-text) !important;
+    letter-spacing: 0.16em;
+}
+
+.logo-container .leaderboard-type {
+    color: var(--sr-accent) !important;
+}
+
+.page-content {
+    min-height: calc(100vh - 5rem);
+}
+
+.content-box,
+.landing-box,
+.leaderboard-header-box,
+.leaderboard,
+.map-card-wrapper,
+.player-card,
+.score-card {
+    border: 1px solid var(--sr-border) !important;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24) !important;
+}
+
+.darkened-background {
+    background: linear-gradient(145deg, rgba(18, 26, 43, 0.96), rgba(9, 13, 23, 0.96)) !important;
+}
+
+a {
+    color: var(--sr-accent);
+}
+
+a:hover {
+    color: #9af3df;
+}
+
+button,
+.button {
+    border-radius: 8px !important;
+}
+
+footer {
+    border-top: 1px solid var(--sr-border);
+    background: rgba(7, 10, 18, 0.75);
+}
+
+.big-landing-box {
+    border: 1px solid var(--sr-border);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    background:
+        linear-gradient(90deg, rgba(7, 10, 18, 0.97) 0%, rgba(7, 10, 18, 0.78) 42%, rgba(7, 10, 18, 0.28) 100%),
+        url('/assets/Main/landing.webp') center / cover !important;
+}
+
+.big-title {
+    color: #fff;
+}
+
+.feature-image {
+    filter: saturate(0.8) brightness(0.82);
+}
+
+@media (max-width: 700px) {
+    .big-title {
+        font-size: 2.7em !important;
+    }
+}

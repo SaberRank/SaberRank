@@ -11,6 +11,7 @@ import createPlayerService from './services/saberrank/player';
 import {enablePatches, setAutoFreeze} from 'immer';
 import ErrorComponent from './components/Common/Error.svelte';
 import './themes/default.less';
+import './themes/saberrank.less';
 import './themes/mirror.less';
 import './themes/mirror-low.less';
 import './themes/ree-dark.less';

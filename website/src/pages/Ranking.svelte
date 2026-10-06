@@ -50,7 +50,7 @@
 	];
 	const roleOptions = [
 		{id: 'admin', label: 'Administrator'},
-		{id: 'creator', label: 'BL creator'},
+		{id: 'creator', label: 'SaberRank creator'},
 		{id: 'rankedteam', label: 'Ranking Team'},
 		{id: 'qualityteam', label: 'Quality Team'},
 

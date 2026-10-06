@@ -83,25 +83,25 @@
 
 	var leaderboardTypeOptions = [
 		{
-			name: 'General',
+			name: 'Global',
 			id: '',
 			logoBig: '/assets/logo.webp',
 			logoSmall: '/assets/logo-small.webp',
 		},
 		{
-			name: 'LeftLeader',
+			name: 'Left Saber',
 			id: 'leftleader',
 			logoBig: '/assets/logo.webp',
 			logoSmall: '/assets/logo-small.webp',
 		},
 		{
-			name: 'No modifiers',
+			name: 'No Modifiers',
 			id: 'nomods',
 			logoBig: '/assets/logo-no-pause.webp',
 			logoSmall: '/assets/logo-small-no-pause.webp',
 		},
 		{
-			name: 'No pauses',
+			name: 'No Pauses',
 			id: 'nopause',
 			logoBig: '/assets/logo.webp',
 			logoSmall: '/assets/favicon-96x96.webp',
@@ -113,7 +113,7 @@
 			logoSmall: '/assets/favicon-96x96.webp',
 		},
 		{
-			name: 'SCPM',
+			name: 'Standard',
 			id: 'scpm',
 			logoBig: '/assets/logo.webp',
 			logoSmall: '/assets/favicon-96x96.webp',
@@ -122,7 +122,7 @@
 
 	let leaderboardType = leaderboardTypeOptions.find(
 		t => t.id == GLOBAL_LEADERBOARD_TYPE || (GLOBAL_LEADERBOARD_TYPE == 'general' && t.id == '')
-	);
+	) ?? leaderboardTypeOptions[0];
 
 	let signupOptions = [];
 
@@ -290,7 +290,7 @@
 			<div class="logo-container tablet">
 				<img src="/assets/logo-small.webp" class="logo" alt="" />
 				<div class="logo-name">
-					<span class="name">BL</span>
+					<span class="name">SR</span>
 					{#if leaderboardType.id != ''}
 						<span class="leaderboard-type">{leaderboardType.name}</span>
 					{/if}

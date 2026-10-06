@@ -64,7 +64,7 @@
 					<Button icon={steamSvg} label="Log In with Steam" type="green" />
 				</form>
 				<br />
-				<span>or Log In with BL account from the Quest mod</span>
+				<span>or Log In with SaberRank account from the Quest mod</span>
 				<div class="input-container">
 					<div class="cat">Login</div>
 					<input bind:value={login} placeholder="Login" />

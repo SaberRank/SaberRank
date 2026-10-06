@@ -14,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>{ssrConfig.name} - Beat Saber leaderboard</title>
+	<title>{ssrConfig.name} — Competitive Beat Saber Rankings</title>
 </svelte:head>
 
 <article class="page-content" transition:fade|global>
@@ -26,51 +26,52 @@
 				</div>
 			</div>
 			<div class="title-and-buttons">
-				<h1 class="big-title audiowide">Hello, future SaberRank!</h1>
-				<h3 class="big-description">Welcome to the most extensive Beat Saber leaderboard!</h3>
+				<div class="brand-kicker">COMPETE • IMPROVE • CLIMB</div>
+				<h1 class="big-title audiowide">SaberRank</h1>
+				<h3 class="big-description">Your scores. Your progress. Your rank.</h3>
 
 				<div class="downloadButtons">
 					<a class="pc-download-button" href="https://github.com/SaberRank/saberrank-mod/releases" target="_blank" rel="noreferrer">
-						<Button iconFa="fas fa-download" type="green" label="Download PC mod" />
+						<Button iconFa="fas fa-download" type="green" label="Get the PC mod" />
 					</a>
 					<a class="quest-download-button" href="https://github.com/SaberRank/saberrank-qmod/releases" target="_blank" rel="noreferrer">
-						<Button iconFa="fas fa-download" type="green" label="Download Quest mod" />
+						<Button iconFa="fas fa-download" type="green" label="Get the Quest mod" />
 					</a>
 				</div>
 				<div class="mod-beatsaber">
-					<span><strong>Never modded Beat Saber? <a href="https://bsmg.wiki/pc-modding.html">It's easy!</a></strong></span>
+					<span><strong>New to modded Beat Saber? <a href="https://bsmg.wiki/pc-modding.html">Start here.</a></strong></span>
 				</div>
 			</div>
 		</div>
 		<ContentBox cls="landing-box">
 			<div class="container-element darkened-background">
 				<h3 class="description centered-title">
-					<b>Start posting your scores to compete with others on more than 100,000 different maps.</b>
+					<b>Build your profile, compare performances, and climb the SaberRank ladder across the Beat Saber community.</b>
 				</h3>
 
 				<div class="features">
 					<div class="feature">
 						<img src="/assets/leaderboard-landing.webp" class="feature-image" style="transform: rotate3d(0, 1, 0, 22deg);" />
-						<h3 class="feature-description">In-game leaderboards<br />for custom maps!</h3>
+						<h3 class="feature-description">In-game rankings<br />for your scores!</h3>
 					</div>
 					<div class="feature">
 						<img src="/assets/webreplays-landing.webp" class="feature-image" style="transform: rotate3d(0, 1, 0, -22deg);" />
-						<h3 class="feature-description">Gameplay replays!</h3>
+						<h3 class="feature-description">Detailed performance data!</h3>
 					</div>
 				</div>
 
 				<div class="table-container">
 					<ul>
-						<li>Fully open-source project and community</li>
-						<li>Complexity ratings for all maps</li>
-						<li>Ranked maps to earn Performance Points</li>
+						<li>Built around transparent ranking data</li>
+						<li>Map and performance insights</li>
+						<li>Performance Points and global ranks</li>
 
 						<li>Detailed statistics for every score</li>
-						<li>Clans, events, and many more!</li>
+						<li>Players, maps, events, and more</li>
 					</ul>
 				</div>
 				<div class="global-ranking-call">
-					<h3><strong>Check out <a href="/ranking/1">the global rankings</a> to find the best players</strong></h3>
+					<h3><strong>Explore <a href="/ranking/1">global rankings</a> and find the players at the top</strong></h3>
 				</div>
 			</div>
 		</ContentBox>
@@ -78,7 +79,7 @@
 		<!-- <EventBanner wideScreen={true} /> -->
 		<div class="two-boxes">
 			<ContentBox cls="landing-box">
-				<span class="box-headline">We aggregate the data from other cool projects to help you play better.</span>
+				<span class="box-headline">Everything you need to understand your performance in one place.</span>
 				<div class="container-element darkened-background">
 					<div class="sources">
 						<a class="source" href="https://beatsaver.com/" target="_blank" rel="noreferrer">
@@ -117,22 +118,22 @@
 </article>
 
 <MetaTags
-	title={ssrConfig.name + ' - Beat Saber leaderboard'}
+	title={ssrConfig.name + ' — Competitive Beat Saber Rankings'}
 	description={metaDescription}
 	openGraph={{
-		title: ssrConfig.name + ' - Beat Saber leaderboard',
+		title: ssrConfig.name + ' — Competitive Beat Saber Rankings',
 		description: metaDescription,
 		images: [{url: CURRENT_URL + '/assets/logo-small.png'}],
 		siteName: ssrConfig.name,
 	}}
 	twitter={{
-		handle: '@handle',
-		site: '@saberrank_',
+		handle: '@SaberRank',
+		site: '@SaberRank',
 		cardType: 'summary',
-		title: ssrConfig.name + ' - Beat Saber leaderboard',
+		title: ssrConfig.name + ' — Competitive Beat Saber Rankings',
 		description: metaDescription,
 		image: CURRENT_URL + '/assets/logo-small.png',
-		imageAlt: ssrConfig.name + "'s logo",
+		imageAlt: ssrConfig.name + ' logo',
 	}} />
 
 <style>
@@ -192,11 +193,20 @@
 		padding-left: 0.1em;
 	}
 
+	.brand-kicker {
+		font-size: 0.85em;
+		letter-spacing: 0.28em;
+		font-weight: 700;
+		color: var(--sr-accent);
+		margin-bottom: 0.8em;
+	}
+
 	.big-title {
 		font-size: 4em;
 		line-height: 1.2em;
 		font-family: 'Audiowide';
-		text-shadow: 2px 2px 4px black;
+		text-shadow: 0 8px 30px rgba(0,0,0,.55);
+		letter-spacing: -0.03em;
 	}
 
 	.big-description {
