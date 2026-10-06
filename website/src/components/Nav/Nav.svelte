@@ -16,8 +16,6 @@
 	import MenuLine from '../Player/MenuLine.svelte';
 	import LinkMenuItem from './LinkMenuItem.svelte';
 	import PlaylistHeaderMenuItem from './PlaylistHeaderMenuItem.svelte';
-	import {globalHistory} from 'svelte-routing/src/history';
-	import {GLOBAL_LEADERBOARD_TYPE, setLeaderboardType} from '../../utils/format';
 	import LogOutConfirm from './LogOutConfirm.svelte';
 
 	let className = null;
@@ -38,7 +36,6 @@
 
 	let accountMenuShown = false;
 	let mobileMenuShown = false;
-	var currenturl;
 
 	onMount(async () => {
 		const settingsBadgeUnsubscribe = eventBus.on('settings-notification-badge', message => (settingsNotificationBadge = message));
@@ -52,10 +49,6 @@
 		};
 
 		document.addEventListener('keydown', keyDownHandler);
-
-		globalHistory.listen(({location, action}) => {
-			currenturl = location.href;
-		});
 
 		return () => {
 			settingsBadgeUnsubscribe();
@@ -79,50 +72,7 @@
 	const playlists = createPlaylistStore();
 	const account = createAccountStore();
 
-	let testMenuShown = false;
 
-	var leaderboardTypeOptions = [
-		{
-			name: 'Global',
-			id: '',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/logo-small.webp',
-		},
-		{
-			name: 'Left Saber',
-			id: 'leftleader',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/logo-small.webp',
-		},
-		{
-			name: 'No Modifiers',
-			id: 'nomods',
-			logoBig: '/assets/logo-no-pause.webp',
-			logoSmall: '/assets/logo-small-no-pause.webp',
-		},
-		{
-			name: 'No Pauses',
-			id: 'nopause',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/favicon-96x96.webp',
-		},
-		{
-			name: 'Golf',
-			id: 'golf',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/favicon-96x96.webp',
-		},
-		{
-			name: 'Standard',
-			id: 'scpm',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/favicon-96x96.webp',
-		},
-	];
-
-	let leaderboardType = leaderboardTypeOptions.find(
-		t => t.id == GLOBAL_LEADERBOARD_TYPE || (GLOBAL_LEADERBOARD_TYPE == 'general' && t.id == '')
-	) ?? leaderboardTypeOptions[0];
 
 	let signupOptions = [];
 
@@ -219,13 +169,6 @@
 		}
 	}
 
-	function normalizedId(id) {
-		return id != '' ? id + '.' : '';
-	}
-
-	function updateHref() {
-		currenturl = window.location.href;
-	}
 
 	const logOut = async () => {
 		openModal(LogOutConfirm, {
@@ -256,83 +199,26 @@
 </script>
 
 <nav class={`ssr-page-container ${className ?? ''}`}>
-	<div
-		class="hovermenu nav-button"
-		on:mouseover={() => {
-			if (!isTouchDevice()) testMenuShown = true;
-		}}
-		on:focus={() => {
-			if (!isTouchDevice()) testMenuShown = true;
-		}}
-		on:mouseleave={() => {
-			if (!isTouchDevice()) testMenuShown = false;
-		}}>
+	<div class="nav-button brand-button">
 		<a
 			class="logo-link"
 			href="/"
-			on:click|preventDefault={() => {
-				if (!isTouchDevice()) {
-					navigate('/');
-				} else {
-					testMenuShown = !testMenuShown;
-				}
-			}}>
+			on:click|preventDefault={() => navigate('/')}>
 			<div class="logo-container desktop-and-up">
-				<img src="/assets/logo.webp" class="logo" alt="" />
+				<img src="/assets/logo-small.webp" class="logo" alt="SaberRank" />
 				<div class="logo-name">
 					<span class="name">SABERRANK</span>
-					{#if leaderboardType.id != ''}
-						<span class="leaderboard-type">{leaderboardType.name}</span>
-					{/if}
+					<span class="tagline">BEAT SABER RANKINGS</span>
 				</div>
 			</div>
-
 			<div class="logo-container tablet">
-				<img src="/assets/logo-small.webp" class="logo" alt="" />
-				<div class="logo-name">
-					<span class="name">SR</span>
-					{#if leaderboardType.id != ''}
-						<span class="leaderboard-type">{leaderboardType.name}</span>
-					{/if}
-				</div>
+				<img src="/assets/logo-small.webp" class="logo" alt="SaberRank" />
+				<span class="name">SABERRANK</span>
 			</div>
-
 			<div class="logo-container up-to-tablet">
-				<img src="/assets/logo-small.webp" class="logo" alt="" />
-				{#if leaderboardType.id != 'general'}
-					<span class="leaderboard-type">{leaderboardType.name}</span>
-				{/if}
+				<img src="/assets/logo-small.webp" class="logo" alt="SaberRank" />
 			</div>
 		</a>
-		<Dropdown
-			items={isTouchDevice()
-				? [
-						{
-							name: 'Dashboard',
-							id: 'dashboard',
-						},
-						...leaderboardTypeOptions,
-					]
-				: leaderboardTypeOptions}
-			bind:shown={testMenuShown}>
-			<svelte:fragment slot="row" let:item>
-				{#if item.id == 'dashboard'}
-					<a href="/">
-						{item.name}
-					</a>
-				{:else}
-					<a
-						style="display: block; width: 100%"
-						href={currenturl.replace(
-							location.protocol + '//' + normalizedId(leaderboardType.id),
-							location.protocol + '//' + normalizedId(item.id)
-						)}>
-						<i class={item.icon} />
-						{item.name}
-					</a>
-				{/if}
-			</svelte:fragment>
-		</Dropdown>
 	</div>
 
 	{#if player}
@@ -1142,4 +1028,73 @@
 			display: block;
 		}
 	}
+	/* SaberRank navigation */
+	:global(nav.ssr-page-container) {
+		height: 4.5rem !important;
+		padding: 0 .9rem !important;
+		background: rgba(6, 9, 19, .94) !important;
+		border-bottom: 1px solid rgba(78, 210, 255, .12);
+		box-shadow: 0 12px 40px rgba(0,0,0,.22);
+		backdrop-filter: blur(18px);
+	}
+
+	.brand-button {
+		border-right: 1px solid rgba(255,255,255,.07);
+		padding-right: 1.2rem;
+	}
+
+	.brand-button .logo-link {
+		gap: .7rem;
+		align-items: center;
+	}
+
+	.brand-button .desktop-and-up .logo {
+		width: 2.8rem !important;
+		height: 2.8rem !important;
+		margin: 0 !important;
+	}
+
+	.brand-button .logo-name {
+		align-items: flex-start !important;
+	}
+
+	.brand-button .name {
+		font-size: 1rem;
+		letter-spacing: .22em;
+		color: #f8faff;
+	}
+
+	.brand-button .tagline {
+		font-size: .55rem;
+		letter-spacing: .18em;
+		color: #5fdcff;
+		font-weight: 800;
+		margin-top: .2rem;
+	}
+
+	:global(nav.ssr-page-container .nav-button > a:hover) {
+		background: rgba(255,255,255,.035) !important;
+	}
+
+	:global(nav.ssr-page-container .right > a),
+	:global(nav.ssr-page-container .me > a) {
+		border-radius: 10px;
+		margin: .55rem .15rem;
+		padding-left: .8rem;
+		padding-right: .8rem;
+		transition: background .15s ease, color .15s ease;
+	}
+
+	:global(nav.ssr-page-container .right > a:hover),
+	:global(nav.ssr-page-container .me > a:hover) {
+		background: rgba(255,42,191,.08);
+		color: #fff;
+	}
+
+	@media (max-width: 900px) {
+		.brand-button { padding-right: .4rem; border-right: 0; }
+		.brand-button .name { display: none; }
+		.brand-button .desktop-and-up .logo { width: 2.55rem !important; height: 2.55rem !important; }
+	}
+
 </style>

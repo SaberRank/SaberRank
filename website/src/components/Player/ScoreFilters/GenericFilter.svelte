@@ -1,6 +1,6 @@
 <script>
 	import {createEventDispatcher} from 'svelte';
-	import editModel from '../../../stores/saberrank/profile-edit-model';
+	import editModel from '../../../stores/beatleader/profile-edit-model';
 	import {debounce} from '../../../utils/debounce';
 
 	export let filter;

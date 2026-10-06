@@ -1,417 +1,442 @@
 <script>
-	import ssrConfig from '../ssr-config';
 	import {fade} from 'svelte/transition';
 	import Button from '../components/Common/Button.svelte';
 	import ContentBox from '../components/Common/ContentBox.svelte';
 	import {MetaTags} from 'svelte-meta-tags';
 	import {CURRENT_URL} from '../network/queues/saberrank/api-queue';
-	import BlueSkyTimeline from '../components/Dashboard/BlueSkyTimeline.svelte';
-	import EventBanner from '../components/Event/EventBanner.svelte';
+	import ssrConfig from '../ssr-config';
 
 	$: metaDescription =
 		ssrConfig.name +
-		" is Beat Saber's leaderboard with open code and community. Start posting your scores to compete with others on more than 100,000 different maps.";
+		' is a competitive Beat Saber leaderboard focused on scores, rankings, progression, and player performance.';
 </script>
 
 <svelte:head>
-	<title>{ssrConfig.name} — Competitive Beat Saber Rankings</title>
+	<title>SaberRank — Competitive Beat Saber Rankings</title>
+	<meta name="description" content={metaDescription} />
 </svelte:head>
 
 <article class="page-content" transition:fade|global>
-	<div class="sspl-page-container">
-		<div class="big-landing-box image-container">
-			<div class="cinematics">
-				<div class="cinematics-canvas">
-					<div class="image-container" style="position: absolute; width: 100%; height: 100%;" />
-				</div>
-			</div>
-			<div class="title-and-buttons">
-				<div class="brand-kicker">COMPETE • IMPROVE • CLIMB</div>
-				<h1 class="big-title audiowide">SaberRank</h1>
-				<h3 class="big-description">Your scores. Your progress. Your rank.</h3>
+	<div class="sr-home">
+		<section class="sr-hero">
+			<div class="hero-grid" aria-hidden="true"></div>
+			<div class="hero-glow hero-glow-one" aria-hidden="true"></div>
+			<div class="hero-glow hero-glow-two" aria-hidden="true"></div>
 
-				<div class="downloadButtons">
-					<a class="pc-download-button" href="https://github.com/SaberRank/saberrank-mod/releases" target="_blank" rel="noreferrer">
+			<div class="hero-copy">
+				<div class="eyebrow"><span></span> COMPETE • IMPROVE • CLIMB</div>
+				<img class="hero-wordmark" src="/assets/SaberRank/wordmark.webp" alt="SaberRank" />
+				<h1>Competitive Beat Saber rankings.</h1>
+				<p>
+					Track your scores, compare performances, and climb the SaberRank ladder.
+					Everything you need to see how you stack up.
+				</p>
+
+				<div class="hero-actions">
+					<a href="https://github.com/SaberRank/saberrank-mod/releases" target="_blank" rel="noreferrer">
 						<Button iconFa="fas fa-download" type="green" label="Get the PC mod" />
 					</a>
-					<a class="quest-download-button" href="https://github.com/SaberRank/saberrank-qmod/releases" target="_blank" rel="noreferrer">
+					<a href="https://github.com/SaberRank/saberrank-qmod/releases" target="_blank" rel="noreferrer">
 						<Button iconFa="fas fa-download" type="green" label="Get the Quest mod" />
 					</a>
 				</div>
-				<div class="mod-beatsaber">
-					<span><strong>New to modded Beat Saber? <a href="https://bsmg.wiki/pc-modding.html">Start here.</a></strong></span>
+
+				<div class="hero-links">
+					<a href="/ranking/1">View global rankings</a>
+					<span>•</span>
+					<a href="/maps">Browse maps</a>
 				</div>
 			</div>
-		</div>
-		<ContentBox cls="landing-box">
-			<div class="container-element darkened-background">
-				<h3 class="description centered-title">
-					<b>Build your profile, compare performances, and climb the SaberRank ladder across the Beat Saber community.</b>
-				</h3>
 
-				<div class="features">
-					<div class="feature">
-						<img src="/assets/leaderboard-landing.webp" class="feature-image" style="transform: rotate3d(0, 1, 0, 22deg);" />
-						<h3 class="feature-description">In-game rankings<br />for your scores!</h3>
+			<div class="hero-preview">
+				<div class="preview-header">
+					<div>
+						<span class="preview-kicker">LIVE STANDINGS</span>
+						<strong>Global Rankings</strong>
 					</div>
-					<div class="feature">
-						<img src="/assets/webreplays-landing.webp" class="feature-image" style="transform: rotate3d(0, 1, 0, -22deg);" />
-						<h3 class="feature-description">Detailed performance data!</h3>
-					</div>
+					<span class="live-dot"></span>
 				</div>
 
-				<div class="table-container">
-					<ul>
-						<li>Built around transparent ranking data</li>
-						<li>Map and performance insights</li>
-						<li>Performance Points and global ranks</li>
-
-						<li>Detailed statistics for every score</li>
-						<li>Players, maps, events, and more</li>
-					</ul>
+				<div class="preview-player first">
+					<span class="place">01</span>
+					<div class="avatar-placeholder">N</div>
+					<div class="player-copy"><strong>NeonBlade</strong><small>18,492 PP</small></div>
+					<span class="score-accent">#1</span>
 				</div>
-				<div class="global-ranking-call">
-					<h3><strong>Explore <a href="/ranking/1">global rankings</a> and find the players at the top</strong></h3>
+				<div class="preview-player">
+					<span class="place">02</span>
+					<div class="avatar-placeholder cyan">P</div>
+					<div class="player-copy"><strong>Pulse</strong><small>18,155 PP</small></div>
+					<span class="score-accent">#2</span>
+				</div>
+				<div class="preview-player">
+					<span class="place">03</span>
+					<div class="avatar-placeholder violet">A</div>
+					<div class="player-copy"><strong>ArcByte</strong><small>17,921 PP</small></div>
+					<span class="score-accent">#3</span>
+				</div>
+
+				<div class="preview-footer">
+					<span>Performance</span>
+					<strong>98.42%</strong>
+					<span class="footer-pp">+412 PP</span>
 				</div>
 			</div>
-		</ContentBox>
-		<span class="event-promotion-title">Latest event - Beat The Heat 2026: 32 fresh summer themed maps!</span>
-		<!-- <EventBanner wideScreen={true} /> -->
-		<div class="two-boxes">
-			<ContentBox cls="landing-box">
-				<span class="box-headline">Everything you need to understand your performance in one place.</span>
-				<div class="container-element darkened-background">
-					<div class="sources">
-						<a class="source" href="https://beatsaver.com/" target="_blank" rel="noreferrer">
-							<img src="/assets/beatsaver-icon.png" class="icon" alt="BeatSaver" title="BeatSaver" />
-							<span>BeatSaver</span>
-						</a>
-						<a class="source" href="https://github.com/AllPoland/ArcViewer/" target="_blank" rel="noreferrer">
-							<img src="/assets/ArcViewerIcon.webp" title="ArcViewer" class="icon" alt="ArcViewer Logo" />
-							<span>ArcViewer</span>
-						</a>
-						<a class="source" href="https://accsaber.com/" target="_blank" rel="noreferrer">
-							<img src="/assets/accsaber-logo.webp" title="AccSaber" class="icon" alt="AccSaber Logo" />
-							<span>AccSaber</span>
-						</a>
-						<a class="source" href="https://bsaber.com/" target="_blank" rel="noreferrer">
-							<img src="/assets/beastsabericonbig.webp" title="BeastSaber" class="icon" alt="BeastSaber Logo" />
-							<span>BeastSaber</span>
-						</a>
-						<a class="source" href="https://cube.community/" target="_blank" rel="noreferrer">
-							<img src="/assets/cubecommunitylogo.webp" title="CubeCommunity" class="icon" alt="CubeCommunity Logo" />
-							<span>CubeCommunity</span>
-						</a>
-						<a class="source" href="https://beat-savior.herokuapp.com/" target="_blank" rel="noreferrer">
-							<span class="icon beatsavior-icon" title="BeatSavior" />
-							<span>BeatSavior</span>
-						</a>
-						<a class="source" href="https://github.com/Umbranoxio/chroviewer/" target="_blank" rel="noreferrer" style="align-self: center">
-							<span>ChroViewer</span>
-						</a>
-					</div>
+		</section>
+
+		<section class="sr-intro">
+			<div class="section-heading">
+				<span class="section-number">01</span>
+				<div>
+					<span class="section-kicker">THE SABERRANK SYSTEM</span>
+					<h2>Built around the scores that matter.</h2>
 				</div>
-			</ContentBox>
-			<BlueSkyTimeline cls="landing-box" title={true} />
-		</div>
+			</div>
+
+			<div class="feature-grid">
+				<ContentBox cls="sr-feature">
+					<div class="feature-icon rank-icon">01</div>
+					<div>
+						<span class="feature-kicker">RANKINGS</span>
+						<h3>Know where you stand.</h3>
+						<p>Compare players, follow your position, and see the scores pushing the leaderboard forward.</p>
+					</div>
+					<img src="/assets/SaberRank/leaderboard.webp" alt="SaberRank global rankings preview" />
+				</ContentBox>
+
+				<ContentBox cls="sr-feature">
+					<div class="feature-icon score-icon">02</div>
+					<div>
+						<span class="feature-kicker">PERFORMANCE</span>
+						<h3>Understand every score.</h3>
+						<p>Review accuracy, performance points, and score history without digging through clutter.</p>
+					</div>
+					<img src="/assets/SaberRank/score.webp" alt="SaberRank score analysis preview" />
+				</ContentBox>
+			</div>
+		</section>
+
+		<section class="sr-pillars">
+			<div class="pillar">
+				<span>01</span>
+				<strong>Player-first</strong>
+				<p>Your profile is the center of your progression.</p>
+			</div>
+			<div class="pillar">
+				<span>02</span>
+				<strong>Score-driven</strong>
+				<p>Clear numbers, meaningful rankings, useful detail.</p>
+			</div>
+			<div class="pillar">
+				<span>03</span>
+				<strong>Community-ready</strong>
+				<p>Designed to grow with the SaberRank community.</p>
+			</div>
+		</section>
+
+		<section class="sr-cta">
+			<div>
+				<span class="section-kicker">READY?</span>
+				<h2>Put your scores on the board.</h2>
+				<p>Install SaberRank, play your maps, and start climbing.</p>
+			</div>
+			<a href="/ranking/1" class="cta-link">Explore rankings <span>→</span></a>
+		</section>
 	</div>
 </article>
 
 <MetaTags
-	title={ssrConfig.name + ' — Competitive Beat Saber Rankings'}
+	title="SaberRank — Competitive Beat Saber Rankings"
 	description={metaDescription}
 	openGraph={{
-		title: ssrConfig.name + ' — Competitive Beat Saber Rankings',
+		title: 'SaberRank — Competitive Beat Saber Rankings',
 		description: metaDescription,
-		images: [{url: CURRENT_URL + '/assets/logo-small.png'}],
-		siteName: ssrConfig.name,
+		images: [{url: CURRENT_URL + '/assets/SaberRank/icon.webp'}],
+		siteName: 'SaberRank',
 	}}
 	twitter={{
-		handle: '@SaberRank',
-		site: '@SaberRank',
+		handle: '@saberrank_',
+		site: '@saberrank_',
 		cardType: 'summary',
-		title: ssrConfig.name + ' — Competitive Beat Saber Rankings',
+		title: 'SaberRank — Competitive Beat Saber Rankings',
 		description: metaDescription,
-		image: CURRENT_URL + '/assets/logo-small.png',
-		imageAlt: ssrConfig.name + ' logo',
+		image: CURRENT_URL + '/assets/SaberRank/icon.webp',
+		imageAlt: 'SaberRank logo',
 	}} />
 
 <style>
-	.image-container {
-		background: url('/assets/Main/landing.webp') !important;
-		background-position-y: -2em !important;
-		background-position-x: 0% !important;
-		background-size: 100% !important;
+	:global(.sr-home) {
+		max-width: 1400px;
+		margin: 0 auto;
+		padding: 1.25rem 1.25rem 4rem;
+		color: #f5f7ff;
 	}
 
-	.big-landing-box {
-		display: flex;
-		justify-content: flex-start;
-		margin: 4px 10px 18px;
-		border-radius: 12px;
-		padding: 1rem;
+	.sr-hero {
+		min-height: 620px;
 		position: relative;
-		z-index: var(--z-index);
-	}
-
-	.container-element {
-		border-radius: 8px;
-		padding: 1.5em;
-		flex: 1;
-	}
-
-	:global(.landing-box) {
-		border-radius: 12px !important;
-		padding: 0.5em !important;
-		display: flex;
-		flex-direction: column;
 		overflow: hidden;
-	}
-
-	:global(.landing-box .v-scrollbar) {
-		margin-top: 4em !important;
-		margin-right: 0.8em !important;
-	}
-
-	.mod-beatsaber {
-		margin-left: 0.3em;
-	}
-
-	.two-boxes {
+		border: 1px solid rgba(91, 216, 255, 0.18);
+		border-radius: 26px;
+		background:
+			linear-gradient(115deg, rgba(8, 12, 25, 0.98) 0%, rgba(10, 12, 31, 0.92) 48%, rgba(25, 8, 35, 0.84) 100%),
+			url('/assets/SaberRank/hero.webp') center / cover;
+		box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4);
 		display: grid;
-		grid-template-columns: 50% 50%;
-	}
-
-	.box-headline {
-		margin-left: 0.3em;
-	}
-
-	.box-headline {
-		font-size: 1.2em;
-		padding-bottom: 0.5em;
-		padding-top: 0.5em;
-		padding-left: 0.1em;
-	}
-
-	.brand-kicker {
-		font-size: 0.85em;
-		letter-spacing: 0.28em;
-		font-weight: 700;
-		color: var(--sr-accent);
-		margin-bottom: 0.8em;
-	}
-
-	.big-title {
-		font-size: 4em;
-		line-height: 1.2em;
-		font-family: 'Audiowide';
-		text-shadow: 0 8px 30px rgba(0,0,0,.55);
-		letter-spacing: -0.03em;
-	}
-
-	.big-description {
-		margin-left: 0.3em;
-		text-shadow: 2px 2px 4px black;
-	}
-
-	.title-and-buttons {
-		margin-top: 3.6em;
-		margin-bottom: 2em;
-		max-width: 48%;
-		margin-left: 5em;
-	}
-
-	.table-container {
-		display: flex;
-		justify-content: center;
+		grid-template-columns: 1.2fr 0.8fr;
 		align-items: center;
+		padding: 4.5rem;
+		gap: 3rem;
 	}
 
-	.sources {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, 10em);
-		gap: 2em 1em;
-		padding: 1em 0;
-		justify-content: center;
-		align-content: center;
-		height: 100%;
-	}
-
-	.source {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5em;
-		transition: transform 0.2s ease-in-out;
-	}
-
-	.source:hover {
-		transform: scale(1.05);
-	}
-
-	.features {
-		display: flex;
-		justify-content: space-evenly;
-	}
-
-	.feature-image {
-		height: 25em;
-	}
-
-	.feature {
-		perspective: 50em;
-	}
-
-	.feature-description {
-		text-align: center;
-	}
-
-	.cinematics {
+	.hero-grid {
 		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
+		inset: 0;
+		background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+		background-size: 48px 48px;
+		mask-image: linear-gradient(to right, black, transparent 85%);
+	}
+
+	.hero-glow {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(80px);
 		pointer-events: none;
 	}
 
-	.cinematics-canvas {
-		filter: blur(5em) opacity(0.5) saturate(250%);
-		left: 0;
-		pointer-events: none;
-		position: absolute;
-		top: 0;
-		transform: scale(1.1) translateZ(0);
-		width: 100%;
-		z-index: -1;
-		height: 100%;
+	.hero-glow-one {
+		width: 340px;
+		height: 340px;
+		right: 8%;
+		top: -100px;
+		background: rgba(255, 24, 181, .18);
 	}
 
-	.title.is-4 {
-		margin-top: 1.2em;
+	.hero-glow-two {
+		width: 280px;
+		height: 280px;
+		left: 35%;
+		bottom: -120px;
+		background: rgba(45, 207, 255, .14);
 	}
 
-	.global-ranking-call {
-		margin-top: 2em;
-		text-align: center;
+	.hero-copy,
+	.hero-preview {
+		position: relative;
+		z-index: 1;
 	}
 
-	.centered-title {
-		text-align: center;
+	.eyebrow,
+	.section-kicker,
+	.feature-kicker,
+	.preview-kicker {
+		font-size: .72rem;
+		letter-spacing: .25em;
+		font-weight: 800;
+		color: #58d9ff;
 	}
 
-	.event-promotion-title {
-		padding: 0.25em 0;
-		margin-bottom: 0.75em !important;
-		font-size: 1.25em;
-		width: 100%;
+	.eyebrow {
+		display: flex;
+		align-items: center;
+		gap: .6rem;
+	}
+
+	.eyebrow span,
+	.live-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #ff2abf;
+		box-shadow: 0 0 16px #ff2abf;
+	}
+
+	.hero-wordmark {
 		display: block;
-		margin-left: 0.5em;
-		margin-right: 0.5em;
-		text-align: center;
+		width: min(520px, 100%);
+		height: auto;
+		margin: 1.25rem 0 .6rem;
+		object-fit: contain;
+		object-position: left center;
 	}
 
-	h3 {
-		padding: 0.25em 0;
-		margin-bottom: 0.75em !important;
-		font-size: 1.25em;
+	.hero-copy h1 {
+		font-size: clamp(2rem, 4vw, 3.8rem);
+		line-height: 1.05;
+		max-width: 680px;
+		margin: 0;
 	}
 
-	h3 > a {
-		display: inline-flex;
-		align-items: center;
+	.hero-copy p {
+		max-width: 610px;
+		color: #b8c2d8;
+		font-size: 1.08rem;
+		line-height: 1.7;
+		margin: 1.25rem 0;
 	}
 
-	h3 .icon {
-		display: inline-block;
-		width: 4em;
-		height: 4em;
-		margin-right: 0.5em;
-	}
-
-	.source .icon {
-		width: 5em;
-		height: 5em;
-	}
-
-	.downloadButtons {
-		margin-top: 1.5em;
-		margin-left: 0.3em;
-		margin-bottom: 2em;
+	.hero-actions {
 		display: flex;
-		gap: 0.6em;
-		float: center;
-	}
-	ul {
-		list-style-type: square;
-		padding-left: 20px;
+		flex-wrap: wrap;
+		gap: .75rem;
+		margin-top: 1.6rem;
 	}
 
-	li {
-		line-height: 1.6;
+	.hero-links {
+		display: flex;
+		gap: .7rem;
+		margin-top: 1.25rem;
+		font-size: .9rem;
+		color: #8995ae;
 	}
 
-	@media screen and (min-width: 1250px) {
-		.image-container {
-			background-position-y: -3em !important;
-			background-position-x: 0% !important;
-			background-size: 100% !important;
-		}
-		.big-landing-box {
-			justify-content: flex-end;
-		}
+	.hero-links a:hover { color: #fff; }
 
-		.title-and-buttons {
-			margin-top: 4.6em;
-			margin-bottom: 3em;
-			max-width: 44%;
-			margin-right: 40em;
-		}
+	.hero-preview {
+		padding: 1.2rem;
+		border: 1px solid rgba(255,255,255,.1);
+		border-radius: 20px;
+		background: rgba(7, 11, 23, .76);
+		backdrop-filter: blur(18px);
+		box-shadow: 0 25px 60px rgba(0,0,0,.35);
 	}
 
-	@media screen and (max-width: 1024px) {
-		.title-and-buttons {
-			max-width: 60%;
-		}
+	.preview-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: .5rem .5rem 1rem;
+		border-bottom: 1px solid rgba(255,255,255,.08);
 	}
 
-	@media screen and (max-width: 767px) {
-		.features {
-			flex-direction: column;
-		}
+	.preview-header div { display: flex; flex-direction: column; gap: .25rem; }
+	.preview-header strong { font-size: 1.25rem; }
+	.live-dot { display: block; }
 
-		.feature-image {
-			transform: none !important;
-		}
+	.preview-player {
+		display: grid;
+		grid-template-columns: 2.5rem 2.6rem 1fr auto;
+		gap: .7rem;
+		align-items: center;
+		padding: .8rem .55rem;
+		border-bottom: 1px solid rgba(255,255,255,.055);
+	}
 
-		.image-container {
-			background-position-y: -0.9em !important;
-			background-position-x: 62.2% !important;
-			background-size: 200% !important;
-		}
+	.preview-player.first {
+		background: linear-gradient(90deg, rgba(255,42,191,.09), transparent);
+	}
 
-		.big-title {
-			font-size: 2em;
-		}
+	.place { color: #68748c; font-weight: 800; }
+	.avatar-placeholder {
+		width: 2.35rem;
+		height: 2.35rem;
+		display: grid;
+		place-items: center;
+		border-radius: 10px;
+		background: linear-gradient(135deg,#ff2abf,#8d2cff);
+		font-weight: 900;
+	}
+	.avatar-placeholder.cyan { background: linear-gradient(135deg,#2ed7ff,#376cff); }
+	.avatar-placeholder.violet { background: linear-gradient(135deg,#9a52ff,#ff2abf); }
+	.player-copy { display: flex; flex-direction: column; gap: .15rem; }
+	.player-copy small { color: #7f8ba3; }
+	.score-accent { color: #58d9ff; font-weight: 800; }
 
-		.pc-download-button {
-			display: none;
-		}
+	.preview-footer {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
+		gap: 1rem;
+		padding: 1rem .55rem .4rem;
+		color: #7f8ba3;
+	}
+	.preview-footer strong { color: #fff; }
+	.footer-pp { color: #ff48c5; font-weight: 800; }
 
-		.title-and-buttons {
-			margin-top: 8em;
-			margin-bottom: 0em;
-			max-width: none;
-			margin-left: 0.125em;
-		}
+	.sr-intro { padding: 5rem 0 2rem; }
+	.section-heading { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 2rem; }
+	.section-number { color: #ff2abf; font-weight: 900; font-size: .9rem; padding-top: .25rem; }
+	.section-heading h2, .sr-cta h2 { font-size: clamp(2rem, 3vw, 3rem); margin: .3rem 0 0; line-height: 1.05; }
 
-		.cinematics-canvas {
-			transform: scaleY(1.2) translateZ(0);
-		}
+	.feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+	:global(.sr-feature) {
+		position: relative;
+		overflow: hidden;
+		min-height: 450px;
+		padding: 2rem !important;
+		border: 1px solid rgba(255,255,255,.07);
+		background: linear-gradient(145deg, rgba(16,22,40,.96), rgba(8,12,25,.96)) !important;
+	}
+	.feature-icon {
+		width: 3rem;
+		height: 3rem;
+		display: grid;
+		place-items: center;
+		border-radius: 12px;
+		font-weight: 900;
+		margin-bottom: 2rem;
+	}
+	.rank-icon { background: rgba(55,210,255,.12); color: #58d9ff; }
+	.score-icon { background: rgba(255,42,191,.12); color: #ff48c5; }
+	.sr-feature h3 { font-size: 1.65rem; margin: .5rem 0; }
+	.sr-feature p { max-width: 500px; color: #8f9ab1; line-height: 1.6; }
+	.sr-feature img {
+		width: 78%;
+		display: block;
+		margin: 1.5rem auto -1rem;
+		border-radius: 14px;
+		box-shadow: 0 18px 40px rgba(0,0,0,.35);
+	}
 
-		.two-boxes {
-			display: flex;
-			flex-wrap: wrap;
-		}
+	.sr-pillars {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1px;
+		margin: 3rem 0 4rem;
+		border: 1px solid rgba(255,255,255,.07);
+		border-radius: 18px;
+		overflow: hidden;
+		background: rgba(255,255,255,.07);
+	}
+	.pillar { background: #0b1020; padding: 2rem; }
+	.pillar span { color: #ff2abf; font-size: .75rem; font-weight: 900; }
+	.pillar strong { display: block; font-size: 1.25rem; margin: .7rem 0 .35rem; }
+	.pillar p { color: #818ca4; line-height: 1.5; margin: 0; }
+
+	.sr-cta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 2rem;
+		padding: 2.5rem 3rem;
+		border-radius: 20px;
+		background: linear-gradient(100deg, rgba(255,42,191,.12), rgba(48,205,255,.08));
+		border: 1px solid rgba(255,255,255,.09);
+	}
+	.sr-cta p { color: #8995ae; margin: .75rem 0 0; }
+	.cta-link {
+		flex: 0 0 auto;
+		padding: .9rem 1.25rem;
+		border-radius: 10px;
+		background: #ff2abf;
+		color: #fff;
+		font-weight: 800;
+		box-shadow: 0 10px 30px rgba(255,42,191,.2);
+	}
+	.cta-link span { margin-left: .6rem; }
+
+	@media (max-width: 950px) {
+		.sr-hero { grid-template-columns: 1fr; padding: 3rem 2rem; }
+		.hero-preview { max-width: 620px; width: 100%; }
+	}
+	@media (max-width: 700px) {
+		:global(.sr-home) { padding: .75rem .75rem 3rem; }
+		.sr-hero { min-height: 0; padding: 2.25rem 1.25rem; border-radius: 18px; }
+		.hero-wordmark { width: 100%; }
+		.hero-copy h1 { font-size: 2rem; }
+		.hero-links { flex-wrap: wrap; }
+		.feature-grid, .sr-pillars { grid-template-columns: 1fr; }
+		:global(.sr-feature) { min-height: 0; }
+		.sr-feature img { width: 100%; }
+		.sr-cta { flex-direction: column; align-items: flex-start; padding: 2rem; }
 	}
 </style>
