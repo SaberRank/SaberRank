@@ -16,8 +16,6 @@
 	import MenuLine from '../Player/MenuLine.svelte';
 	import LinkMenuItem from './LinkMenuItem.svelte';
 	import PlaylistHeaderMenuItem from './PlaylistHeaderMenuItem.svelte';
-	import {globalHistory} from 'svelte-routing/src/history';
-	import {GLOBAL_LEADERBOARD_TYPE, setLeaderboardType} from '../../utils/format';
 	import LogOutConfirm from './LogOutConfirm.svelte';
 
 	let className = null;
@@ -38,7 +36,6 @@
 
 	let accountMenuShown = false;
 	let mobileMenuShown = false;
-	var currenturl;
 
 	onMount(async () => {
 		const settingsBadgeUnsubscribe = eventBus.on('settings-notification-badge', message => (settingsNotificationBadge = message));
@@ -52,10 +49,6 @@
 		};
 
 		document.addEventListener('keydown', keyDownHandler);
-
-		globalHistory.listen(({location, action}) => {
-			currenturl = location.href;
-		});
 
 		return () => {
 			settingsBadgeUnsubscribe();
@@ -79,50 +72,6 @@
 	const playlists = createPlaylistStore();
 	const account = createAccountStore();
 
-	let testMenuShown = false;
-
-	var leaderboardTypeOptions = [
-		{
-			name: 'General',
-			id: '',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/logo-small.webp',
-		},
-		{
-			name: 'LeftLeader',
-			id: 'leftleader',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/logo-small.webp',
-		},
-		{
-			name: 'No modifiers',
-			id: 'nomods',
-			logoBig: '/assets/logo-no-pause.webp',
-			logoSmall: '/assets/logo-small-no-pause.webp',
-		},
-		{
-			name: 'No pauses',
-			id: 'nopause',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/favicon-96x96.webp',
-		},
-		{
-			name: 'Golf',
-			id: 'golf',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/favicon-96x96.webp',
-		},
-		{
-			name: 'SCPM',
-			id: 'scpm',
-			logoBig: '/assets/logo.webp',
-			logoSmall: '/assets/favicon-96x96.webp',
-		},
-	];
-
-	let leaderboardType = leaderboardTypeOptions.find(
-		t => t.id == GLOBAL_LEADERBOARD_TYPE || (GLOBAL_LEADERBOARD_TYPE == 'general' && t.id == '')
-	);
 
 	let signupOptions = [];
 
@@ -219,13 +168,6 @@
 		}
 	}
 
-	function normalizedId(id) {
-		return id != '' ? id + '.' : '';
-	}
-
-	function updateHref() {
-		currenturl = window.location.href;
-	}
 
 	const logOut = async () => {
 		openModal(LogOutConfirm, {
@@ -240,7 +182,6 @@
 		});
 	};
 
-	$: updateHref();
 	$: player = $account?.player;
 	$: starredFollowedIds = player?.profileSettings?.starredFriends ?? [];
 	$: starredFollowed =
@@ -256,83 +197,14 @@
 </script>
 
 <nav class={`ssr-page-container ${className ?? ''}`}>
-	<div
-		class="hovermenu nav-button"
-		on:mouseover={() => {
-			if (!isTouchDevice()) testMenuShown = true;
-		}}
-		on:focus={() => {
-			if (!isTouchDevice()) testMenuShown = true;
-		}}
-		on:mouseleave={() => {
-			if (!isTouchDevice()) testMenuShown = false;
-		}}>
+	<div class="nav-brand nav-button">
 		<a
 			class="logo-link"
 			href="/"
-			on:click|preventDefault={() => {
-				if (!isTouchDevice()) {
-					navigate('/');
-				} else {
-					testMenuShown = !testMenuShown;
-				}
-			}}>
-			<div class="logo-container desktop-and-up">
-				<img src="/assets/logo.webp" class="logo" alt="" />
-				<div class="logo-name">
-					<span class="name">SABERRANK</span>
-					{#if leaderboardType.id != ''}
-						<span class="leaderboard-type">{leaderboardType.name}</span>
-					{/if}
-				</div>
-			</div>
-
-			<div class="logo-container tablet">
-				<img src="/assets/logo-small.webp" class="logo" alt="" />
-				<div class="logo-name">
-					<span class="name">BL</span>
-					{#if leaderboardType.id != ''}
-						<span class="leaderboard-type">{leaderboardType.name}</span>
-					{/if}
-				</div>
-			</div>
-
-			<div class="logo-container up-to-tablet">
-				<img src="/assets/logo-small.webp" class="logo" alt="" />
-				{#if leaderboardType.id != 'general'}
-					<span class="leaderboard-type">{leaderboardType.name}</span>
-				{/if}
-			</div>
+			on:click|preventDefault={() => navigate('/')}>
+			<img src="/assets/snoresaber-logo.png" class="logo" alt="SnoreSaber" />
+			<span class="name">snoresaber</span>
 		</a>
-		<Dropdown
-			items={isTouchDevice()
-				? [
-						{
-							name: 'Dashboard',
-							id: 'dashboard',
-						},
-						...leaderboardTypeOptions,
-					]
-				: leaderboardTypeOptions}
-			bind:shown={testMenuShown}>
-			<svelte:fragment slot="row" let:item>
-				{#if item.id == 'dashboard'}
-					<a href="/">
-						{item.name}
-					</a>
-				{:else}
-					<a
-						style="display: block; width: 100%"
-						href={currenturl.replace(
-							location.protocol + '//' + normalizedId(leaderboardType.id),
-							location.protocol + '//' + normalizedId(item.id)
-						)}>
-						<i class={item.icon} />
-						{item.name}
-					</a>
-				{/if}
-			</svelte:fragment>
-		</Dropdown>
 	</div>
 
 	{#if player}

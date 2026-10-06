@@ -14,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>{ssrConfig.name} - Beat Saber leaderboard</title>
+	<title>snoresaber</title>
 </svelte:head>
 
 <article class="page-content" transition:fade|global>
