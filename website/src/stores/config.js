@@ -33,7 +33,7 @@ export const DEFAULT_CONFIG = {
 		rankedSortOptions: 'last',
 		scoresSortOptions: 'last',
 		attemptsSortOptions: 'last',
-		theme: 'ree-dark',
+		theme: 'snoresaber',
 		jumpDistanceMetric: 'jd',
 		oneclick: 'modassistant',
 		webPlayer: 'saberrank',

@@ -1,5 +1,5 @@
 export default {
-	name: 'snoresaber',
+	name: 'SnoreSaber',
 	domain: 'https://snoresaber.vercel.app',
 
 	leftSaberColor: 'rgba(168,32,32,1)',

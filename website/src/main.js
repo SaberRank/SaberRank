@@ -16,6 +16,7 @@ import './themes/mirror-low.less';
 import './themes/ree-dark.less';
 import './themes/unbounded.less';
 import './themes/flylight.less';
+import './themes/snoresaber.less';
 import 'atropos/css';
 
 let app = null;

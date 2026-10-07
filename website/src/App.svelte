@@ -19,8 +19,7 @@
 	import SimpleModal from './components/Common/SimpleModal.svelte';
 	import {Svrollbar} from 'svrollbar';
 	import {produce} from 'immer';
-	import TournamentTopBanner from './components/Common/TournamentTopBanner.svelte';
-	import {initReturnMorph} from './utils/view-transition';
+		import {initReturnMorph} from './utils/view-transition';
 
 	// Dynamic imports for pages
 	const pageImports = {
@@ -156,7 +155,6 @@
 
 <div bind:this={mobileTooltip} class="mobile-tooltip" />
 <div class="main-background" />
-<TournamentTopBanner />
 
 <!-- <BeatCancerTopBanner /> -->
 <!-- {#if $account?.player && $configStore.preferences.followersBecomingPublic}
@@ -303,15 +301,9 @@
 			<main bind:this={mainEl} class={$configStore?.preferences?.theme}>
 				<div class="ssr-page-container">
 					<Route path="/">
-						{#if $account?.player}
-							{#await pageImports.DashboardPage() then module}
-								<svelte:component this={module.default} />
-							{/await}
-						{:else if $account?.refreshError}
-							{#await pageImports.LandingPage() then module}
-								<svelte:component this={module.default} />
-							{/await}
-						{/if}
+						{#await pageImports.LandingPage() then module}
+							<svelte:component this={module.default} />
+						{/await}
 					</Route>
 					<Route path="/u/:initialPlayerId/*initialParams" let:params let:location>
 						{#await pageImports.PlayerPage() then module}
@@ -649,23 +641,9 @@
 	<Search />
 {/if}
 
-<link rel="stylesheet" href="/build/themes/{$configStore.preferences.theme}.css" />
+<link rel="stylesheet" href="/build/themes/snoresaber.css" />
 
-<footer class="site-footer">
-	<div class="footer-inner">
-		<a class="footer-brand" href="/" on:click|preventDefault={() => navigate('/')}>
-			<img src="/assets/snoresaber-logo-hd.png" alt="snoresaber" />
-			<span>snoresaber</span>
-		</a>
-		<div class="footer-links" aria-label="Footer navigation">
-			<a href="/privacy" on:click|preventDefault={() => navigate('/privacy')}>Privacy</a>
-			<a href="/help" on:click|preventDefault={() => navigate('/help')}>Help</a>
-			<a href="/socket" on:click|preventDefault={() => navigate('/socket')}>Scores feed</a>
-			<a href="https://github.com/SaberRank" target="_blank" rel="noreferrer">Source</a>
-		</div>
-		<span class="footer-copy">snoresaber</span>
-	</div>
-</footer>
+
 
 <style>
 	.reebanner {
