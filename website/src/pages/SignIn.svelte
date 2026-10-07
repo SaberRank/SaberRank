@@ -1,526 +1,78 @@
 <script>
-	import Button from '../components/Common/Button.svelte';
-	import createAccountStore from '../stores/saberrank/account';
-	import createOculusStore from '../stores/saberrank/oculususer';
-	import {formatDateRelative, dateFromUnix} from '../utils/date';
-	import {opt} from '../utils/js';
-	import {CURRENT_URL, BL_API_URL} from '../network/queues/saberrank/api-queue';
 	import {navigate} from 'svelte-routing';
-	import Dialog from '../components/Common/Dialog.svelte';
-	import Spinner from '../components/Common/Spinner.svelte';
-	import beatSaverSvg from '../resources/beatsaver.svg';
-	import steamSvg from '../resources/steam.svg';
-	import ContentBox from '../components/Common/ContentBox.svelte';
+	import account, {setSnoreProfile} from '../stores/snore-account';
 
-	export let action;
+	let query = '';
+	let loading = false;
+	let error = '';
+	let found = null;
 
-	document.body.scrollIntoView({behavior: 'smooth'});
-
-	const account = createAccountStore();
-	const oculus = createOculusStore();
-
-	let login;
-	let password;
-	let newPassword;
-	let newLogin = opt($account, 'login');
-	let suspendingDialogShown = false;
-	let token = null;
-	let showBeatSaverLogin = false;
-
-	function performAction() {
-		if (action == 'addHome') {
-			account.refresh(true);
-		}
-		if (action == 'oculuspc') {
-			const urlParams = new URLSearchParams(window.location.search);
-			token = urlParams.get('token');
-			oculus.fetchOculusUser(token);
-		}
+	async function connect() {
+		error = '';
+		found = null;
+		const value = query.trim();
+		if (!value) return;
+		loading = true;
+		try {
+			const endpoint = /^\d+$/.test(value)
+				? `/api/scoresaber/v2/players/${encodeURIComponent(value)}`
+				: `/api/scoresaber/v2/players/vanity/${encodeURIComponent(value)}`;
+			const response = await fetch(endpoint);
+			if (!response.ok) throw new Error(response.status === 404 ? 'Player not found.' : `ScoreSaber returned ${response.status}.`);
+			found = await response.json();
+		} catch (e) {
+			error = e?.message || 'Could not find that player.';
+		} finally { loading = false; }
 	}
 
-	function navigateToProfile(url) {
-		window.location.replace(CURRENT_URL + url);
+	function save() {
+		if (!found) return;
+		const profile = {
+			id: found.id || found.playerId,
+			name: found.name || found.playerNameInGame || 'Player',
+			country: found.country || '',
+			avatar: found.avatar || found.avatarUrl || '',
+			rank: found.rank || found.stats?.rank || 0,
+			pp: found.pp || found.stats?.pp || 0,
+		};
+		setSnoreProfile(profile);
+		navigate(`/u/${profile.id}`);
 	}
-
-	let oculusPcAction = 'signup';
-
-	$: loggedInPlayer = opt($account, 'id');
-	$: playerLink = $account?.player?.alias ?? loggedInPlayer;
-	$: socials = opt($account, 'player.playerInfo.socials');
-	$: error = opt($account, 'error') ?? $oculus?.error;
-	$: message = opt($account, 'message');
-	$: loading = opt($account, 'loading');
-	$: performAction();
 </script>
 
-<ContentBox cls="login-container login-page">
-	{#if !action || action == 'addHome'}
-		{#if !loggedInPlayer}
-			<div class="signup-title">Log In</div>
-			<div class="tips">Log in with Steam or the account you created in game.</div>
-			<div class="options">
-				<div class="login-option">
-					<form action={BL_API_URL + 'signin'} method="post">
-						<input type="hidden" name="Provider" value="Steam" />
-						<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
+<svelte:head><title>snore saber</title></svelte:head>
 
-						<Button type="primary" icon={steamSvg} label="Log In With Steam" />
-					</form>
-					<div class="sorting-options">
-						<span
-							class="beat-savior-reveal clickable"
-							class:opened={showBeatSaverLogin}
-							on:click={() => (showBeatSaverLogin = !showBeatSaverLogin)}
-							on:keydown={() => (showBeatSaverLogin = !showBeatSaverLogin)}
-							title="Show login with BeatSaver">
-							{#if showBeatSaverLogin}
-								I'm not a mapper
-							{:else}
-								Are you a mapper?
-							{/if}
+<div class="auth-page">
+	<div class="auth-card">
+		<img src="/assets/snoresaber-icon.png" alt="" class="mark" />
+		<div class="eyebrow">SNORE SABER PROFILE</div>
+		<h1>Connect your player</h1>
+		<p class="lead">Use your ScoreSaber player ID or vanity name. SnoreSaber stores only the public profile you choose to connect.</p>
 
-							<i class="fas fa-chevron-down" />
-						</span>
-					</div>
-
-					{#if showBeatSaverLogin}
-						<a href="/developer">Click here if you do not own the game</a>
-					{/if}
-				</div>
-				<div class="login-option with-line-to-left">
-					<form class="login-option" on:submit|preventDefault={() => account.logIn(login, password)}>
-						<div class="input-container">
-							<div class="cat">Login, may differ from username</div>
-							<input bind:value={login} placeholder="Login" />
-						</div>
-						<div class="input-container">
-							<div class="cat">Password</div>
-							<input type="password" bind:value={password} placeholder="Password" />
-						</div>
-						<Button iconFa="fas fa-arrow-right-to-bracket" label="Log In" on:click={() => account.logIn(login, password)} />
-					</form>
-					<a href="https://discord.com/channels/921820046345523311/951919251227295844">forgot password?</a>
-				</div>
+		<div class="field">
+			<label for="player">ScoreSaber player</label>
+			<div class="input-row">
+				<input id="player" bind:value={query} on:keydown={(e) => e.key === 'Enter' && connect()} placeholder="Player ID or vanity name" autocomplete="off" />
+				<button on:click={connect} disabled={loading}>{loading ? 'Finding…' : 'Find player'}</button>
 			</div>
-
-			{#if error}
-				<p class="error">{error}</p>
-			{/if}
-
-			<b>To use Quest mod - sign up in the mod preferences with new login and password </b>
-			<b>To log in with Oculus PC - <a href="https://saberrank.wiki/en/accounts/signup#website-1">check this instruction</a> </b>
-
-			<br />
-		{:else if loggedInPlayer > 70000000000000000}
-			{#if !$account.migrated}
-				<span>
-					If you are using the <b>Steam game</b> you are all set!<br />
-					Check <a class="inlineLink" href={'/u/' + playerLink}>your fancy profile </a>
-				</span>
-				<br />
-				<br />
-				<br />
-				<span>
-					If you are using Quest - you can migrate<br />account created in mod to this
-					<b class="inlineLink">Steam account.</b><br /><br />
-					Your current scores will migrate and<br />the new ones will be posted to the Steam acc.<br />
-					This is not required and there is no way to unmerge!
-				</span>
-				<div class="input-container">
-					Login
-					<input bind:value={login} placeholder="Login" />
-				</div>
-				<div class="input-container">
-					Password
-					<input type="password" bind:value={password} placeholder="Password" />
-				</div>
-				<Button iconFa="fas fa-plus-square" label="Migrate" on:click={() => account.migrate(login, password)} />
-			{:else}
-				Loading...
-				<span style="opacity: 0;">{navigateToProfile('/u/' + playerLink)}</span>
-			{/if}
-		{:else if loggedInPlayer < 30000000 || loggedInPlayer > 1000000000000000}
-			<span>
-				You can migrate this account to your Steam account.<br /><br />
-				Your current scores will migrate and<br />the new ones will be posted to the Steam account.<br /><br />
-				Or just use this account ¯\_(ツ)_/¯.<br />
-				You can change your avatar and name in <a class="inlineLink" href={'/u/' + playerLink}>your profile.</a>
-			</span>
-
-			<form action={BL_API_URL + 'signinmigrate'} method="post">
-				<input type="hidden" name="Provider" value="Steam" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fas fa-plus-square" label="Migrate to Steam" type="submit" />
-			</form>
-		{:else}
-			Loading...
-			<span style="opacity: 0;">{navigateToProfile('/u/' + playerLink)}</span>
-		{/if}
-	{:else if action == 'changePassword'}
-		{#if !$account.migrated}
-			<div class="input-container">
-				Login
-				<input bind:value={login} placeholder="Login" />
-			</div>
-			<div class="input-container">
-				Current password
-				<input type="password" bind:value={password} placeholder="Password" />
-			</div>
-			<div class="input-container">
-				New password
-				<input type="password" bind:value={newPassword} placeholder="New password" />
-			</div>
-
-			<Button iconFa="fas fa-plus-square" label="Change password" on:click={() => account.changePassword(login, password, newPassword)} />
-		{:else}
-			<div class="input-container">
-				Login
-				<input bind:value={login} placeholder="Login" />
-			</div>
-			<div class="input-container">
-				New password
-				<input type="password" bind:value={newPassword} placeholder="Password" />
-			</div>
-
-			<Button iconFa="fas fa-plus-square" label="Change password" on:click={() => account.changePasswordMigrated(login, newPassword)} />
-		{/if}
-	{:else if action == 'socials'}
-		{#if socials && socials.find(s => s.service == 'BeatSaver')}
-			{#if loggedInPlayer < 30000000 || loggedInPlayer > 1000000000000000}
-				<form action={BL_API_URL + 'user/unlink'} method="post">
-					<input type="hidden" name="Provider" value="BeatSaver" />
-					<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-					<Button icon={beatSaverSvg} label="Unlink BeatSaver" type="danger" />
-				</form>
-			{/if}
-		{:else}
-			<span>
-				Link BeatSaver to receive mapper role.<br />
-				And receive a profile badge if you are approved mapper.<br />
-			</span>
-
-			<form action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="BeatSaver" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fas fa-plus-square" label="Link to BeatSaver" type="submit" />
-			</form>
-		{/if}
-
-		<span>
-			Link social platforms to add buttons on your profile and<br />
-			in-game if you are Patreon supporter.
-		</span>
-		{#if socials && socials.find(s => s.service == 'Discord')}
-			<form action={BL_API_URL + 'user/unlink'} method="post">
-				<input type="hidden" name="Provider" value="Discord" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fab fa-discord" label="Unlink Discord" type="danger" />
-			</form>
-		{:else}
-			<form class="blurple" action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="Discord" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button type="blurple" iconFa="fab fa-discord" label="Link Discord" />
-			</form>
-		{/if}
-		{#if socials && socials.find(s => s.service == 'Twitch')}
-			<form action={BL_API_URL + 'user/unlink'} method="post">
-				<input type="hidden" name="Provider" value="Twitch" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fab fa-twitch" label="Unlink Twitch" type="danger" />
-			</form>
-		{:else}
-			<form class="twitch" action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="Twitch" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button type="twitch" iconFa="fab fa-twitch" label="Link Twitch" />
-			</form>
-		{/if}
-		{#if socials && socials.find(s => s.service == 'YouTube')}
-			<form action={BL_API_URL + 'user/unlink'} method="post">
-				<input type="hidden" name="Provider" value="Google" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fab fa-youtube" label="Unlink YouTube" type="danger" />
-			</form>
-		{:else}
-			<form class="youtube" action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="Google" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button type="youtube" iconFa="fab fa-youtube" label="Link YouTube" />
-			</form>
-		{/if}
-		{#if socials && socials.find(s => s.service == 'Twitter')}
-			<form action={BL_API_URL + 'user/unlink'} method="post">
-				<input type="hidden" name="Provider" value="Twitter" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fab fa-twitter" label="Unlink Twitter" type="danger" />
-			</form>
-		{:else}
-			<form class="twitter" action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="Twitter" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button type="twitter" iconFa="fab fa-twitter" label="Link Twitter" />
-			</form>
-		{/if}
-		{#if socials && socials.find(s => s.service == 'BlueSky')}
-			<form action={BL_API_URL + 'user/unlink'} method="post">
-				<input type="hidden" name="Provider" value="BlueSky" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fab fa-bluesky" label="Unlink BlueSky" type="danger" />
-			</form>
-		{:else}
-			<form class="twitter" action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="BlueSky" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button type="twitter" iconFa="fab fa-bluesky" label="Link BlueSky" />
-			</form>
-		{/if}
-		{#if socials && socials.find(s => s.service == 'GitHub')}
-			<form action={BL_API_URL + 'user/unlink'} method="post">
-				<input type="hidden" name="Provider" value="GitHub" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button iconFa="fab fa-github" label="Unlink GitHub" type="danger" />
-			</form>
-		{:else}
-			<form class="github" action={BL_API_URL + 'signin'} method="post">
-				<input type="hidden" name="Provider" value="GitHub" />
-				<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-				<Button type="github" iconFa="fab fa-github" label="Link GitHub" />
-			</form>
-		{/if}
-	{:else if action == 'mylogin'}
-		<span>
-			Your current login is: <b>{$account.login}</b><br />
-			It's the username you use to sign in with.<br />
-			Your profile name is a different thing!<br />
-		</span>
-
-		<div class="input-container">
-			You may change it once a week.<br />Make sure you don't use special characters not available in-game keyboard.
-			<input bind:value={newLogin} placeholder="New login" />
 		</div>
 
-		<Button iconFa="fas fa-plus-square" label="Change login" on:click={() => account.changeLogin(newLogin)} />
-	{:else if action == 'autoban'}
-		{#if $account.ban}
-			Your account was suspended {formatDateRelative(dateFromUnix($account.ban.timeset))}<br />
-			You can activate it after a week has passed.
+		{#if error}<div class="error">{error}</div>{/if}
 
-			<Button iconFa="fas fa-plus-square" label="Try activate my account" on:click={() => account.unbanPlayer()} />
-		{:else}
-			You can suspend your SaberRank account. It will disappear in the leaderboards and ranking.<br />
-			And you won't be able to submit scores.<br /><br />
-
-			<b
-				>You can activate it back only after the week of suspension.<br />
-				All account data will be deleted after 6 months of suspension!</b
-			><br />
-
-			Account suspension may take up to 3 minutes.
-
-			<Button
-				iconFa="fas fa-plus-square"
-				label="Yes, suspend my account"
-				on:click={() => (suspendingDialogShown = !suspendingDialogShown)} />
-		{/if}
-		<div style="display: flex; grid-gap: 0.25em;">
-			<a href="mailto:golova@golova.dev">Contact me </a>if you need to delete your data immediately.
-		</div>
-	{:else if action == 'oculuspc'}
-		{#if $oculus.name}
-			{#if !$oculus.migrated}
-				<span>
-					{$oculus.name}, hi! 👋<br /><br />
-					Please select preffered way to login on the website.<br />
-				</span>
-				<b>Steam account.</b>
-				<span>
-					You don't need to own the game.<br />
-					Your ID will be changed to the Steam ID<br />
-				</span>
-
-				<form action={BL_API_URL + 'signinmigrate/oculuspc'} method="post">
-					<input type="hidden" name="Provider" value="Steam" />
-					<input type="hidden" name="Token" value={token} />
-					<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-
-					<Button iconFa="fas fa-plus-square" label="Use Steam" type="submit" />
-				</form>
-
-				<b>Login and password.</b>
-				New login and password just for this website.<br />
-				Your ID will remain the same.<br />
-				Or if you have existing Quest account.<br />
-				<form action={BL_API_URL + 'signinoculus/oculuspc'} method="post">
-					<input type="hidden" name="action" value={oculusPcAction} />
-					<input type="hidden" name="Token" value={token} />
-					<input type="hidden" name="ReturnUrl" value={CURRENT_URL + '/signin/addHome'} />
-					<div class="input-container">
-						Website Login
-						<input name="login" bind:value={login} placeholder="Login" />
-					</div>
-					<div class="input-container">
-						New password
-						<input name="password" type="password" bind:value={password} placeholder="Password" />
-					</div>
-					<div class="button-container">
-						<Button
-							iconFa="fas fa-plus-square"
-							label="Sign up"
-							type="submit"
-							on:click={() => {
-								oculusPcAction = 'signup';
-							}} />
-					</div>
-					<div class="button-container">
-						<Button
-							iconFa="fas fa-right-to-bracket"
-							label="Log in with Quest"
-							type="submit"
-							on:click={() => {
-								oculusPcAction = 'login';
-							}} />
-					</div>
-				</form>
-			{:else}
-				<span style="opacity: 0;">{navigateToProfile('/u/' + $oculus.migratedId)}</span>
-			{/if}
-		{:else}
-			Loading...
-		{/if}
-	{/if}
-
-	{#if suspendingDialogShown}
-		<Dialog
-			type="confirm"
-			title="Are you sure?"
-			okButton="Yeah!"
-			cancelButton="Hell no!"
-			on:confirm={() => {
-				account.banPlayer();
-				suspendingDialogShown = false;
-			}}
-			on:cancel={() => (suspendingDialogShown = false)}>
-			<div slot="content">
-				<div>Your SaberRank account will be suspended!</div>
+		{#if found}
+			<div class="preview">
+				{#if found.avatar || found.avatarUrl}<img src={found.avatar || found.avatarUrl} alt="" />{:else}<span>{(found.name || '?')[0]}</span>{/if}
+			<div class="preview-copy"><b>{found.name || found.playerNameInGame}</b><small>#{found.rank || found.stats?.rank || '—'} · {Number(found.pp || found.stats?.pp || 0).toFixed(2)} PP</small></div>
+			<button class="connect" on:click={save}>Use this profile</button>
 			</div>
-		</Dialog>
-	{/if}
+		{/if}
 
-	{#if loading}
-		<Spinner />
-	{/if}
-	{#if error}
-		<p class="error">{error}</p>
-	{/if}
-	{#if message}
-		<p class="messagep">{message}</p>
-	{/if}
-</ContentBox>
+		<div class="note"><strong>No password is requested here.</strong> This is a SnoreSaber profile connection, not a copy of ScoreSaber authentication.</div>
+	</div>
+</div>
 
 <style>
-	.signup-title {
-		font-size: larger;
-	}
-	.options {
-		display: flex;
-	}
-	.login-option {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-direction: column;
-		grid-gap: 1em;
-		padding: 1.4em;
-	}
-	.with-line-to-left {
-		border-left: 0.3em solid #cbc7c7;
-	}
-	b {
-		margin-left: 1em;
-		margin-right: 1em;
-	}
-	span {
-		margin-left: 1em;
-		margin-right: 1em;
-	}
-
-	:global(.login-container) {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-direction: column;
-		grid-gap: 1em;
-	}
-	.error {
-		color: red;
-	}
-	.messagep {
-		color: green;
-	}
-
-	.input-container {
-		display: grid;
-		width: 16em;
-	}
-
-	.button-container {
-		display: flex;
-		justify-content: center;
-		margin: 1em;
-	}
-
-	.inlineLink {
-		display: contents;
-	}
-	.twitch :global(.button) {
-		font-size: 0.875em;
-		width: max-content;
-	}
-	.beat-savior-reveal {
-		align-self: end;
-		cursor: pointer;
-	}
-
-	.beat-savior-reveal > i {
-		transition: transform 500ms;
-		transform-origin: 0.42em 0.5em;
-	}
-
-	.beat-savior-reveal.opened > i {
-		transform: rotateZ(180deg);
-	}
-
-	.beat-saver-description {
-		margin-bottom: 1em;
-		flex-wrap: wrap;
-		width: 18em;
-		text-align: center;
-	}
-
-	@media screen and (max-width: 767px) {
-		.options {
-			flex-direction: column;
-		}
-
-		.with-line-to-left {
-			border-top: 0.3em solid #cbc7c7;
-			border-left: none;
-		}
-	}
+	.auth-page{min-height:calc(100vh - 82px);display:grid;place-items:center;padding:50px 20px;background:radial-gradient(circle at 50% 0%,rgba(239,114,187,.12),transparent 34rem)}
+	.auth-card{width:min(700px,100%);padding:42px;border:1px solid rgba(255,255,255,.09);border-radius:24px;background:linear-gradient(145deg,rgba(19,20,32,.98),rgba(9,10,17,.98));box-shadow:0 30px 90px rgba(0,0,0,.4)}
+	.mark{width:62px;height:62px;object-fit:contain;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:.24em;color:#f083c6;font-weight:800}h1{font-size:42px;margin:10px 0 10px;background:linear-gradient(90deg,#fff,#f58acb,#9c84ff);-webkit-background-clip:text;background-clip:text;color:transparent}.lead{color:#aaa9bb;line-height:1.6;margin-bottom:30px}.field label{display:block;font-size:13px;margin-bottom:9px;color:#d9d6e2}.input-row{display:flex;gap:10px}.input-row input{flex:1;min-width:0;height:50px;border:1px solid rgba(180,160,255,.2);border-radius:12px;background:#0d0e17;color:#fff;padding:0 15px;outline:none}.input-row input:focus{border-color:#ef72bb;box-shadow:0 0 0 3px rgba(239,114,187,.1)}.input-row button,.connect{border:0;border-radius:12px;background:linear-gradient(90deg,#ef72bb,#8f78ff);color:#130b15;font-weight:800;padding:0 20px;cursor:pointer}.input-row button{height:50px}.input-row button:disabled{opacity:.55;cursor:wait}.error{margin-top:16px;padding:12px;border-radius:10px;background:rgba(255,70,120,.09);border:1px solid rgba(255,70,120,.2);color:#ff9ebd}.preview{display:flex;align-items:center;gap:13px;margin-top:22px;padding:13px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.025)}.preview img,.preview>span{width:48px;height:48px;border-radius:50%;object-fit:cover}.preview>span{display:grid;place-items:center;background:linear-gradient(135deg,#ef72bb,#8f78ff);font-weight:900}.preview-copy{flex:1;min-width:0}.preview-copy b,.preview-copy small{display:block}.preview-copy small{margin-top:4px;color:#9695a6;font-size:11px}.connect{height:42px}.note{margin-top:25px;padding-top:20px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;line-height:1.55;color:#888797}.note strong{color:#c6c3d0}@media(max-width:600px){.auth-card{padding:28px 22px}h1{font-size:33px}.input-row{flex-direction:column}.input-row button{width:100%}.preview{flex-wrap:wrap}.connect{width:100%}}
 </style>

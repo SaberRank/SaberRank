@@ -1,5 +1,5 @@
 <script>
-	import {onMount, setContext} from 'svelte';
+	import {afterUpdate, onMount, setContext} from 'svelte';
 	import {Router, Route, navigate} from 'svelte-routing';
 	import Notifications from 'svelte-notifications';
 	import {configStore} from './stores/config';
@@ -23,7 +23,7 @@
 
 	// Dynamic imports for pages
 	const pageImports = {
-		RankingPage: () => import('./pages/Ranking.svelte'),
+		RankingPage: () => import('./pages/SnoreRanking.svelte'),
 		EventPage: () => import('./pages/Event.svelte'),
 		LoveLivePage: () => import('./pages/LoveLive.svelte'),
 		RocketLeaguePackPage: () => import('./pages/RocketLeaguePack.svelte'),
@@ -33,7 +33,7 @@
 		ClanPage: () => import('./pages/Clan.svelte'),
 		ClansPage: () => import('./pages/Clans.svelte'),
 		FollowedPage: () => import('./pages/Followed.svelte'),
-		PlayerPage: () => import('./pages/Player.svelte'),
+		PlayerPage: () => import('./pages/SnorePlayer.svelte'),
 		NotFoundPage: () => import('./pages/NotFound.svelte'),
 		PrivacyPage: () => import('./pages/Privacy.svelte'),
 		AboutPage: () => import('./pages/About.svelte'),
@@ -53,7 +53,7 @@
 		SurveyAchievementPage: () => import('./pages/SurveyAchievement.svelte'),
 		PatreonPage: () => import('./pages/Patreon.svelte'),
 		DeveloperPortalPage: () => import('./pages/DeveloperPortal.svelte'),
-		MapsPortal: () => import('./pages/MapsPortal.svelte'),
+		MapsPortal: () => import('./pages/SnoreMaps.svelte'),
 		MapsPage: () => import('./pages/MapsList.svelte'),
 		MapsTrending: () => import('./pages/MapsTrending.svelte'),
 		Replayed: () => import('./pages/Replayed.svelte'),
@@ -66,7 +66,7 @@
 		TibytesPresets: () => import('./pages/TibytesPresets.svelte'),
 		BuildingBlocks2024: () => import('./pages/BuildingBlocks2024.svelte'),
 		ProjectTree: () => import('./pages/ProjectTree.svelte'),
-		ScoresPage: () => import('./pages/Scores.svelte'),
+		ScoresPage: () => import('./pages/SnoreScores.svelte'),
 		ScorePage: () => import('./pages/Score.svelte'),
 		NominatedScores: () => import('./pages/NominatedScores.svelte'),
 		BadgesPage: () => import('./pages/Badges.svelte'),
@@ -130,6 +130,11 @@
 				event.stopPropagation();
 			}
 		});
+	});
+
+	// SnoreSaber keeps one browser-tab identity everywhere; individual pages do not rename the tab.
+	afterUpdate(() => {
+		document.title = 'snore saber';
 	});
 
 	let openModal = null;
