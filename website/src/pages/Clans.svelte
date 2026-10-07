@@ -170,7 +170,7 @@
 </script>
 
 <svelte:head>
-	<title>Clans / {currentPage} - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <section class="align-content">

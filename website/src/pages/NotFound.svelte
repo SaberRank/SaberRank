@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>404 | You missed - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <article transition:fade|global>

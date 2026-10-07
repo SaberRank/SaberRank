@@ -34,9 +34,9 @@
 
 <svelte:head>
 	{#if isSupporter}
-		<title>Supporting {ssrConfig.name}</title>
+		<title>snore saber</title>
 	{:else}
-		<title>Thank you for supporting {ssrConfig.name}</title>
+		<title>snore saber</title>
 	{/if}
 </svelte:head>
 

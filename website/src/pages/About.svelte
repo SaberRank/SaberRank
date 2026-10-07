@@ -89,7 +89,7 @@
 </script>
 
 <svelte:head>
-	<title>About - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 {#snippet members(players)}

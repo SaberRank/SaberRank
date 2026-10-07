@@ -77,7 +77,7 @@
 </script>
 
 <svelte:head>
-	<title>{player?.name ?? 'Player'} on {song?.name ?? 'map'} - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 {#if score}

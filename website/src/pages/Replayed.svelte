@@ -438,7 +438,7 @@
 </script>
 
 <svelte:head>
-	<title>SaberRank rePlayed 2024</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <section class="align-content">

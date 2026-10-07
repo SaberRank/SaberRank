@@ -2,7 +2,7 @@
 	import {onMount} from 'svelte';
 	import {navigate} from 'svelte-routing';
 	import {search} from '../../stores/search';
-	import snoreAccount, {clearSnoreProfile} from '../../stores/snore-account';
+	import snoreAccount, {logoutSnoreAccount} from '../../stores/snore-account';
 
 	let accountOpen = false;
 	let mobileOpen = false;
@@ -64,14 +64,14 @@
 
 		<div class="account-wrap">
 			<button class="account-button" on:click={() => (accountOpen = !accountOpen)} aria-expanded={accountOpen}>
-				{#if $snoreAccount?.avatar}<img src={$snoreAccount.avatar} alt="" />{:else}<span class="user-dot"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.5-4 2.8-6 7-6s6.5 2 7 6"/></svg></span>{/if}
-				<span class="account-name">{$snoreAccount?.name ?? 'Account'}</span><span class="chevron">⌄</span>
+				{#if $snoreAccount?.avatarUrl}<img src={$snoreAccount.avatarUrl} alt="" />{:else}<span class="user-dot"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.5-4 2.8-6 7-6s6.5 2 7 6"/></svg></span>{/if}
+				<span class="account-name">{$snoreAccount?.displayName ?? 'Account'}</span><span class="chevron">⌄</span>
 			</button>
 			{#if accountOpen}
 				<div class="account-menu">
 					{#if $snoreAccount}
-						<button on:click={() => go(`/u/${$snoreAccount.id}`)}>Profile</button>
-						<button on:click={() => { clearSnoreProfile(); accountOpen = false; }}>Disconnect profile</button>
+						<button on:click={() => go(`/u/${$snoreAccount.scoresaberId}`)}>Profile</button>
+						<button on:click={() => { logoutSnoreAccount(); accountOpen = false; }}>Disconnect profile</button>
 					{:else}<button on:click={() => go('/signin')}>Connect profile</button>{/if}
 				</div>
 			{/if}

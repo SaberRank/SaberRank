@@ -106,8 +106,8 @@
 			</div>
 		</section>
 
-		{#if $snoreAccount}
-			<section class="connected"><div><span class="live-dot"></span> Connected profile</div><button on:click={() => go(`/u/${$snoreAccount.id}`)}><strong class="gradient-name">{$snoreAccount.name}</strong><span>#{format($snoreAccount.rank)} · {pp($snoreAccount.pp)} PP</span> →</button></section>
+		{#if $snoreAccount?.scoresaberId}
+			<section class="connected"><div><span class="live-dot"></span> Connected profile</div><button on:click={() => go(`/u/${$snoreAccount.scoresaberId}`)}><strong class="gradient-name">{$snoreAccount.displayName}</strong><span>Steam-linked account · ScoreSaber profile connected</span> →</button></section>
 		{:else}
 			<section class="connect-banner"><div><span class="eyebrow">YOUR PROFILE</span><h3>Make SnoreSaber yours.</h3><p>Connect a public ScoreSaber profile and keep your own SnoreSaber profile shortcut.</p></div><button on:click={() => go('/signin')}>Connect profile →</button></section>
 		{/if}

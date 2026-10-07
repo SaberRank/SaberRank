@@ -1,5 +1,6 @@
 <script>
 	import {afterUpdate, onMount, setContext} from 'svelte';
+	import {loadSnoreAccount} from './stores/snore-account';
 	import {Router, Route, navigate} from 'svelte-routing';
 	import Notifications from 'svelte-notifications';
 	import {configStore} from './stores/config';
@@ -85,6 +86,7 @@
 
 	let mobileTooltip = null;
 	onMount(() => {
+		loadSnoreAccount();
 		initReturnMorph();
 		const hideTooltip = () => (mobileTooltip ? (mobileTooltip.style.display = 'none') : null);
 		const showTooltip = (contents, x, y) => {

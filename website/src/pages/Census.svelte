@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>{title} - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <div>

@@ -154,7 +154,7 @@
 </script>
 
 <svelte:head>
-	<title>Event / {currentPage} - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <section class="align-content">

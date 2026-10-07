@@ -557,7 +557,7 @@
 </script>
 
 <svelte:head>
-	<title>Map Suggestions</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <section class="align-content">

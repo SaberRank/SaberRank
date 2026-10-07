@@ -1188,7 +1188,7 @@
 </script>
 
 <svelte:head>
-	<title>Staff Dashboard</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <section class="align-content">

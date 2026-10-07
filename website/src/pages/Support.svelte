@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>Help - {ssrConfig.name}</title>
+	<title>snore saber</title>
 </svelte:head>
 
 <article bind:this={articleEl} transition:fade|global>
