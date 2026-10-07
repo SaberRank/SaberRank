@@ -1,11 +1,7 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "public",
   "framework": null,
-  "installCommand": "npm install --legacy-peer-deps",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  "installCommand": "npm install --legacy-peer-deps"
 }
