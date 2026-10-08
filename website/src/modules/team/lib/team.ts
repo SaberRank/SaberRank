@@ -50,6 +50,15 @@ const fetchTeamJson = createGithubJsonFetcher(
    'github team fetch'
 );
 
-export function fetchTeam() {
-   return fetchTeamJson();
+const LOCAL_TEAM: TeamData = {
+   TeamMembers: {
+      Backend: [{ Name: 'YawningSylveon', ProfilePicture: '/assets/snoresaber-icon.png', Discord: null, GitHub: 'SaberRank/SaberRank', Twitch: null, Twitter: null, YouTube: null }],
+      Frontend: [{ Name: 'SnoreSaber Contributors', ProfilePicture: '/assets/snoresaber-icon.png', Discord: null, GitHub: 'SaberRank/SaberRank', Twitch: null, Twitter: null, YouTube: null }],
+      Mod: [], PPv3: [], Admin: [], NAT: [], RT: [], QAT: [], CAT: [], CCT: []
+   }
+};
+
+export async function fetchTeam() {
+   const remote = await fetchTeamJson();
+   return Result.isOk(remote) ? remote : Result.ok(LOCAL_TEAM);
 }

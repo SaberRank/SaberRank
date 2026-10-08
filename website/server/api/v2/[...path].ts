@@ -177,7 +177,7 @@ async function fetchSteamProfile(steamId: string) {
 }
 
 function dbPlayer(r: any) {
-  const publicId = Number(r.player_number || r.id);
+  const publicId = String(r.player_number ?? r.id);
   return {
     id: publicId,
     playerId: publicId,
@@ -392,10 +392,36 @@ export default defineHandler(async (event: any) => {
     const p = players.find((x) => x.vanity === slug || x.name.toLowerCase() === slug);
     return p ? json(p) : json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
   }
+  if (route.startsWith('/players/') && route.endsWith('/profile') && method === 'GET') {
+    const seg = route.split('/');
+    const requestedId = decodeURIComponent(seg[2]);
+    if (sql) {
+      const pr: any[] = await sql`SELECT * FROM players WHERE id=${requestedId} OR player_number::text=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+      if (!pr[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+      const p = dbPlayer(pr[0]);
+      const historyRows: any[] = await sql`
+        SELECT rank, pp, total_score, total_ranked_score, total_plays, average_accuracy, created_at
+        FROM players WHERE id=${pr[0].id} LIMIT 1`;
+      const h = historyRows[0];
+      const history = h ? [{
+        rank: Number(h.rank || 0), totalPP: Number(h.pp || 0), totalScore: String(h.total_score || 0),
+        totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: 0,
+        totalPlayedRankedLeaderboards: 0, totalSubmittedPlays: Number(h.total_plays || 0),
+        totalReplayViews: 0, averageAccuracy: Number(h.average_accuracy || 0),
+        weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
+        estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
+      }] : [];
+      return json({ player: { ...p, pinnedScores: [], followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [] }, history, aliases: [] });
+    }
+    const p = players.find((x) => x.id === requestedId || String(x.player_number) === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
+    if (!p) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    return json({ player: { ...p, pinnedScores: [], followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [] }, history: [], aliases: [] });
+  }
+
   if (route.startsWith('/players/') && method === 'GET') {
     const seg = route.split('/'); const id = decodeURIComponent(seg[2]);
     if (sql) {
-      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} OR player_number::text=${id} LIMIT 1`;
+      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} OR player_number::text=${id} OR steam_id=${id} LIMIT 1`;
       if (!pr[0]) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
       const p = dbPlayer(pr[0]);
       if (seg[3] === 'scores') {
