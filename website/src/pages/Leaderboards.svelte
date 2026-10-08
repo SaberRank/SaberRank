@@ -696,7 +696,7 @@
 						<i class="fas fa-star" />
 						<span>Ratings</span>
 					</div>
-					<i class="fas fa-chevron-{isStarsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isStarsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isStarsFilterOpen}
@@ -846,7 +846,7 @@
 						<i class="fas fa-calendar-alt" />
 						<span>Date</span>
 					</div>
-					<i class="fas fa-chevron-{isDateFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isDateFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isDateFilterOpen}
@@ -885,7 +885,7 @@
 						<i class="fas fa-tags" />
 						<span>Categories</span>
 					</div>
-					<i class="fas fa-chevron-{isCategoryFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isCategoryFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isCategoryFilterOpen}
@@ -915,7 +915,7 @@
 						<i class="fas fa-list-check" />
 						<span>Requirements</span>
 					</div>
-					<i class="fas fa-chevron-{isRequirementsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isRequirementsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isRequirementsFilterOpen}
@@ -972,7 +972,7 @@
 						<i class="fas fa-list" />
 						<span>Generate Playlist</span>
 					</div>
-					<i class="fas fa-chevron-{isPlaylistOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isPlaylistOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isPlaylistOpen}

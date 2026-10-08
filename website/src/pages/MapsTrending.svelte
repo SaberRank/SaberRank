@@ -127,7 +127,7 @@
 			</a>
 			<div class="maps-trending-list darkened-background">
 				{#each topPlayedToday as map, idx (map.index)}
-					<div class="maps-trending-section-map {idx != 0 ? 'maps-trending-section-map-not-first' : ''}">
+					<div class={`maps-trending-section-map ${idx != 0 ? 'maps-trending-section-map-not-first' : ''}`}>
 						<div class="maps-trending-section-map-number">{idx + 1}.</div>
 						<MapCard {idx} {map} sortBy="playcount" />
 					</div>
@@ -141,7 +141,7 @@
 			</a>
 			<div class="maps-trending-list darkened-background">
 				{#each topPlayedThisWeek as map, idx (map.index)}
-					<div class="maps-trending-section-map {idx != 0 ? 'maps-trending-section-map-not-first' : ''}">
+					<div class={`maps-trending-section-map ${idx != 0 ? 'maps-trending-section-map-not-first' : ''}`}>
 						<div class="maps-trending-section-map-number">{idx + 1}.</div>
 						<MapCard {idx} {map} sortBy="playcount" />
 					</div>
@@ -155,7 +155,7 @@
 			</a>
 			<div class="maps-trending-list darkened-background">
 				{#each topPlayedNewMaps as map, idx (map.index)}
-					<div class="maps-trending-section-map {idx != 0 ? 'maps-trending-section-map-not-first' : ''}">
+					<div class={`maps-trending-section-map ${idx != 0 ? 'maps-trending-section-map-not-first' : ''}`}>
 						<div class="maps-trending-section-map-number">{idx + 1}.</div>
 						<MapCard {idx} {map} sortBy="playcount" />
 					</div>
@@ -171,7 +171,7 @@
 			</a>
 			<div class="maps-trending-list darkened-background">
 				{#each topBeatSaverTrending as map, idx (map.index)}
-					<div class="maps-trending-section-map {idx != 0 ? 'maps-trending-section-map-not-first' : ''}">
+					<div class={`maps-trending-section-map ${idx != 0 ? 'maps-trending-section-map-not-first' : ''}`}>
 						<div class="maps-trending-section-map-number">{idx + 1}.</div>
 						<MapCard {idx} {map} sortBy="upvotes" />
 					</div>
@@ -185,7 +185,7 @@
 			</a>
 			<div class="maps-trending-list darkened-background">
 				{#each topVotedNewMaps as map, idx (map.index)}
-					<div class="maps-trending-section-map {idx != 0 ? 'maps-trending-section-map-not-first' : ''}">
+					<div class={`maps-trending-section-map ${idx != 0 ? 'maps-trending-section-map-not-first' : ''}`}>
 						<div class="maps-trending-section-map-number">{idx + 1}.</div>
 						<MapCard {idx} {map} sortBy="voting" />
 					</div>

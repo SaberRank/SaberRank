@@ -73,7 +73,7 @@
 										</div>
 									{:else}
 										<div class="badge-player badge-player-count">
-											<div class="overlapping-avatars {badge.players.length > 5 ? 'more-avatars' : ''}">
+											<div class={`overlapping-avatars ${badge.players.length > 5 ? 'more-avatars' : ''}`}>
 												{#each badge.players.slice(0, 5) as player}
 													<img loading="lazy" src={player.avatar} alt={player.name} class="player-avatar overlapping-avatar" />
 												{/each}

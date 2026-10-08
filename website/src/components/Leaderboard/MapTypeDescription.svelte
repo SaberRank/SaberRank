@@ -9,8 +9,8 @@
 
 {#if type}
 	{#each typeList as type, idx}
-		<span class="type {cram ? 'cram' : ''}" style="color: {type.textColor}; background-color: {type.backgroundColor}; border: 2px solid {type.foregroundColor};" title={type.title} on:click>
-			<span class="icon {!cram ? 'cram' : ''}">
+		<span class={`type ${cram ? 'cram' : ''}`} style="color: {type.textColor}; background-color: {type.backgroundColor}; border: 2px solid {type.foregroundColor};" title={type.title} on:click>
+			<span class={`icon ${!cram ? 'cram' : ''}`}>
 				<div class={type.icon} title={type.title} />
 			</span>
 			{#if cram}

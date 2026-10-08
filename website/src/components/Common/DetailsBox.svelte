@@ -3,7 +3,7 @@
 	export let cls = null;
 </script>
 
-<div class="details-box {cls ?? ''}" bind:this={box}>
+<div class={`details-box ${cls ?? ''}`} bind:this={box}>
 	<slot />
 </div>
 

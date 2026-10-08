@@ -16,7 +16,7 @@
 </script>
 
 {#if filteredRoles?.length}
-	<a href="/about" class="roles-badge {editModel ? 'editing' : ''}">
+	<a href="/about" class={`roles-badge ${editModel ? 'editing' : ''}`}>
 		{#each filteredRoles as role, idx}
 			{#if idx > 0}
 				<div class="separator" />

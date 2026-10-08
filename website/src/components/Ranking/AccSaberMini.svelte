@@ -62,7 +62,7 @@
 			{#if isLoading}
 				<Spinner />
 			{/if}
-			<div class="bullets {currentCategoryName}">
+			<div class={`bullets ${currentCategoryName}`}>
 				{#each categoriesOrder as card, cardIdx}
 					<span title="{capitalize(card)} acc" class:active={card === currentCategoryName} on:click={() => (currentCategoryName = card)} />
 				{/each}

@@ -94,7 +94,7 @@
 </script>
 
 {#if score}
-	<div class="player-score {isBot ? 'bot' : ''} {isTemporary ? 'temporary' : ''}" class:highlight>
+	<div class={`player-score ${isBot ? 'bot' : ''} ${isTemporary ? 'temporary' : ''}`} class:highlight>
 		<div class="mobile-first-line">
 			<div class="rank with-badge">
 				<Badge

@@ -725,7 +725,7 @@
 						<i class="fas fa-tags" />
 						<span>Categories</span>
 					</div>
-					<i class="fas fa-chevron-{isCategoryFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isCategoryFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isCategoryFilterOpen}
@@ -755,7 +755,7 @@
 						<i class="fas fa-list-check" />
 						<span>Requirements</span>
 					</div>
-					<i class="fas fa-chevron-{isRequirementsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isRequirementsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isRequirementsFilterOpen}
@@ -785,7 +785,7 @@
 						<i class="fas fa-crosshairs" />
 						<span>Acc Range</span>
 					</div>
-					<i class="fas fa-chevron-{isAccFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isAccFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isAccFilterOpen}
@@ -844,7 +844,7 @@
 						<i class="fas fa-star" />
 						<span>Ratings</span>
 					</div>
-					<i class="fas fa-chevron-{isStarsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isStarsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isStarsFilterOpen}
@@ -1006,7 +1006,7 @@
 						<i class="fas fa-m" />
 						<span>Modifiers</span>
 					</div>
-					<i class="fas fa-chevron-{isModifiersFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isModifiersFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isModifiersFilterOpen}
@@ -1028,7 +1028,7 @@
 						<i class="fas fa-calendar-alt" />
 						<span>Date posted</span>
 					</div>
-					<i class="fas fa-chevron-{isDateFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isDateFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isDateFilterOpen}

@@ -7,7 +7,7 @@
 </script>
 
 <div
-	class="content-box {cls ?? ''}"
+	class={`content-box ${cls ?? ''}`}
 	bind:this={box}
 	style="--box-background: {background}; {zIndex != 1 ? 'z-index: ' + zIndex : ''}"
 	{id}

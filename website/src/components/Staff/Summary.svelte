@@ -90,7 +90,7 @@
 				{#each voters as vote}
 					{#if $playersCache[vote.playerId]}
 						<img
-							class="voter {vote.value == 1 ? 'positive-vote' : vote.value == 3 ? 'negative-vote' : 'neutral-vote'}"
+							class={`voter ${vote.value == 1 ? 'positive-vote' : vote.value == 3 ? 'negative-vote' : 'neutral-vote'}`}
 							src={$playersCache[vote.playerId].avatar} />
 					{/if}
 				{/each}

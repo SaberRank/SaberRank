@@ -164,11 +164,11 @@
 			{@const bswc2025 = eventId == 69 || eventId == 70 || eventId == 71 || eventId == 72 || eventId == 74}
 			{@const showFlags = bswc2024 || bswc2025}
 			<div
-				class="ranking-grid-row {showFlags || (!noIcons && $configStore.rankingList.showFriendsButton)
+				class={`ranking-grid-row ${showFlags || (!noIcons && $configStore.rankingList.showFriendsButton)
 					? 'with-friends-button'
-					: ''} {eventId == 50 && (player.playerInfo.rank == 1 || player.playerInfo.rank == 10 || player.playerInfo.rank == 50)
+					: ''} ${eventId == 50 && (player.playerInfo.rank == 1 || player.playerInfo.rank == 10 || player.playerInfo.rank == 50)
 					? 'event-winner'
-					: ''} {type}-rating"
+					: ''} ${type}-rating`}
 				in:fly|global={{delay: idx * 10, x: animationSign * 100}}>
 				<PlayerCard
 					{player}

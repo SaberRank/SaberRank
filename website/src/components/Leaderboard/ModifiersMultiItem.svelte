@@ -17,7 +17,7 @@
 
 {#each value as item, i}
 	<div
-		class="multiSelectItem {activeValue === i ? 'active' : ''} {isDisabled ? 'disabled' : ''}"
+		class={`multiSelectItem ${activeValue === i ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
 		on:click={event => (multiFullItemClearable ? handleClear(i, event) : {})}>
 		<div class="multiSelectItem_label">
 			<span title={item.label}>{item.value}</span>

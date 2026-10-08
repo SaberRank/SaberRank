@@ -20,7 +20,7 @@
 </script>
 
 {#if avatar}
-	<figure class="image {cls}" {title} on:click>
+	<figure class={`image ${cls}`} {title} on:click>
 		<img src={avatarUrl} loading="lazy" alt="" />
 		{#if overlayUrl}
 			<img
@@ -35,7 +35,7 @@
 		{/if}
 	</figure>
 {:else if clan}
-	<figure class="image {cls}" on:click>
+	<figure class={`image ${cls}`} on:click>
 		<img src={clanAvatar} loading="lazy" alt="" />
 	</figure>
 {/if}

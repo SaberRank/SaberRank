@@ -983,15 +983,15 @@
 							<div class="first-page-spacer"></div>
 						{:else if idx % itemsPerPage == 0}
 							{#if page == currentPage - 1}
-								<div class="page-split page-maker-{currentPage - 1}" bind:this={previousPageAnchor}>
+								<div class={`page-split page-maker-${currentPage - 1}`} bind:this={previousPageAnchor}>
 									{currentPage - 1}
 								</div>
 							{:else if page == currentPage}
-								<div class="page-split page-maker-{currentPage}" bind:this={currentPageAnchor}>
+								<div class={`page-split page-maker-${currentPage}`} bind:this={currentPageAnchor}>
 									{currentPage}
 								</div>
 							{:else}
-								<div class="page-split page-maker-{page} other-page-anchor">
+								<div class={`page-split page-maker-${page} other-page-anchor`}>
 									{page}
 								</div>
 							{/if}
@@ -1128,7 +1128,7 @@
 						<i class="fas fa-star" />
 						<span>Ratings</span>
 					</div>
-					<i class="fas fa-chevron-{isStarsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isStarsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isStarsFilterOpen}
@@ -1278,7 +1278,7 @@
 						<i class="fas fa-calendar-alt" />
 						<span>Date</span>
 					</div>
-					<i class="fas fa-chevron-{isDateFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isDateFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isDateFilterOpen}
@@ -1319,7 +1319,7 @@
 						<i class="fas fa-clock" />
 						<span>Duration</span>
 					</div>
-					<i class="fas fa-chevron-{isDurationFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isDurationFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isDurationFilterOpen}
@@ -1378,7 +1378,7 @@
 						<i class="fas fa-tags" />
 						<span>Categories</span>
 					</div>
-					<i class="fas fa-chevron-{isCategoryFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isCategoryFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isCategoryFilterOpen}
@@ -1408,7 +1408,7 @@
 						<i class="fas fa-list-check" />
 						<span>Requirements</span>
 					</div>
-					<i class="fas fa-chevron-{isRequirementsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isRequirementsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isRequirementsFilterOpen}
@@ -1464,7 +1464,7 @@
 						<i class="fas fa-list" />
 						<span>Generate Playlist</span>
 					</div>
-					<i class="fas fa-chevron-{isPlaylistOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isPlaylistOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isPlaylistOpen}

@@ -70,7 +70,7 @@
 </script>
 
 {#if clan?.id}
-	<section class="clan-info {tag == 'GAY' ? 'rainbow' : ''}" transition:fade|global>
+	<section class={`clan-info ${tag == 'GAY' ? 'rainbow' : ''}`} transition:fade|global>
 		<div class="clanData">
 			<div class="imageInput">
 				<img class="clanImage" src={iconUrl} alt="ClanIcon" />

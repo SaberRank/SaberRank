@@ -698,7 +698,7 @@
 		<div class="timeline-labels">
 			{#each timelineData as data, index}
 				<span
-					class="timeline-label {data.timestamp === selectedTimestamp ? 'selected' : ''}"
+					class={`timeline-label ${data.timestamp === selectedTimestamp ? 'selected' : ''}`}
 					style="left: {(index / (timelineData.length - 1)) * 100}%"
 					on:click={() => selectTimestamp(data.timestamp)}>
 					{dateFromUnix(data.timestamp).toLocaleDateString()}

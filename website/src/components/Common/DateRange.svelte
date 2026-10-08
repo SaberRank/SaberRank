@@ -136,7 +136,7 @@
 	});
 </script>
 
-<div class="date-range {type === 'datetime' ? 'datetime-local' : 'date'}">
+<div class={`date-range ${type === 'datetime' ? 'datetime-local' : 'date'}`}>
 	{#if isFirefox}
 		<span class="picker-wrap">
 			<input bind:this={fromEl} placeholder="From" readonly />

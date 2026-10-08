@@ -82,7 +82,7 @@
 			<div class="header-container">
 				<div class="header-top-part">
 					<h1 class="title is-4">
-						<span class="name {name.length > 40 ? 'name-long' : 'name-short'}" title="Song name">{name} </span>
+						<span class={`name ${name.length > 40 ? 'name-long' : 'name-short'}`} title="Song name">{name} </span>
 						{#if $configStore?.leaderboardPreferences?.showSubtitleInHeader && song.subName}
 							<span class="subname">{song.subName}</span>
 						{/if}

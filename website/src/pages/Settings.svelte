@@ -133,7 +133,7 @@
 							<div
 								on:click={() => selectNavigation(item, idx)}
 								on:keydown={() => selectNavigation(item, idx)}
-								class="navigation-item {idx == selectedNavigationIndex ? 'selected' : ''}">
+								class={`navigation-item ${idx == selectedNavigationIndex ? 'selected' : ''}`}>
 								<i class={item.icon} />
 								<span class="navigation-item-title">{item.name}</span>
 							</div>

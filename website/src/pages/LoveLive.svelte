@@ -583,7 +583,7 @@
 								<div class="canvas-grid"></div>
 								{#each placedStickers as sticker, index}
 									<div
-										class="placed-sticker {selectedSticker === index ? 'selected' : ''}"
+										class={`placed-sticker ${selectedSticker === index ? 'selected' : ''}`}
 										style="
 										left: calc(50% + {sticker.x}px);
 										top: {sticker.y}px;
@@ -615,14 +615,14 @@
 								<span class="background-label">Background:</span>
 								<div class="background-options">
 									<button
-										class="background-option {selectedBackgroundId === 0 ? 'selected' : ''}"
+										class={`background-option ${selectedBackgroundId === 0 ? 'selected' : ''}`}
 										on:click={() => (selectedBackgroundId = 0)}
 										title="None">
 										<div class="no-background">✕</div>
 									</button>
 									{#each playerStatus.backgrounds as bg}
 										<button
-											class="background-option {selectedBackgroundId === bg.id ? 'selected' : ''}"
+											class={`background-option ${selectedBackgroundId === bg.id ? 'selected' : ''}`}
 											on:click={() => (selectedBackgroundId = bg.id)}
 											title={bg.name}>
 											<img src={bg.thumbnailUrl} alt={bg.name} />

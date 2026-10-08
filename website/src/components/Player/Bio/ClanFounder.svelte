@@ -58,7 +58,7 @@
 			</div>
 			<img class="clanImage" src={iconUrl} alt="ClanIcon" />
 
-			<div class="clan-info-container {tag == 'GAY' ? 'rainbow' : ''}" transition:fade|global>
+			<div class={`clan-info-container ${tag == 'GAY' ? 'rainbow' : ''}`} transition:fade|global>
 				<div class="clans-title-container">
 					<span style="--clan-color: {color}" class="clanTag">{tag}</span>
 				</div>

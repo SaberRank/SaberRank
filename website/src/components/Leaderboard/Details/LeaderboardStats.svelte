@@ -258,9 +258,9 @@
 			{#if compact && hasExpandableStats}
 				<button
 					type="button"
-					class="stats-toggle {showAllStats ? 'opened' : ''} {leaderboard?.stats?.requirements || diff.mapVersion
+					class={`stats-toggle ${showAllStats ? 'opened' : ''} ${leaderboard?.stats?.requirements || diff.mapVersion
 						? 'has-expandable-stats'
-						: ''}"
+						: ''}`}
 					on:click={() => (showAllStats = !showAllStats)}
 					title={showAllStats ? 'Hide full stats' : 'Show full stats'}
 					aria-label={showAllStats ? 'Hide full stats' : 'Show full stats'}
@@ -271,7 +271,7 @@
 		</div>
 
 		{#if !showCompactStats && (leaderboard?.stats?.requirements || diff.mapVersion)}
-			<div class="stats-footer {showAllStats ? 'opened' : ''}">
+			<div class={`stats-footer ${showAllStats ? 'opened' : ''}`}>
 				{#if !showCompactStats && diff.mapVersion}
 					<span class="map-version" title={`Map version, supported by Beat Saber ${getGameVersionForMapVersion(diff.mapVersion)} version`}
 						>v{diff.mapVersion}</span>

@@ -166,7 +166,7 @@
 									href={day.song
 										? `/leaderboard/global/${day.song.id}${difficulties[difficulties.length - 1].value}${difficulties[difficulties.length - 1].mode}`
 										: null}
-									class="calendar-day {day.today ? 'today' : ''} {day.song ? 'has-song' : 'empty'}">
+									class={`calendar-day ${day.today ? 'today' : ''} ${day.song ? 'has-song' : 'empty'}`}>
 									<div class="calendar-day-container">
 										<div class="date">{day.date.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</div>
 										{#if day.song?.videoPreviewUrl}
@@ -190,13 +190,13 @@
 												{#if day.score}
 													<div class="score-container">
 														{#if day.points}
-															<p class="score-points {day.today ? 'yellow' : ''}">
+															<p class={`score-points ${day.today ? 'yellow' : ''}`}>
 																#{day.points.rank}
 															</p>
 														{/if}
 														<p class="score">{(day.score.accuracy * 100).toFixed(2)}%</p>
 														{#if day.points}
-															<p class="score-points {day.today ? 'yellow' : ''}">
+															<p class={`score-points ${day.today ? 'yellow' : ''}`}>
 																{day.points.points} point{day.points.points == 1 ? '' : 's'}
 															</p>
 														{/if}

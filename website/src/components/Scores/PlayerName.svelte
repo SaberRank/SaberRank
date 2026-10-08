@@ -19,7 +19,7 @@
 
 <a
 	href={`/u/${playerId}${type ? '/' + type : ''}/1${playerClickFilter ? '?' + playerClickFilter : ''}`}
-	class="player-name clickable has-pointer-events {cls}"
+	class={`player-name clickable has-pointer-events ${cls}`}
 	bind:this={referenceElement}
 	on:click|preventDefault>
 	{#if showRank}

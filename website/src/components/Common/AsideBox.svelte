@@ -47,7 +47,7 @@
 				<span>{title}</span>
 			</div>
 
-			<i class="fas fa-chevron-{opened ? 'up' : 'down'}" />
+			<i class={`fas fa-chevron-${opened ? 'up' : 'down'}`} />
 		</span>
 	</div>
 

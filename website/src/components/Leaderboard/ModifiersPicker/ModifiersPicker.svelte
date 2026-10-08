@@ -125,7 +125,7 @@
 			<div class="modifiers-list">
 				{#each modifiers as modifier}
 					<div
-						class="modifier {modifier.selected ? 'selected' : ''}"
+						class={`modifier ${modifier.selected ? 'selected' : ''}`}
 						on:click={() => (modifier.selected = !modifier.selected)}
 						on:keypress={() => (modifier.selected = !modifier.selected)}>
 						<span class="modifier-title"><i>{modifier.name}</i> </span>

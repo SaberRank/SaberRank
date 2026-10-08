@@ -92,7 +92,7 @@
 			{/each}
 		{/if}{#if showMods && secondary === 'improvement' && prevMods && prevMods.length}
 			<small
-				class="compare-mods {prevMods.length > 1 && mods?.length > 1 ? 'double' : ''}"
+				class={`compare-mods ${prevMods.length > 1 && mods?.length > 1 ? 'double' : ''}`}
 				title={$isDemo
 					? 'Click to setup'
 					: showMods && prevMods

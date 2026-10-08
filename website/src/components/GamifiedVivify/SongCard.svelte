@@ -34,7 +34,7 @@
 
 <a
 	href={songStatus.song ? `/leaderboard/global/${songStatus.song.id}` : null}
-	class="song-card {songStatus.blockScore && (!songStatus.hasPoodleDiff || songStatus.poodleScore) ? 'unlocked' : 'locked'}"
+	class={`song-card ${songStatus.blockScore && (!songStatus.hasPoodleDiff || songStatus.poodleScore) ? 'unlocked' : 'locked'}`}
 	style="--cover-url: url({songStatus.song?.coverImage || '/assets/song-default.webp'})"
 	on:mouseenter={() => (hovered = true)}
 	on:mouseleave={() => (hovered = false)}>
@@ -49,7 +49,7 @@
 			<!-- <img 
                 src={songStatus.score ? songStatus.idolDescription.smallPictureRegular : songStatus.idolDescription.smallPictureRegular} 
                 alt={songStatus.idolDescription.name}
-                class="idol-avatar {songStatus.score ? '' : 'locked-avatar'}"
+                class={`idol-avatar ${songStatus.score ? '' : 'locked-avatar'}`}
             /> -->
 			<span class="song-name">{songStatus.song.name}</span>
 			<span class="song-author">{songStatus.song.author}</span>

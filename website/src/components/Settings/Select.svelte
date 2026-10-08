@@ -98,12 +98,12 @@
 		on:keydown={onKeyDownHeader}>
 		<div class="dropdown-header-text" style="padding-left: {fontPadding}em">
 			{#if options?.length > 0 && value != null && options.find(x => valueSelector(x) == value)?.icon}
-				<i class="fa {options.find(x => valueSelector(x) == value).icon}" style="margin-right: {fontPadding}em" />
+				<i class={`fa ${options.find(x => valueSelector(x) == value).icon}`} style="margin-right: {fontPadding}em" />
 			{/if}
 			{options?.length > 0 ? (value != null ? nameSelector(options.find(x => valueSelector(x) == value)) : nullPlaceholder) : 'No options'}
 		</div>
 		<div style="padding: 0 {fontPadding}em 0 {fontPadding * 2}em">
-			<i class="fa fa-chevron-down dropdown-arrow {isOpened ? 'opened' : ''}" />
+			<i class={`fa fa-chevron-down dropdown-arrow ${isOpened ? 'opened' : ''}`} />
 		</div>
 	</div>
 	{#if header && isOpened && options?.length > 0}
@@ -128,14 +128,14 @@
 								style="font-size: {menuFontSize}em"
 								on:click|preventDefault|stopPropagation={selectOption(item)}>
 								{#if item.icon}
-									<i class="fa {item.icon} dropdown-item-icon" style="margin-right: {fontPadding}em" />
+									<i class={`fa ${item.icon} dropdown-item-icon`} style="margin-right: {fontPadding}em" />
 								{/if}
 								{nameSelector(item).trim()}
 							</a>
 						{:else}
 							<div tabindex="0" class="dropdown-item" style="font-size: {menuFontSize}em" on:click={selectOption(item)}>
 								{#if item.icon}
-									<i class="fa {item.icon} dropdown-item-icon" style="margin-right: {fontPadding}em" />
+									<i class={`fa ${item.icon} dropdown-item-icon`} style="margin-right: {fontPadding}em" />
 								{/if}
 								{nameSelector(item).trim()}
 							</div>

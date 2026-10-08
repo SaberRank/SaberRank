@@ -206,7 +206,7 @@
 	);
 </script>
 
-<div class="ranking-voting {insideLeaderboard || showModifiers ? 'inside-leaderboard' : ''}">
+<div class={`ranking-voting ${insideLeaderboard || showModifiers ? 'inside-leaderboard' : ''}`}>
 	<Dialog
 		type="confirm"
 		title={dialogTitle}

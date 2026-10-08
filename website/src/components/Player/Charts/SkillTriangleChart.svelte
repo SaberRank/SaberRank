@@ -172,9 +172,9 @@
 					<div class="timeline-labels">
 						{#each history as data, index}
 							<div
-								class="activity-bar {data.timestamp === selectedTimestamp ? 'selected' : ''} {data.timestamp === hoveredTimestamp
+								class={`activity-bar ${data.timestamp === selectedTimestamp ? 'selected' : ''} ${data.timestamp === hoveredTimestamp
 									? 'hovered'
-									: ''}"
+									: ''}`}
 								title="New scores: {data.newScores}
 Improvements: {data.improvements}"
 								on:click={() => selectTimestamp(data.timestamp)}
@@ -195,9 +195,9 @@ Improvements: {data.improvements}"
 				<div class="timeline-labels">
 					{#each history as data, index}
 						<span
-							class="timeline-label {data.timestamp === selectedTimestamp ? 'selected' : ''} {data.timestamp === hoveredTimestamp
+							class={`timeline-label ${data.timestamp === selectedTimestamp ? 'selected' : ''} ${data.timestamp === hoveredTimestamp
 								? 'hovered'
-								: ''}"
+								: ''}`}
 							style="left: {(index / (history.length - 1)) * 100}%"
 							on:click={() => selectTimestamp(data.timestamp)}
 							on:mouseenter={() => handleMouseEnter(data.timestamp)}

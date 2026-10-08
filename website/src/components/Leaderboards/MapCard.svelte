@@ -35,7 +35,7 @@
 	{:then Atropos}
 		<svelte:component
 			this={Atropos}
-			class="map-card-atropos {hovered ? 'card-hovered' : ''}"
+			class={`map-card-atropos ${hovered ? 'card-hovered' : ''}`}
 			rotateXMax={5}
 			rotateYMax={5}
 			rotateTouch="scroll-y"

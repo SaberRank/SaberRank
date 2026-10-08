@@ -99,7 +99,7 @@
 		{#each modes as mode}
 			<div class="mode-container" class:isHovered>
 				<div class="mode-icon-name" class:isHovered>
-					<i class="mode-icon {mode.description.icon}" class:isHovered />
+					<i class={`mode-icon ${mode.description.icon}`} class:isHovered />
 					{#if isHovered}
 						<span class="mode-name">{mode.modeName}</span>
 					{/if}

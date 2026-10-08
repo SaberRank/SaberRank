@@ -293,7 +293,7 @@
 					{#if editMode}
 						<input type="text" placeholder="Clan Name" bind:value={name} disabled={!!pendingText} />
 					{:else}
-						<span class="clanName {tag == 'GAY' ? 'rainbow' : ''}">{name}</span>
+						<span class={`clanName ${tag == 'GAY' ? 'rainbow' : ''}`}>{name}</span>
 					{/if}
 				</section>
 

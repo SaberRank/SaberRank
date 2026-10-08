@@ -490,7 +490,7 @@
 
 <section class="chart" style="--height: {height}px">
 	<canvas class="chartjs" bind:this={canvas} {height} />
-	<div class="chart-toggle-unranked {supporter ? '' : 'disabled-toggle'}">
+	<div class={`chart-toggle-unranked ${supporter ? '' : 'disabled-toggle'}`}>
 		<Switch
 			value={showUnrankedMapsOnGraph}
 			label="Show unranked"

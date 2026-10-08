@@ -42,7 +42,7 @@
 <div class="slice-summary">
 	<div class="slice-summary-list">
 		{#each sliceSummaryData as summary, idx}
-			<div class="summary-group {getPaginationClass(idx, pageIndex)}" on:mouseenter={_ => onHover(idx)} on:mouseleave={_ => onLeave(idx)}>
+			<div class={`summary-group ${getPaginationClass(idx, pageIndex)}`} on:mouseenter={_ => onHover(idx)} on:mouseleave={_ => onLeave(idx)}>
 				<h2>{summary.label}</h2>
 				<div class="summary-grid">
 					<span class="summary-row-label">Acc</span>

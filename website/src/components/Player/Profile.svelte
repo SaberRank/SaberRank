@@ -372,7 +372,7 @@
 			{/if}
 
 			{#if roles}
-				<div class="role-icons {$editModel ? 'editing' : ''}">
+				<div class={`role-icons ${$editModel ? 'editing' : ''}`}>
 					{#each roles as role, idx}
 						<RoleIcon
 							{role}

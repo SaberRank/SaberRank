@@ -10,10 +10,10 @@
 	class:with-icon={!!icon}
 	style="--height: 44px; --inputFontSize: 1em; --multiItemBG: var(--selected); --multiClearBG: var(--selected); --inputColor: var(--textColor); --placeholderColor: white; --multiSelectPadding: 2px 4rem 2px 4px; --clearSelectRight: 2.2rem; --clearSelectTop: 14px; --clearSelectBottom: auto; --listBackground: var(--background); --listBorder: 1px solid var(--dimmed); --listBorderRadius: 0.25rem; --listMaxHeight: 20rem; --listShadow: none">
 	{#if icon}
-		<i class="{icon} picker-icon" />
+		<i class={`${icon} picker-icon`} />
 	{/if}
 	<slot />
-	<i class="fas fa-chevron-{open ? 'up' : 'down'} picker-chevron" />
+	<i class={`fas fa-chevron-${open ? 'up' : 'down'} picker-chevron`} />
 </div>
 
 <style>

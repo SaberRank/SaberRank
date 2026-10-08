@@ -36,7 +36,7 @@
 </script>
 
 <div
-	class="achievement {grade == 0 ? 'gold' : grade == 1 ? 'silver' : ''}"
+	class={`achievement ${grade == 0 ? 'gold' : grade == 1 ? 'silver' : ''}`}
 	style="background-color: {level.color}"
 	bind:this={referenceElement}
 	on:click={showPopup}>

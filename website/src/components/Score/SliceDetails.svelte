@@ -123,7 +123,7 @@
 			</div>
 			<div class="mini-main-grid" on:click={backOnClick}>
 				{#each sliceDetailsData.mainGrid as cell, idx}
-					<div class="mini-main-grid-cell {idx === selectedSecondaryGridIndex ? 'selected' : ''}" />
+					<div class={`mini-main-grid-cell ${idx === selectedSecondaryGridIndex ? 'selected' : ''}`} />
 				{/each}
 			</div>
 			<div class="secondary-grid" on:click={backOnClick}>
@@ -146,7 +146,7 @@
 			<div class="main-grid">
 				{#if showSummaryGrid}
 					{#each sliceDetailsData.summaryGrids[summaryIndex] as cell, idx}
-						<div class="grid-cell {getHighlightClass(idx)}" title={formatHoverHint(cell)}>
+						<div class={`grid-cell ${getHighlightClass(idx)}`} title={formatHoverHint(cell)}>
 							{#if cell.count}
 								<p>{cell.count}<br />{formatNumber(cell.averageScore, 2)}</p>
 							{/if}

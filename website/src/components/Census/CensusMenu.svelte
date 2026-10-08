@@ -42,7 +42,7 @@
 			<input type="text" bind:value={search} placeholder="Search..." />
 		</div>
 		{#each censusData as group (group.name)}
-			<div class="group {selectedGroup === group ? 'selected' : ''}" on:click={() => selectGroup(group)}>
+			<div class={`group ${selectedGroup === group ? 'selected' : ''}`} on:click={() => selectGroup(group)}>
 				{group.name}
 			</div>
 
@@ -50,7 +50,7 @@
 				<div class="categories">
 					{#each group.categories as category (category.name)}
 						<div
-							class="category {selectedCategory === category ? 'selected' : ''}"
+							class={`category ${selectedCategory === category ? 'selected' : ''}`}
 							on:click={() => selectCategory(category)}
 							title={category.question}>
 							{@html highlightSearchTerm(category.name, search)}

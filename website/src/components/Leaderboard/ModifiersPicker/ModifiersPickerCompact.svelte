@@ -119,7 +119,7 @@
 <div class="modifiers-list">
 	{#each modifiers as modifier}
 		<div
-			class="modifier {modifier.selected ? 'selected' : ''}"
+			class={`modifier ${modifier.selected ? 'selected' : ''}`}
 			on:click={() => toggleModifier(modifier)}
 			on:keypress={() => toggleModifier(modifier)}>
 			<span class="modifier-title"><i>{modifier.name}</i> </span>

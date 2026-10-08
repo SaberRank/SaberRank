@@ -19,13 +19,13 @@
 	}
 </script>
 
-<div class="achievement-container {grey ? 'grey' : ''}">
+<div class={`achievement-container ${grey ? 'grey' : ''}`}>
 	{#if showDetails}
 		<div class="achievement-description-name">
 			<a href={achievement.achievementDescription.link}>{achievement.achievementDescription.name}</a>
 		</div>
 	{/if}
-	<div class="achievement {grade == 0 ? 'gold' : grade == 1 ? 'silver' : ''}" style="background-color: {level.color}" on:click>
+	<div class={`achievement ${grade == 0 ? 'gold' : grade == 1 ? 'silver' : ''}`} style="background-color: {level.color}" on:click>
 		<img src={level.image} alt={level.name} />
 		<div class="achievement-details">
 			<div class="achievement-name">{level.name}</div>

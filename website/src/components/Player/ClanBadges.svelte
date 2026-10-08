@@ -37,7 +37,7 @@
 			on:finalize={handleDndFinalize}
 			class="clan-badges">
 			{#each clans as clan, idx (clan.id)}
-				<div class="change-wobble clan-tag {idx == 0 ? 'main-clan' : ''}" animate:flip={{duration: 300}}>
+				<div class={`change-wobble clan-tag ${idx == 0 ? 'main-clan' : ''}`} animate:flip={{duration: 300}}>
 					<Badge
 						label={(highlightMain && idx == 0 ? '🏠' : '') + clan?.tag ?? '???'}
 						onlyLabel={true}
@@ -53,7 +53,7 @@
 		<span class="clan-badges">
 			{#each clans as clan, idx (clan.tag)}
 				<a
-					class="clan-tag {idx == 0 ? 'main-clan' : ''}"
+					class={`clan-tag ${idx == 0 ? 'main-clan' : ''}`}
 					href={`/clan/${clan?.tag}`}
 					on:click|stopPropagation={() => navigate(`/clan/${clan?.tag}`)}>
 					<Badge

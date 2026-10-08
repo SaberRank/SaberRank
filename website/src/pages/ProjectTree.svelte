@@ -112,7 +112,7 @@
 									href={day.song
 										? `/leaderboard/global/${day.song.id}${day.song.difficulties[0].value}${day.song.difficulties[0].mode}`
 										: null}
-									class="calendar-day {day.today ? 'today' : ''} {day.song ? 'has-song' : 'empty'}">
+									class={`calendar-day ${day.today ? 'today' : ''} ${day.song ? 'has-song' : 'empty'}`}>
 									<div class="date">{day.date.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</div>
 									{#if day.song}
 										<div class="song-card">

@@ -17,7 +17,7 @@
 </script>
 
 {#if diff}
-	<div class="diff-container {viewType}" style="background-color: {diffColor};" title={diffInfo?.name}>
+	<div class={`diff-container ${viewType}`} style="background-color: {diffColor};" title={diffInfo?.name}>
 		<div class="diff-description" data-atropos-offset="3">
 			{#if map?.diffInfo?.type != 'Standard'}
 				<div class="mode">

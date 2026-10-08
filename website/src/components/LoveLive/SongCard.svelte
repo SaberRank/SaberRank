@@ -13,7 +13,7 @@
 
 <a 
     href={songStatus.song ? `/leaderboard/global/${songStatus.song.id}` : null}
-    class="song-card {songStatus.score ? 'unlocked' : 'locked'}"
+    class={`song-card ${songStatus.score ? 'unlocked' : 'locked'}`}
     style="--cover-url: url({songStatus.song?.coverImage || '/assets/song-default.webp'})"
 >
     <div class="song-cover-bg"></div>
@@ -26,7 +26,7 @@
             <img 
                 src={songStatus.score ? songStatus.idolDescription.smallPictureRegular : songStatus.idolDescription.smallPictureRegular} 
                 alt={songStatus.idolDescription.name}
-                class="idol-avatar {songStatus.score ? '' : 'locked-avatar'}"
+                class={`idol-avatar ${songStatus.score ? '' : 'locked-avatar'}`}
             />
             <span class="idol-name">{songStatus.idolDescription.name}</span>
         </div>

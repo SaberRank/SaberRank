@@ -88,7 +88,7 @@
 	</Dialog>
 {/if}
 
-<div class="bio-and-cards {!(richBioID || editModel) || horizontalRichBio ? 'only-one' : ''}">
+<div class={`bio-and-cards ${!(richBioID || editModel) || horizontalRichBio ? 'only-one' : ''}`}>
 	{#if playerId}
 		{#if richBioID || editModel}
 			<div class="bio-limiter">
@@ -126,7 +126,7 @@
 		{/if}
 
 		{#if !horizontalRichBio}
-			<div class="cards-part {!richBioID ? 'cards-part-only' : ''}">
+			<div class={`cards-part ${!richBioID ? 'cards-part-only' : ''}`}>
 				<PlayerCards {playerInfo} {playerId} onEmptyClan={() => (emptyClan = true)} onEmptyMaps={() => (emptyMaps = true)} />
 			</div>
 		{/if}

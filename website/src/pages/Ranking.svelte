@@ -381,7 +381,7 @@
 						<i class="fas fa-computer" />
 						<span>Platform</span>
 					</div>
-					<i class="fas fa-chevron-{isPlatformFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isPlatformFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isPlatformFilterOpen}
@@ -415,7 +415,7 @@
 						<i class="fas fa-tags" />
 						<span>Role</span>
 					</div>
-					<i class="fas fa-chevron-{isRoleFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isRoleFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isRoleFilterOpen}
@@ -449,7 +449,7 @@
 						<i class="fas fa-robot" />
 						<span>Bots</span>
 					</div>
-					<i class="fas fa-chevron-{isBotsFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isBotsFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isBotsFilterOpen}
@@ -485,7 +485,7 @@
 						<i class="fas fa-ruler" />
 						<span>Ranges</span>
 					</div>
-					<i class="fas fa-chevron-{isRangeFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isRangeFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isRangeFilterOpen}
@@ -753,7 +753,7 @@
 						<i class="fas fa-calendar-alt" />
 						<span>Dates</span>
 					</div>
-					<i class="fas fa-chevron-{isDateFilterOpen ? 'up' : 'down'}" />
+					<i class={`fas fa-chevron-${isDateFilterOpen ? 'up' : 'down'}`} />
 				</div>
 
 				{#if isDateFilterOpen}

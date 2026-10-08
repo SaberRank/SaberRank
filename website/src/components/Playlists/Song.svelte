@@ -88,7 +88,7 @@
 	$: updateSongKey(hash);
 </script>
 
-<div class="container row-${idx}">
+<div class={`container row-$${idx}`}>
 	{#if songInfo}
 		<div class="cover-container">
 			<img loading="lazy" class="cover" src={coverUrl} alt="" />

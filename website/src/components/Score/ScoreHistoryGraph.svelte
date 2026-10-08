@@ -176,7 +176,7 @@
 				{/if}
 				{#each history.sort((a, b) => b.timeset - a.timeset) as score}
 					<div
-						class="history-item {score.id == hoveredAttempt?.id ? 'hovered-item' : ''}"
+						class={`history-item ${score.id == hoveredAttempt?.id ? 'hovered-item' : ''}`}
 						style="--type-color: {colorForEndType(score.type, 0.04)}; --hover-type-color: {colorForEndType(score.type, 0.4)}"
 						on:mouseenter={() => (hoveredAttempt = score)}
 						on:mouseleave={() => (hoveredAttempt = null)}>

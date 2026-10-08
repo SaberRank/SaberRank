@@ -183,7 +183,7 @@
 {/if}
 <div class="profile-header-info">
 	{#if playerInfo}
-		<div class="player-nickname {showRainbow(playerInfo) ? 'rainbow' : ''}">
+		<div class={`player-nickname ${showRainbow(playerInfo) ? 'rainbow' : ''}`}>
 			{#if name}
 				<div style="display: flex;">
 					{#if editModel?.data}

@@ -59,7 +59,7 @@
 		{#if isLoading}
 			<Spinner />
 		{:else if miniRanking}
-			<div class="players darkened-background {frosted ? 'frosted' : ''}">
+			<div class={`players darkened-background ${frosted ? 'frosted' : ''}`}>
 				{#each miniRanking as player}
 					<div class="rank">
 						<Value value={country ? player.countryRank : player.rank} zero="" digits={0} prefix="#" />
