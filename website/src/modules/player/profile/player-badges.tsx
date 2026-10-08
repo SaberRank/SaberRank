@@ -17,12 +17,13 @@ export function PlayerBadges({ badges, badgeOrder, badgeComments }: PlayerBadges
    const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
    const [openBadgeId, setOpenBadgeId] = useState<number | null>(null);
 
-   if (badges.length === 0) {
+   const safeBadges = badges ?? [];
+   if (safeBadges.length === 0) {
       return null;
    }
 
-   const badgesById = new Map(badges.map((badge) => [badge.id, badge]));
-   const orderedBadges = badgeOrder ? badgeOrder.map((badgeId) => badgesById.get(badgeId)).filter((badge) => badge !== undefined) : badges;
+   const badgesById = new Map(safeBadges.map((badge) => [badge.id, badge]));
+   const orderedBadges = badgeOrder ? badgeOrder.map((badgeId) => badgesById.get(badgeId)).filter((badge) => badge !== undefined) : safeBadges;
    const visibleBadges = orderedBadges.filter((badge) => !failedImages.has(badge.image));
    if (visibleBadges.length === 0) return null;
 

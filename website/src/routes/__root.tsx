@@ -178,7 +178,6 @@ function RootDocument({
    for (const href of criticalFonts) {
       preload(href, { as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' });
    }
-   preload('/fonts/snoresaber-wordmark-mask.svg', { as: 'image', type: 'image/svg+xml', fetchPriority: 'high' });
 
    return (
       <html

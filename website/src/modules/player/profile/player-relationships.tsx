@@ -139,11 +139,12 @@ export function PlayerRelationships({ player }: { player: PlayerControllerGetPla
    );
 }
 
-function RecentRelationshipAvatars({ players }: { players: PlayerControllerGetPlayerResponse['recentFollowers'] }) {
-   if (players.length === 0) return null;
+function RecentRelationshipAvatars({ players }: { players: PlayerControllerGetPlayerResponse['recentFollowers'] | null | undefined }) {
+   const safePlayers = players ?? [];
+   if (safePlayers.length === 0) return null;
 
    const fadeStyle =
-      players.length === 4
+      safePlayers.length === 4
          ? {
               WebkitMaskImage: 'linear-gradient(to right, black 0%, black 45%, transparent 100%)',
               maskImage: 'linear-gradient(to right, black 0%, black 45%, transparent 100%)'
@@ -152,7 +153,7 @@ function RecentRelationshipAvatars({ players }: { players: PlayerControllerGetPl
 
    return (
       <div aria-hidden="true" className="flex" style={fadeStyle}>
-         {players.map((relationshipPlayer) => (
+         {safePlayers.map((relationshipPlayer) => (
             <Avatar key={relationshipPlayer.id} className="-ml-2 size-5 first:ml-0" title={relationshipPlayer.name}>
                <AvatarImage src={versionedImageUrl(relationshipPlayer.avatar, relationshipPlayer.avatarVersion)} alt="" />
                <AvatarFallback className="text-[9px]">{relationshipPlayer.name.slice(0, 1).toUpperCase()}</AvatarFallback>
@@ -172,7 +173,7 @@ function RelationshipList({
    hasNextPage,
    onLoadMore
 }: {
-   data: PlayerRelationshipControllerGetRelationshipsResponse['data'];
+   data: PlayerRelationshipControllerGetRelationshipsResponse['data'] | null | undefined;
    type: PlayerRelationshipControllerGetRelationshipsType;
    isOwner: boolean;
    isPending: boolean;
@@ -208,8 +209,8 @@ function RelationshipList({
                      <EmptyTitle>{t('relationshipsLoadFailed')}</EmptyTitle>
                   </EmptyHeader>
                </Empty>
-            ) : data.length ? (
-               data.map((relationship, index) => (
+            ) : (data ?? []).length ? (
+               (data ?? []).map((relationship, index) => (
                   <div key={relationship.player.id} className="min-w-0">
                      {index > 0 && <Separator />}
                      <div className="flex min-w-0 items-center gap-3 overflow-hidden px-6 py-3">

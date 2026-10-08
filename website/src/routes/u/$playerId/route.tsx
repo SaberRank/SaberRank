@@ -116,7 +116,40 @@ const getPlayerProfilePageData = createServerFn({ method: 'GET' })
          };
       }
 
-      const { player, history, aliases } = profileResult.data;
+      // Normalize optional/legacy profile fields so an older SnoreSaber API response
+      // cannot crash the client when profile components call .map() on arrays.
+      const rawPlayer = profileResult.data.player;
+      const player = {
+         ...rawPlayer,
+         followers: rawPlayer.followers ?? 0,
+         following: rawPlayer.following ?? 0,
+         platformFriends: rawPlayer.platformFriends ?? 0,
+         recentFollowers: rawPlayer.recentFollowers ?? [],
+         recentFollowing: rawPlayer.recentFollowing ?? [],
+         badges: rawPlayer.badges ?? [],
+         pinnedScores: rawPlayer.pinnedScores ?? [],
+         profileCustomization: {
+            backgroundImage: null,
+            backgroundImageVersion: null,
+            accentColor: null,
+            accentForegroundColor: null,
+            accentForegroundActiveColor: null,
+            supporterNameColorEnabled: true,
+            badgeOrder: null,
+            badgeComments: null,
+            statOrder: null,
+            enabledStatIds: null,
+            chartMetricIds: null,
+            sectionOrder: null,
+            ...(rawPlayer.profileCustomization ?? {})
+         },
+         stats: {
+            ...rawPlayer.stats,
+            device: rawPlayer.stats?.device ?? null
+         }
+      };
+      const history = profileResult.data.history ?? [];
+      const aliases = profileResult.data.aliases ?? [];
       const sanitizedBio = sanitizeRichTextHtml(player.bio ?? '');
       let banMetadata: BanMetadataAccess = hiddenBanMetadata;
       if (token && player.banned) {

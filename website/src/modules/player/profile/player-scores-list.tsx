@@ -9,7 +9,7 @@ import { Pagination } from '@/shared/components/pagination';
 import type { RouteLocation } from '@/shared/url-state/route-location';
 
 interface PlayerScoresListProps<TLocation> {
-   playerScores: PlayerControllerGetPlayerScoresDataItem[];
+   playerScores?: PlayerControllerGetPlayerScoresDataItem[] | null;
    totalItems: number;
    pageSize: number;
    currentPage: number;
@@ -25,13 +25,14 @@ export function PlayerScoresList<TLocation>({
    getPageLocation,
    renderScoreAction
 }: PlayerScoresListProps<TLocation>) {
+   const safePlayerScores = playerScores ?? [];
    const [shareOpen, setShareOpen] = useState(false);
    const [shareSeedId, setShareSeedId] = useState<number | null>(null);
 
    return (
       <div>
          <div className="flex flex-col gap-2">
-            {playerScores.map((score) => (
+            {safePlayerScores.map((score) => (
                <ScoreCard
                   key={score.score.id}
                   className="p-3"
@@ -49,7 +50,7 @@ export function PlayerScoresList<TLocation>({
                <Pagination totalItems={totalItems} pageSize={pageSize} currentPage={currentPage} getPageLocation={getPageLocation} scroll={false} />
             </div>
          )}
-         <ScoreShareStudio open={shareOpen} onOpenChange={setShareOpen} scores={playerScores} initialScoreId={shareSeedId} />
+         <ScoreShareStudio open={shareOpen} onOpenChange={setShareOpen} scores={safePlayerScores} initialScoreId={shareSeedId} />
       </div>
    );
 }
