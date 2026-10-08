@@ -9,6 +9,17 @@ VALUES
 ('76561198000000005','76561198000000005','Astra','GB','/assets/snoresaber-icon.png',15662.11,5,1)
 ON CONFLICT (id) DO NOTHING;
 
+-- Public SnoreSaber player IDs are sequential: 1, 2, 3, ...
+-- Existing seeded accounts are assigned in rank order.
+UPDATE players p
+SET player_number = ranked.player_number
+FROM (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY rank ASC, created_at ASC, id ASC) AS player_number
+  FROM players
+) ranked
+WHERE p.id = ranked.id;
+SELECT setval(pg_get_serial_sequence('players','player_number'), GREATEST((SELECT COALESCE(MAX(player_number),1) FROM players),1), true);
+
 INSERT INTO maps (id, hash, song_name, song_author_name, level_author_name, bpm, cover_url, verified)
 VALUES
 (1,'A1B2C3D4E5F6','Imprinting','CreepyBlock','Sotarks',174,'/assets/snoresaber-icon.png',true),

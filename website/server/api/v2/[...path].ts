@@ -4,6 +4,7 @@ import { db } from '../../utils/db';
 
 const SECRET = process.env.SESSION_SECRET || 'snoresaber-development-secret-change-me';
 const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
+const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
 const NOW = () => new Date().toISOString();
 
 // Development/demo data is deliberately kept as a fallback. Once DATABASE_URL is
@@ -140,9 +141,47 @@ async function verifySteam(req: Request) {
   return claimed.match(/([0-9]{17})$/)?.[1] ?? null;
 }
 
+async function fetchSteamProfile(steamId: string) {
+  try {
+    if (STEAM_API_KEY) {
+      const response = await fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${encodeURIComponent(STEAM_API_KEY)}&steamids=${steamId}`, {
+        headers: { accept: 'application/json' },
+        cache: 'no-store'
+      });
+      if (response.ok) {
+        const data: any = await response.json();
+        const profile = data?.response?.players?.[0];
+        if (profile) {
+          return {
+            name: typeof profile.personaname === 'string' && profile.personaname.trim() ? profile.personaname.trim() : null,
+            avatar: typeof profile.avatarfull === 'string' ? profile.avatarfull : null
+          };
+        }
+      }
+    }
+
+    const response = await fetch(`https://steamcommunity.com/profiles/${steamId}?xml=1`, {
+      headers: { 'user-agent': 'SnoreSaber/3.0 SteamLogin' },
+      cache: 'no-store'
+    });
+    if (!response.ok) return null;
+    const xml = await response.text();
+    const read = (tag: string) => {
+      const match = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'i'));
+      return match ? match[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : null;
+    };
+    return { name: read('steamID'), avatar: read('avatarFull') };
+  } catch {
+    return null;
+  }
+}
+
 function dbPlayer(r: any) {
+  const publicId = Number(r.player_number || r.id);
   return {
-    id: r.id, name: r.name, playerNameInGame: r.name, role: null, avatar: r.avatar || '', avatarVersion: 1,
+    id: publicId,
+    playerId: publicId,
+    steamId: r.steam_id || null, name: r.name, playerNameInGame: r.name, role: null, avatar: r.avatar || '', avatarVersion: 1,
     bio: r.bio ?? null, country: r.country || 'XX', permissions: 0, banned: false, silenced: false, inactive: false,
     vanity: r.vanity || r.name?.toLowerCase(), publicLivePresenceOptOut: false,
     stats: {
@@ -197,6 +236,12 @@ async function dbMapWithLeaderboards(sql: any, mapId: number) {
     WHERE l.map_id=${mapId}
     GROUP BY l.id ORDER BY l.difficulty ASC, l.id ASC`;
   return dbMap(mapsRows[0], lbRows.map((x) => dbLeaderboard(x, Number(x.total_scores || 0))));
+}
+
+async function resolveInternalPlayerId(sql: any, publicOrInternalId: string) {
+  if (!sql) return publicOrInternalId;
+  const rows: any[] = await sql`SELECT id FROM players WHERE id=${publicOrInternalId} OR player_number::text=${publicOrInternalId} OR steam_id=${publicOrInternalId} LIMIT 1`;
+  return rows[0]?.id ?? null;
 }
 
 async function recalculatePlayerStats(sql: any, playerId: string) {
@@ -285,7 +330,7 @@ export default defineHandler(async (event: any) => {
     if (sql) {
       const rows: any[] = await sql`SELECT * FROM players`;
       let filtered = rows.filter((p) => {
-        const matchesSearch = !search || p.name.toLowerCase().includes(search) || String(p.id).includes(search);
+        const matchesSearch = !search || p.name.toLowerCase().includes(search) || String(p.player_number || p.id).includes(search);
         const matchesCountry = !countries.length || countries.includes(String(p.country || 'XX').toUpperCase());
         return matchesSearch && matchesCountry;
       });
@@ -293,7 +338,7 @@ export default defineHandler(async (event: any) => {
         const av = sortValue(dbPlayer(a));
         const bv = sortValue(dbPlayer(b));
         const primary = direction === 'desc' ? bv - av : av - bv;
-        return primary || String(a.id).localeCompare(String(b.id));
+        return primary || Number(a.player_number || 0) - Number(b.player_number || 0);
       });
       const start = (page - 1) * limit;
       return json({
@@ -309,7 +354,7 @@ export default defineHandler(async (event: any) => {
     });
     filtered.sort((a, b) => {
       const primary = direction === 'desc' ? sortValue(b) - sortValue(a) : sortValue(a) - sortValue(b);
-      return primary || String(a.id).localeCompare(String(b.id));
+      return primary || Number(a.player_number || 0) - Number(b.player_number || 0);
     });
     const start = (page - 1) * limit;
     return json({ data: filtered.slice(start, start + limit), metadata: metadata(filtered.length, page, limit) });
@@ -341,7 +386,7 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/players/vanity/') && method === 'GET') {
     const slug = decodeURIComponent(route.split('/').pop()!).toLowerCase();
     if (sql) {
-      const rows: any[] = await sql`SELECT * FROM players WHERE lower(name)=${slug} OR lower(id)=${slug} LIMIT 1`;
+      const rows: any[] = await sql`SELECT * FROM players WHERE lower(name)=${slug} OR lower(id)=${slug} OR player_number::text=${slug} LIMIT 1`;
       return rows[0] ? json(dbPlayer(rows[0])) : json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
     }
     const p = players.find((x) => x.vanity === slug || x.name.toLowerCase() === slug);
@@ -350,7 +395,7 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/players/') && method === 'GET') {
     const seg = route.split('/'); const id = decodeURIComponent(seg[2]);
     if (sql) {
-      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} LIMIT 1`;
+      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} OR player_number::text=${id} LIMIT 1`;
       if (!pr[0]) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
       const p = dbPlayer(pr[0]);
       if (seg[3] === 'scores') {
@@ -358,7 +403,7 @@ export default defineHandler(async (event: any) => {
         const rows: any[] = await sql`
           SELECT s.*, l.*, l.id AS leaderboard_id, m.*
           FROM scores s JOIN leaderboards l ON l.id=s.leaderboard_id JOIN maps m ON m.id=l.map_id
-          WHERE s.player_id=${id} ORDER BY s.pp DESC, s.created_at DESC`;
+          WHERE s.player_id=${pr[0].id} ORDER BY s.pp DESC, s.created_at DESC`;
         const best = new Map<number, any>();
         for (const r of rows) if (!best.has(Number(r.leaderboard_id))) best.set(Number(r.leaderboard_id), r);
         const data = [...best.values()].slice((page-1)*limit, (page-1)*limit+limit).map((r, i) => dbScore(r, pr[0], r, r, i+1, true));
@@ -466,7 +511,9 @@ export default defineHandler(async (event: any) => {
   if (route === '/scores/submit' && method === 'POST') {
     if (!hasIngestAuth(request) && !(await authPlayerId(request, sql))) return json({error:'Authentication required'},401);
     const bodyText=await request.text(); let body:any; try{body=JSON.parse(bodyText||'{}')}catch{return json({error:'Invalid JSON'},400)}
-    const playerId=String(body.playerId||await authPlayerId(request, sql)||'');
+    const requestedPlayerId=String(body.playerId||'');
+    const authenticatedPlayerId=await authPlayerId(request, sql);
+    const playerId=sql ? (await resolveInternalPlayerId(sql, requestedPlayerId || String(authenticatedPlayerId || '')) || '') : (requestedPlayerId || String(authenticatedPlayerId || ''));
     const mapHash=String(body.mapHash||'');
     if(!playerId||!mapHash)return json({error:'playerId and mapHash are required'},400);
     const scoreValue=Math.max(0,Math.round(Number(body.score||body.modifiedScore||0))); const accuracy=Number(body.accuracy||0); const pp=Number(body.pp||0);
@@ -494,20 +541,44 @@ export default defineHandler(async (event: any) => {
     const p=players.find((x)=>x.id===pid); return p?json(p):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
   }
   if (route === '/auth/steam' && method === 'GET') {
-    const callback = new URL('/api/v2/auth/steam/callback', origin); callback.searchParams.set('redirectTo', query.get('redirectTo') || '/'); callback.searchParams.set('state', randomBytes(16).toString('hex'));
+    const state = randomBytes(24).toString('hex');
+    const callback = new URL('/api/v2/auth/steam/callback', origin);
+    callback.searchParams.set('redirectTo', query.get('redirectTo') || '/');
+    callback.searchParams.set('state', state);
     const steam = new URL('https://steamcommunity.com/openid/login');
     steam.searchParams.set('openid.ns','http://specs.openid.net/auth/2.0'); steam.searchParams.set('openid.mode','checkid_setup'); steam.searchParams.set('openid.return_to',callback.toString());
     steam.searchParams.set('openid.realm',origin); steam.searchParams.set('openid.identity','http://specs.openid.net/auth/2.0/identifier_select'); steam.searchParams.set('openid.claimed_id','http://specs.openid.net/auth/2.0/identifier_select');
-    return json({redirectUrl:steam.toString()});
+    return json({redirectUrl:steam.toString()},200,{'set-cookie':`steam-auth-state=${state}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=600`});
   }
   if (route === '/auth/steam/callback' && method === 'GET') {
+    const state = query.get('state');
+    const stateCookie = (request.headers.get('cookie') || '').split(';').map((x) => x.trim()).find((x) => x.startsWith('steam-auth-state='));
+    const storedState = stateCookie ? decodeURIComponent(stateCookie.slice('steam-auth-state='.length)) : null;
+    if (!state || !storedState || state !== storedState) return new Response('Steam authentication state expired or invalid',{status:400,headers:{'content-type':'text/plain'}});
     const steamId=await verifySteam(request); if(!steamId)return new Response('Steam authentication failed',{status:401,headers:{'content-type':'text/plain'}});
     let p:any;
+    let internalPlayerId = steamId;
+    const steamProfile = await fetchSteamProfile(steamId);
+    const steamName = steamProfile?.name || `SteamUser_${steamId.slice(-5)}`;
+    const steamAvatar = steamProfile?.avatar || '';
     if(sql){
       const rows:any[]=await sql`SELECT * FROM players WHERE steam_id=${steamId} OR id=${steamId} LIMIT 1`;
-      if(rows[0]) p=dbPlayer(rows[0]); else {const name=`SteamUser_${steamId.slice(-5)}`; await sql`INSERT INTO players (id,steam_id,name,country,avatar) VALUES (${steamId},${steamId},${name},'XX','') ON CONFLICT (id) DO NOTHING`; const created:any[]=await sql`SELECT * FROM players WHERE id=${steamId} LIMIT 1`; p=dbPlayer(created[0]);}
-    } else {p=players.find((x)=>x.id===steamId); if(!p){p=player(steamId,`SteamUser_${steamId.slice(-5)}`,'XX',players.length+1,0);players.push(p);}}
-    const token=tokenFor(p.id); const redirectTo=query.get('redirectTo')||'/';
+      if(rows[0]) {
+        await sql`UPDATE players SET name=${steamName}, avatar=${steamAvatar}, last_seen_at=now() WHERE id=${rows[0].id}`;
+        const updated:any[]=await sql`SELECT * FROM players WHERE id=${rows[0].id} LIMIT 1`;
+        internalPlayerId = updated[0].id;
+        p=dbPlayer(updated[0]);
+      } else {
+        const created:any[]=await sql`INSERT INTO players (id,steam_id,name,country,avatar) VALUES (${steamId},${steamId},${steamName},'XX',${steamAvatar}) RETURNING *`;
+        internalPlayerId = created[0].id;
+        p=dbPlayer(created[0]);
+      }
+    } else {
+      p=players.find((x)=>x.id===steamId);
+      if(!p){p=player(steamId,steamName,'XX',players.length+1,0);players.push(p);}
+      else {p.name=steamName; p.playerNameInGame=steamName; p.avatar=steamAvatar || p.avatar;}
+    }
+    const token=tokenFor(internalPlayerId); const redirectTo=query.get('redirectTo')||'/';
     return new Response(null,{status:302,headers:{Location:redirectTo,'set-cookie':`token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`}});
   }
   if (route === '/auth/token' && method === 'GET') {const token=tokenFromCookie(request.headers.get('cookie')||undefined);return token?json({token}):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);}
