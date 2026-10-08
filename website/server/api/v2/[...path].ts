@@ -37,7 +37,7 @@ function player(id: string, name: string, country: string, rank: number, pp: num
   return {
     id, name, playerNameInGame: name, country, role: null,
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=16131f&color=ff79bd&bold=true`,
-    avatarVersion: 1, permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
+    avatarVersion: 1, permissions: 0, banned: false, silenced: false, inactive: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank, countryRank: rank, rankChange: 0,
       totalPP: pp, plusOnePP: pp + 1, totalScore: '0', totalRankedScore: '0',
