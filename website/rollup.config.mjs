@@ -126,6 +126,20 @@ export default [
 					// enable run-time checks when not in production
 					dev: !production,
 				},
+				// The repository contains legacy Svelte components with CSS/a11y
+				// warnings that are not build errors. Keep real compiler errors
+				// fatal, but don't let these legacy warnings abort CI/Vercel builds.
+				onwarn(warning, defaultHandler) {
+					const code = warning && warning.code;
+					if (
+						code === 'css_unused_selector' ||
+						code === 'a11y_invalid_attribute' ||
+						code === 'element_invalid_self_closing_tag'
+					) {
+						return;
+					}
+					if (defaultHandler) defaultHandler(warning);
+				},
 			}),
 			// we'll extract any component CSS out into
 			// a separate file - better for performance
