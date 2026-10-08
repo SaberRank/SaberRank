@@ -37,7 +37,7 @@ function player(id: string, name: string, country: string, rank: number, pp: num
   return {
     id, name, playerNameInGame: name, country, role: null,
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=16131f&color=ff79bd&bold=true`,
-    avatarVersion: 1, permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
+    avatarVersion: 1, permissions: 0, banned: false, silenced: false, inactive: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank, countryRank: rank, rankChange: 0,
       totalPP: pp, plusOnePP: pp + 1, totalScore: '0', totalRankedScore: '0',
@@ -246,7 +246,7 @@ function dbPlayer(r: any) {
     id: publicId,
     playerId: publicId,
     steamId: r.steam_id || null, name: r.name, playerNameInGame: r.name, role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1,
-    bio: r.bio ?? null, country: r.country || 'XX', permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
+    bio: r.bio ?? null, country: r.country || 'XX', permissions: 0, banned: false, silenced: false, inactive: false,
     vanity: r.vanity || r.name?.toLowerCase(), publicLivePresenceOptOut: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank: Number(r.rank || 0), countryRank: Number(r.country_rank || 0), rankChange: 0,
