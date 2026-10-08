@@ -4,16 +4,15 @@ import { BeatSaberParticles } from './beat-saber-particles';
 
 const MENU_BACKGROUND_STYLE: CSSProperties = {
    background: [
-      'radial-gradient(ellipse at 50% 44%, rgba(92, 205, 238, 0.34) 0%, rgba(31, 134, 199, 0.29) 29%, rgba(7, 66, 108, 0.18) 52%, rgba(2, 10, 24, 0) 78%)',
-      'radial-gradient(ellipse 88% 58% at 50% -8%, rgba(255, 224, 82, 0.34) 0%, rgba(255, 199, 28, 0.13) 34%, rgba(255, 199, 28, 0) 70%)',
-      'radial-gradient(ellipse at 15% 68%, rgba(0, 210, 255, 0.2) 0%, rgba(0, 210, 255, 0) 46%)',
-      'radial-gradient(ellipse at 85% 66%, rgba(39, 136, 255, 0.17) 0%, rgba(39, 136, 255, 0) 48%)',
-      'linear-gradient(180deg, #00020b 0%, #020716 24%, #061d30 54%, #064162 100%)'
+      'radial-gradient(ellipse 72% 48% at 74% 18%, rgba(240,106,183,0.18) 0%, rgba(240,106,183,0.07) 38%, rgba(240,106,183,0) 72%)',
+      'radial-gradient(ellipse 65% 55% at 20% 58%, rgba(151,91,255,0.12) 0%, rgba(151,91,255,0.04) 42%, rgba(151,91,255,0) 76%)',
+      'radial-gradient(ellipse 90% 45% at 50% 100%, rgba(100,70,170,0.12) 0%, rgba(100,70,170,0) 70%)',
+      'linear-gradient(180deg, #08060c 0%, #0a0710 42%, #0b0912 100%)'
    ].join(', ')
 };
 
 const FLOOR_HAZE_STYLE: CSSProperties = {
-   background: 'linear-gradient(180deg, rgba(73, 220, 255, 0) 0%, rgba(73, 220, 255, 0.24) 38%, rgba(5, 64, 96, 0.54) 100%)'
+   background: 'linear-gradient(180deg, rgba(240,106,183,0) 0%, rgba(240,106,183,0.06) 38%, rgba(31,18,45,0.36) 100%)'
 };
 
 const PAGE_DARKENING_STYLE: CSSProperties = {

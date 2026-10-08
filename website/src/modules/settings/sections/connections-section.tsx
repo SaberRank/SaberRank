@@ -54,7 +54,7 @@ type ProviderIconProps = {
 };
 
 const providerIcons = {
-   SCORESABER: ({ className }) => <Image src="/snoresaber.svg" width={20} height={20} alt="" className={className} aria-hidden />,
+   SCORESABER: ({ className }) => <Image src="/assets/snoresaber-icon.png" width={20} height={20} alt="" className={className} aria-hidden />,
    STEAM: ({ className }) => <Icons.steam className={className} aria-hidden />,
    OCULUS: ({ className }) => <Icons.meta className={className} aria-hidden />,
    PATREON: ({ className }) => <Icons.patreon className={className} aria-hidden />,

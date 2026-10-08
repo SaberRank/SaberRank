@@ -12,7 +12,7 @@ export function UnderConstruction({ className, fillHeight = false }: UnderConstr
    const t = useTranslations();
    return (
       <div className={cn('flex flex-col items-center justify-center gap-4 lg:gap-6', fillHeight ? 'min-h-full flex-1' : 'py-12', className)}>
-         <Image src="/snoresaber.svg" width={64} height={64} alt={t('common.scoreSaberLogo')} className="hidden w-20 lg:block" priority />
+         <Image src="/assets/snoresaber-icon.png" width={64} height={64} alt={t('common.scoreSaberLogo')} className="hidden w-20 lg:block" priority />
          <p className="text-muted-foreground text-lg">{t('common.underConstruction')}</p>
       </div>
    );

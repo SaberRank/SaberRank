@@ -63,7 +63,7 @@ function SupportHero() {
 
    return (
       <section className="flex flex-col items-center gap-6 pt-6 text-center">
-         <Image src="/snoresaber.svg" alt={t('logoAlt')} width={76} height={76} priority className="drop-shadow-[0_14px_36px_hsl(0_0%_0%/0.6)]" />
+         <Image src="/assets/snoresaber-icon.png" alt={t('logoAlt')} width={76} height={76} priority className="drop-shadow-[0_14px_36px_hsl(0_0%_0%/0.6)]" />
          <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">{t('title')}</h1>
             <p className="text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed text-pretty sm:text-lg">{t('subtitle')}</p>

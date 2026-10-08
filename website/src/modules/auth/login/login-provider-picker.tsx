@@ -77,7 +77,7 @@ export function LoginProviderPicker({
                   usePointerCursor={false}
                   tabIndex={isExpanded ? -1 : undefined}
                >
-                  <Image src="/snoresaber.svg" width={32} height={32} alt={labels.snoresaber} className="size-8" />
+                  <Image src="/assets/snoresaber-icon.png" width={32} height={32} alt={labels.snoresaber} className="size-8" />
                </ProviderIconButton>
                <ProviderIconButton icon={Icons.steam} label={labels.steam} href={steamHref} tabIndex={isExpanded ? -1 : undefined} />
                <ProviderIconButton
@@ -113,7 +113,7 @@ export function LoginProviderPicker({
                   usePointerCursor={false}
                   tabIndex={isExpanded ? undefined : -1}
                >
-                  <Image src="/snoresaber.svg" width={32} height={32} alt={labels.snoresaber} className="size-8" />
+                  <Image src="/assets/snoresaber-icon.png" width={32} height={32} alt={labels.snoresaber} className="size-8" />
                </ProviderIconButton>
                <ProviderIconButton icon={Icons.steam} label={labels.steam} href={steamHref} tabIndex={isExpanded ? undefined : -1} />
                <ProviderIconButton

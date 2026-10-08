@@ -154,7 +154,7 @@ function HomeRoute() {
 
          <HeroSection />
 
-         <div className="relative z-10 mx-auto flex w-full max-w-[1180px] flex-col gap-14 px-4 pt-0 pb-16 sm:px-6 lg:px-10">
+         <div className="relative z-10 mx-auto flex w-full max-w-[1240px] flex-col gap-10 px-4 pt-8 pb-16 sm:px-6 lg:px-10">
             {data.prioritizeRankedBatch && (
                <section>
                   <RankedBatchSection video={data.news.latestRankedBatchVideo} />
@@ -167,7 +167,7 @@ function HomeRoute() {
                </section>
             )}
 
-            <section className="grid items-stretch gap-4 lg:grid-cols-[minmax(18rem,1.45fr)_minmax(0,1fr)_minmax(19rem,1.08fr)]">
+            <section className="grid items-stretch gap-5 lg:grid-cols-[1.15fr_.95fr_1.1fr]">
                <HomeColumn title={t('sections.news')} action={<NewsColumnActions posts={data.news.posts} />}>
                   <NewsColumn posts={data.news.posts} />
                </HomeColumn>

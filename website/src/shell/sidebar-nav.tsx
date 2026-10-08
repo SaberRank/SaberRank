@@ -51,12 +51,13 @@ const SidebarBrand = memo(function SidebarBrand({ alt, onNavigateAction }: { alt
 
    return (
       <homeRoute.Link className="flex min-w-0 shrink-0 items-center gap-2.5" onClick={handleClick}>
-         <Image src="/snoresaber.svg" width={28} height={28} alt={alt} priority className="shrink-0" />
-         <span className="sr-only">SnoreSaber</span>
+         <Image src="/assets/snoresaber-icon.png" width={28} height={28} alt={alt} priority className="shrink-0" />
          <span
             aria-hidden="true"
-            className="block h-[1.15rem] w-[8rem] shrink-0 bg-current [-webkit-mask:url('/fonts/snoresaber-wordmark-mask.svg')_left_center/contain_no-repeat] [mask:url('/fonts/snoresaber-wordmark-mask.svg')_left_center/contain_no-repeat]"
-         />
+            className="whitespace-nowrap text-[1.05rem] font-semibold tracking-[0.22em] text-foreground lowercase"
+         >
+            snoresaber
+         </span>
       </homeRoute.Link>
    );
 });
