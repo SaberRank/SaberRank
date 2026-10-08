@@ -1265,7 +1265,9 @@ export default defineHandler(async (event: any) => {
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));
       let filtered = dataRows.filter(({r,lbs}) => {
-        const curated = PUBLIC_BEATSAVER_MAP_KEYS.has(String(r.bsid || ''));
+        // Every map explicitly added to SnoreSaber is visible in the public Maps page.
+        // The six-map set is only used by the curated/sync tooling, not as a display filter.
+        const curated = true;
         const ranked = lbs.some((l) => String(l.status || '').toUpperCase() === 'RANKED');
         const ai = Boolean(r.is_ai);
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
@@ -1285,7 +1287,8 @@ export default defineHandler(async (event: any) => {
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
     let filtered = maps.filter((m) => {
-      const curated = PUBLIC_BEATSAVER_MAP_KEYS.has(String(m.bsid || ''));
+      // Fallback data follows the same rule: any map added to SnoreSaber can be displayed.
+      const curated = true;
       const ranked = (m.leaderboards || []).some((l:any) => String(l.realm?.leaderboardStatus || '').toUpperCase() === 'RANKED');
       const q = !search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search);
       const stars = Math.max(0,...(m.leaderboards || []).map((l:any)=>Number(l.realm?.stars||0)));
