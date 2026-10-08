@@ -37,7 +37,7 @@ function player(id: string, name: string, country: string, rank: number, pp: num
   return {
     id, name, playerNameInGame: name, country, role: null,
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=16131f&color=ff79bd&bold=true`,
-    avatarVersion: 1, permissions: 0, banned: false, silenced: false, inactive: false,
+    avatarVersion: 1, permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank, countryRank: rank, rankChange: 0,
       totalPP: pp, plusOnePP: pp + 1, totalScore: '0', totalRankedScore: '0',
@@ -190,8 +190,18 @@ async function getFollowRelationship(sql: any, viewerId: string, targetId: strin
 }
 
 async function relationshipSummary(sql: any, playerId: string, viewerId?: string | null) {
-  if (!sql) return { followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [], viewerRelationship: { following: false, followsViewer: false, mutual: false } };
-  const counts: any[] = await sql`
+  const empty = { followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [], viewerRelationship: { following: false, followsViewer: false, mutual: false } };
+  if (!sql) return empty;
+  // Profiles must remain readable even if the optional social migration has not
+  // been applied yet. The follow endpoints will become active once the table exists.
+  try {
+    const exists: any[] = await sql`SELECT to_regclass('public.player_follows') AS table_name`;
+    if (!exists[0]?.table_name) return empty;
+  } catch {
+    return empty;
+  }
+  try {
+    const counts: any[] = await sql`
     SELECT
       (SELECT COUNT(*)::int FROM player_follows WHERE following_id=${playerId}) AS followers,
       (SELECT COUNT(*)::int FROM player_follows WHERE follower_id=${playerId}) AS following
@@ -210,14 +220,17 @@ async function relationshipSummary(sql: any, playerId: string, viewerId?: string
   `;
   const rel = viewerId ? await getFollowRelationship(sql, viewerId, playerId) : { following: false, followsViewer: false, mutual: false };
   const mapRelationship = (r: any) => ({ id: String(r.id), name: r.name, playerNameInGame: r.name, country: r.country || 'XX', role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1, permissions: Number(r.permissions || 0) });
-  return {
-    followers: Number(counts[0]?.followers || 0),
-    following: Number(counts[0]?.following || 0),
-    platformFriends: 0,
-    recentFollowers: recentFollowers.map(mapRelationship),
-    recentFollowing: recentFollowing.map(mapRelationship),
-    viewerRelationship: rel
-  };
+    return {
+      followers: Number(counts[0]?.followers || 0),
+      following: Number(counts[0]?.following || 0),
+      platformFriends: 0,
+      recentFollowers: recentFollowers.map(mapRelationship),
+      recentFollowing: recentFollowing.map(mapRelationship),
+      viewerRelationship: rel
+    };
+  } catch {
+    return empty;
+  }
 }
 
 async function userRelationships(sql: any, playerId: string) {
@@ -246,7 +259,7 @@ function dbPlayer(r: any) {
     id: publicId,
     playerId: publicId,
     steamId: r.steam_id || null, name: r.name, playerNameInGame: r.name, role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1,
-    bio: r.bio ?? null, country: r.country || 'XX', permissions: 0, banned: false, silenced: false, inactive: false,
+    bio: r.bio ?? null, country: r.country || 'XX', permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
     vanity: r.vanity || r.name?.toLowerCase(), publicLivePresenceOptOut: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank: Number(r.rank || 0), countryRank: Number(r.country_rank || 0), rankChange: 0,
@@ -497,13 +510,13 @@ export default defineHandler(async (event: any) => {
       const viewerId = await authPlayerId(request, sql);
       const rel = await relationshipSummary(sql, pr[0].id, viewerId);
       const historyRows: any[] = await sql`
-        SELECT rank, pp, total_score, total_ranked_score, total_plays, average_accuracy, created_at
+        SELECT rank, pp, total_score, total_ranked_score, total_plays, total_ranked_plays, total_played_leaderboards, total_played_ranked_leaderboards, average_accuracy, created_at
         FROM players WHERE id=${pr[0].id} LIMIT 1`;
       const h = historyRows[0];
       const history = h ? [{
         rank: Number(h.rank || 0), totalPP: Number(h.pp || 0), totalScore: String(h.total_score || 0),
-        totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: 0,
-        totalPlayedRankedLeaderboards: 0, totalSubmittedPlays: Number(h.total_plays || 0),
+        totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: Number(h.total_played_leaderboards || 0),
+        totalPlayedRankedLeaderboards: Number(h.total_played_ranked_leaderboards || 0), totalSubmittedPlays: Number(h.total_plays || 0),
         totalReplayViews: 0, averageAccuracy: Number(h.average_accuracy || 0),
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
@@ -523,6 +536,8 @@ export default defineHandler(async (event: any) => {
     const page = Math.max(1, Number(query.get('page') || 1));
     const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 20)));
     if (!sql) return json({ data: [], metadata: metadata(0, page, limit) });
+    const tableCheck: any[] = await sql`SELECT to_regclass('public.player_follows') AS table_name`;
+    if (!tableCheck[0]?.table_name) return json({ data: [], metadata: metadata(0, page, limit) });
     const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     const targetId = targetRows[0].id;
