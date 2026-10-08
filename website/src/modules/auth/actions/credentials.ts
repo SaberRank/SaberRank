@@ -1,9 +1,9 @@
 import { createServerFn } from '@tanstack/react-start';
 
 import { setAuthCookie } from '@/modules/auth/actions/session.server';
+import { getRequestHeaders } from '@tanstack/react-start/server';
 import { getClientRequestHeaders } from '@/shared/api/client-request.server';
 import type { RequestParams } from '@/shared/api/generated/Api';
-import { env } from '@/env';
 import type { PasswordAuthControllerGetPasswordCredentialResponse } from '@/shared/api/generated/ApiParams';
 import { api } from '@/shared/api/server-api';
 import { actionApiData, actionSuccess, type ActionResult } from '@/shared/result/action';
@@ -19,7 +19,15 @@ function requestOptions(): RequestParams {
 
 async function localPasswordAuth(path: string, data: Record<string, string>): Promise<ActionResult<CredentialAuthResponse>> {
    try {
-      const response = await fetch(`${env.API_URL.replace(/\/$/, '')}/api/v2${path}`, {
+      // Always call the API on the exact host handling this request. Using a
+      // hard-coded/default API_URL can send authentication to an older Vercel
+      // deployment and makes signup/login appear inconsistent.
+      const requestHeaders = getRequestHeaders();
+      const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host');
+      const protocol = requestHeaders.get('x-forwarded-proto') ?? 'https';
+      if (!host) return { ok: false, error: 'Unable to determine the SnoreSaber server address.' };
+      const apiUrl = `${protocol}://${host}/api/v2${path}`;
+      const response = await fetch(apiUrl, {
          method: 'POST',
          headers: { 'content-type': 'application/json', ...getClientRequestHeaders() },
          body: JSON.stringify(data),
