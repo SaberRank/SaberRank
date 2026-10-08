@@ -3,7 +3,7 @@
 import { memo, useEffect, useState } from 'react';
 
 import { getRouteApi, useLocation, useRouter } from '@tanstack/react-router';
-import { Check, ChevronsUpDown, CircleEllipsis, CircleHelp, EllipsisVertical, ExternalLink, LogIn, LogOut, Plus, Search } from 'lucide-react';
+import { Check, ChevronsUpDown, CircleEllipsis, EllipsisVertical, ExternalLink, LogIn, LogOut, Plus, Search } from 'lucide-react';
 import { FaGlobe } from 'react-icons/fa';
 import { useTranslations } from 'use-intl';
 
@@ -104,11 +104,6 @@ export function SidebarNav({ onNavigateAction }: { onNavigateAction?: () => void
                         <PopoverContent side="right" align="start" avoidCollisions={false} collisionPadding={16} className="w-44 p-3 xl:w-56">
                            <div className="mb-2 flex items-center justify-between">
                               <p className="text-muted-foreground cursor-default text-xs font-medium select-none">{t('sidebar.activeRealm')}</p>
-                              <Button asChild variant="ghost" size="icon-xs" className="text-muted-foreground cursor-pointer">
-                                 <a href="https://www.patreon.com/posts/157688806" target="_blank" rel="noreferrer">
-                                    <CircleHelp data-icon />
-                                 </a>
-                              </Button>
                            </div>
                            <div className="flex flex-col gap-1">
                               <div className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm">

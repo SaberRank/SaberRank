@@ -133,6 +133,80 @@ function hasIngestAuth(request: Request) {
   return token === INGEST_KEY;
 }
 
+
+async function ensureAccountConnectionsTable(sql: any) {
+  if (!sql) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS account_connections (
+      id BIGSERIAL PRIMARY KEY,
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL,
+      provider_account_id TEXT NOT NULL,
+      source TEXT NOT NULL,
+      is_primary BOOLEAN NOT NULL DEFAULT false,
+      connected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (player_id, provider),
+      UNIQUE (provider, provider_account_id)
+    )
+  `;
+}
+
+async function syncDerivedConnections(sql: any, playerId: string) {
+  await ensureAccountConnectionsTable(sql);
+  const playerRows: any[] = await sql`
+    SELECT id, steam_id, created_at
+    FROM players
+    WHERE id=${playerId}
+    LIMIT 1
+  `;
+  const player = playerRows[0];
+  if (!player) return [];
+
+  await sql`
+    INSERT INTO account_connections
+      (player_id, provider, provider_account_id, source, is_primary)
+    VALUES
+      (${playerId}, 'SCORESABER', ${String(player.id)}, 'SCORESABER_SIGNUP', true)
+    ON CONFLICT (player_id, provider) DO NOTHING
+  `;
+
+  if (player.steam_id) {
+    await sql`
+      INSERT INTO account_connections
+        (player_id, provider, provider_account_id, source, is_primary)
+      VALUES
+        (${playerId}, 'STEAM', ${String(player.steam_id)}, 'STEAM_OPENID', false)
+      ON CONFLICT (player_id, provider)
+      DO UPDATE SET
+        provider_account_id=EXCLUDED.provider_account_id,
+        source=EXCLUDED.source
+    `;
+  }
+
+  const rows: any[] = await sql`
+    SELECT id, provider, provider_account_id, source, is_primary, connected_at
+    FROM account_connections
+    WHERE player_id=${playerId}
+    ORDER BY CASE provider
+      WHEN 'SCORESABER' THEN 1
+      WHEN 'STEAM' THEN 2
+      WHEN 'OCULUS' THEN 3
+      ELSE 4
+    END
+  `;
+
+  return rows.map((r) => ({
+    id: Number(r.id || 0),
+    provider: String(r.provider),
+    providerAccountId: String(r.provider_account_id),
+    state: 'CONNECTED',
+    source: String(r.source),
+    isPrimary: Boolean(r.is_primary),
+    connectedAt: r.connected_at ? new Date(r.connected_at).toISOString() : null,
+    tokenBacked: false
+  }));
+}
+
 async function verifySteam(req: Request) {
   const url = new URL(req.url);
   const params = new URLSearchParams();
@@ -2017,9 +2091,68 @@ export default defineHandler(async (event: any) => {
   }
 
   if (route === '/user/connections' && method === 'GET') {
-    const pid=await authPlayerId(request,sql);
-    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
-    return json([]);
+    const pid = await authPlayerId(request, sql);
+    if (!pid) return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Not signed in' }, 401);
+    if (!sql) return json([]);
+    try {
+      return json(await syncDerivedConnections(sql, pid));
+    } catch (error) {
+      console.error('[SnoreSaber] failed to load account connections', error);
+      return json([]);
+    }
+  }
+
+  if (route === '/user/connections/primary' && method === 'POST') {
+    const pid = await authPlayerId(request, sql);
+    if (!pid) return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Not signed in' }, 401);
+    if (!sql) return json({ success: true, publicPlayerId: pid, provider: 'SCORESABER' });
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); }
+    catch { return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Invalid JSON' }, 400); }
+
+    const provider = String(body.provider || '').toUpperCase();
+    if (!['SCORESABER', 'STEAM', 'OCULUS'].includes(provider)) {
+      return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Invalid connection provider' }, 400);
+    }
+
+    await syncDerivedConnections(sql, pid);
+    const existing: any[] = await sql`
+      SELECT provider
+      FROM account_connections
+      WHERE player_id=${pid} AND provider=${provider}
+      LIMIT 1
+    `;
+    if (!existing[0]) {
+      return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Connection is not linked' }, 400);
+    }
+
+    await sql`UPDATE account_connections SET is_primary=false WHERE player_id=${pid}`;
+    await sql`UPDATE account_connections SET is_primary=true WHERE player_id=${pid} AND provider=${provider}`;
+
+    return json({ success: true, publicPlayerId: pid, provider });
+  }
+
+  if (route.startsWith('/user/connections/') && method === 'DELETE') {
+    const pid = await authPlayerId(request, sql);
+    if (!pid) return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Not signed in' }, 401);
+    if (!sql) return json({ success: true });
+
+    const provider = decodeURIComponent(route.split('/')[3] || '').toUpperCase();
+    if (!['STEAM', 'OCULUS', 'PATREON', 'DISCORD', 'SCORESABER'].includes(provider)) {
+      return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Invalid connection provider' }, 400);
+    }
+    if (provider === 'SCORESABER') {
+      return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'The SnoreSaber account cannot be disconnected' }, 400);
+    }
+
+    await ensureAccountConnectionsTable(sql);
+    await sql`DELETE FROM account_connections WHERE player_id=${pid} AND provider=${provider}`;
+
+    if (provider === 'STEAM') {
+      await sql`UPDATE players SET steam_id=null, last_seen_at=now() WHERE id=${pid}`;
+    }
+
+    return json({ success: true });
   }
 
   // ------------------------- PROFILE CUSTOMIZATION -------------------------
@@ -2094,8 +2227,10 @@ export default defineHandler(async (event: any) => {
   }
   if (route === '/auth/steam' && method === 'GET') {
     const state = randomBytes(24).toString('hex');
+    const intent = query.get('intent') === 'merge' ? 'merge' : 'login';
     const callback = new URL('/api/v2/auth/steam/callback', origin);
     callback.searchParams.set('redirectTo', query.get('redirectTo') || '/');
+    callback.searchParams.set('intent', intent);
     callback.searchParams.set('state', state);
     const steam = new URL('https://steamcommunity.com/openid/login');
     steam.searchParams.set('openid.ns','http://specs.openid.net/auth/2.0'); steam.searchParams.set('openid.mode','checkid_setup'); steam.searchParams.set('openid.return_to',callback.toString());
@@ -2106,32 +2241,140 @@ export default defineHandler(async (event: any) => {
     const state = query.get('state');
     const stateCookie = (request.headers.get('cookie') || '').split(';').map((x) => x.trim()).find((x) => x.startsWith('steam-auth-state='));
     const storedState = stateCookie ? decodeURIComponent(stateCookie.slice('steam-auth-state='.length)) : null;
-    if (!state || !storedState || state !== storedState) return new Response('Steam authentication state expired or invalid',{status:400,headers:{'content-type':'text/plain'}});
-    const steamId=await verifySteam(request); if(!steamId)return new Response('Steam authentication failed',{status:401,headers:{'content-type':'text/plain'}});
-    let p:any;
+    if (!state || !storedState || state !== storedState) {
+      return new Response('Steam authentication state expired or invalid', { status: 400, headers: { 'content-type': 'text/plain' } });
+    }
+
+    const steamId = await verifySteam(request);
+    if (!steamId) {
+      return new Response('Steam authentication failed', { status: 401, headers: { 'content-type': 'text/plain' } });
+    }
+
+    const intent = query.get('intent') === 'merge' ? 'merge' : 'login';
+    const redirectTo = query.get('redirectTo') || '/';
+
+    // Linking Steam must never replace the current SnoreSaber session.
+    if (intent === 'merge') {
+      const currentPlayerId = await authPlayerId(request, sql);
+      if (!currentPlayerId) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: `${origin}/settings/connections?steam=failed`
+          }
+        });
+      }
+
+      if (sql) {
+        const owner: any[] = await sql`
+          SELECT id
+          FROM players
+          WHERE steam_id=${steamId}
+          LIMIT 1
+        `;
+
+        if (owner[0] && String(owner[0].id) !== String(currentPlayerId)) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: `${origin}/settings/connections?steam=failed`
+            }
+          });
+        }
+
+        await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS steam_id TEXT`;
+        await sql`
+          UPDATE players
+          SET steam_id=${steamId}, last_seen_at=now()
+          WHERE id=${currentPlayerId}
+        `;
+        await ensureAccountConnectionsTable(sql);
+        await sql`
+          INSERT INTO account_connections
+            (player_id, provider, provider_account_id, source, is_primary)
+          VALUES
+            (${currentPlayerId}, 'STEAM', ${steamId}, 'STEAM_OPENID', false)
+          ON CONFLICT (player_id, provider)
+          DO UPDATE SET
+            provider_account_id=EXCLUDED.provider_account_id,
+            source=EXCLUDED.source
+        `;
+      }
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: `${origin}/settings/connections?steam=connected`,
+          'set-cookie': 'steam-auth-state=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0'
+        }
+      });
+    }
+
+    // Normal Steam login.
     let internalPlayerId = steamId;
     const steamProfile = await fetchSteamProfile(steamId);
     const steamName = steamProfile?.name || `SteamUser_${steamId.slice(-5)}`;
     const steamAvatar = steamProfile?.avatar || '';
-    if(sql){
-      const rows:any[]=await sql`SELECT * FROM players WHERE steam_id=${steamId} OR id=${steamId} LIMIT 1`;
-      if(rows[0]) {
-        await sql`UPDATE players SET name=${steamName}, avatar=${steamAvatar}, last_seen_at=now() WHERE id=${rows[0].id}`;
-        const updated:any[]=await sql`SELECT * FROM players WHERE id=${rows[0].id} LIMIT 1`;
-        internalPlayerId = updated[0].id;
-        p=dbPlayer(updated[0]);
+
+    if (sql) {
+      await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS steam_id TEXT`;
+      const rows: any[] = await sql`
+        SELECT *
+        FROM players
+        WHERE steam_id=${steamId} OR id=${steamId}
+        LIMIT 1
+      `;
+
+      if (rows[0]) {
+        await sql`
+          UPDATE players
+          SET steam_id=${steamId},
+              name=${steamName},
+              avatar=${steamAvatar},
+              last_seen_at=now()
+          WHERE id=${rows[0].id}
+        `;
+        internalPlayerId = rows[0].id;
       } else {
-        const created:any[]=await sql`INSERT INTO players (id,steam_id,name,country,avatar) VALUES (${steamId},${steamId},${steamName},'XX',${steamAvatar}) RETURNING *`;
+        const created: any[] = await sql`
+          INSERT INTO players (id, steam_id, name, country, avatar)
+          VALUES (${steamId}, ${steamId}, ${steamName}, 'XX', ${steamAvatar})
+          RETURNING id
+        `;
         internalPlayerId = created[0].id;
-        p=dbPlayer(created[0]);
       }
+
+      await ensureAccountConnectionsTable(sql);
+      await sql`
+        INSERT INTO account_connections
+          (player_id, provider, provider_account_id, source, is_primary)
+        VALUES
+          (${internalPlayerId}, 'STEAM', ${steamId}, 'STEAM_OPENID', false)
+        ON CONFLICT (player_id, provider)
+        DO UPDATE SET
+          provider_account_id=EXCLUDED.provider_account_id,
+          source=EXCLUDED.source
+      `;
     } else {
-      p=players.find((x)=>x.id===steamId);
-      if(!p){p=player(steamId,steamName,'XX',players.length+1,0);players.push(p);}
-      else {p.name=steamName; p.playerNameInGame=steamName; p.avatar=steamAvatar || p.avatar;}
+      let p = players.find((p) => p.id === steamId);
+      if (!p) {
+        p = player(steamId, steamName, 'XX', players.length + 1, 0);
+        players.push(p);
+      } else {
+        p.name = steamName;
+        p.playerNameInGame = steamName;
+        p.avatar = steamAvatar || p.avatar;
+      }
     }
-    const token=tokenFor(internalPlayerId); const redirectTo=query.get('redirectTo')||'/';
-    return new Response(null,{status:302,headers:{Location:redirectTo,'set-cookie':`token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`}});
+
+    const token = tokenFor(internalPlayerId);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: redirectTo,
+        'set-cookie': `token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=2592000`
+      }
+    });
   }
   if (route === '/auth/token' && method === 'GET') {const token=tokenFromCookie(request.headers.get('cookie')||undefined);return token?json({token}):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);}
   if (route === '/auth/logout' && method === 'POST') return json({ok:true},200,{'set-cookie':'token=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0'});

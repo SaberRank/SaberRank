@@ -2,7 +2,6 @@
 
 import { useTransition } from 'react';
 
-import { useRouter } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { Languages } from 'lucide-react';
 import { useLocale } from 'use-intl';
@@ -26,7 +25,6 @@ type LanguageSwitcherProps = {
 
 export function LanguageSwitcher({ className, contentClassName, open, onOpenChangeAction }: LanguageSwitcherProps) {
    const locale = useLocale();
-   const router = useRouter();
    const { visibleLocales } = useSidebar();
    const setLocaleAction = useServerFn(setLocale);
    const [pending, startTransition] = useTransition();
@@ -34,7 +32,10 @@ export function LanguageSwitcher({ className, contentClassName, open, onOpenChan
    function handleChange(value: string) {
       startTransition(async () => {
          await setLocaleAction({ data: value });
-         await router.invalidate();
+         // The locale is stored in a server cookie and the root loader caches shell data.
+         // A hard navigation guarantees the new locale is applied immediately instead of
+         // waiting for the cached root query to expire.
+         window.location.reload();
       });
    }
 

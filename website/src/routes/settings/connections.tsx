@@ -34,7 +34,14 @@ const getConnectionsSettingsData = createServerFn({ method: 'GET' }).handler(asy
 export const Route = createFileRoute('/settings/connections')({
    validateSearch: (search) => requestOrNotFound(settingsConnectionsSearchSchema.safeParse(search)),
    loaderDeps: ({ search }) => search,
-   loader: () => getConnectionsSettingsData(),
+   loader: async () => {
+      try {
+         return await getConnectionsSettingsData();
+      } catch {
+         return { connections: [] };
+      }
+   },
+   staleTime: 15 * 1000,
    head: () => buildNoindexHead('Connections Settings', 'Manage your SnoreSaber connected accounts', '/settings/connections'),
    component: SettingsConnectionsRoute
 });
