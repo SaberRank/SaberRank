@@ -965,7 +965,7 @@ async function recalculatePlayerStats(sql: any, playerId: string) {
     rankedScore += Number(row.score || 0);
     accuracySum += Number(row.accuracy || 0);
   }
-  for (const row of bestAll) allScore += Number(row[1].score || 0);
+  for (const row of bestAll.values()) allScore += Number(row.score || 0);
 
   const average = rankedBest.length ? accuracySum / rankedBest.length : 0;
   const totalPlays = rows.length;
@@ -978,8 +978,8 @@ async function recalculatePlayerStats(sql: any, playerId: string) {
       pp=${pp},
       total_score=${Math.round(allScore)},
       total_ranked_score=${Math.round(rankedScore)},
-      total_played_leaderboards=${totalLeaderboards},
-      total_played_ranked_leaderboards=${rankedLeaderboards},
+      total_plays=${totalPlays},
+      total_ranked_plays=${rankedPlays},
       average_accuracy=${average},
       last_seen_at=now()
     WHERE id=${playerId}`;
