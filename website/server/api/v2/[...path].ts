@@ -509,18 +509,25 @@ export default defineHandler(async (event: any) => {
       const p = dbPlayer(pr[0]);
       const viewerId = await authPlayerId(request, sql);
       const rel = await relationshipSummary(sql, pr[0].id, viewerId);
-      const historyRows: any[] = await sql`
-        SELECT rank, pp, total_score, total_ranked_score, total_plays, total_ranked_plays, total_played_leaderboards, total_played_ranked_leaderboards, average_accuracy, created_at
-        FROM players WHERE id=${pr[0].id} LIMIT 1`;
-      const h = historyRows[0];
-      const history = h ? [{
+      // Do not assume optional play-count columns exist. Older SnoreSaber databases
+      // may have the original players schema, so derive play counts from scores.
+      const playRows: any[] = await sql`
+        SELECT s.leaderboard_id, l.status
+        FROM scores s JOIN leaderboards l ON l.id=s.leaderboard_id
+        WHERE s.player_id=${pr[0].id}`;
+      const totalPlays = playRows.length;
+      const rankedPlays = playRows.filter((row) => row.status === 'RANKED').length;
+      const playedLeaderboards = new Set(playRows.map((row) => String(row.leaderboard_id))).size;
+      const rankedLeaderboards = new Set(playRows.filter((row) => row.status === 'RANKED').map((row) => String(row.leaderboard_id))).size;
+      const h = pr[0];
+      const history = [{
         rank: Number(h.rank || 0), totalPP: Number(h.pp || 0), totalScore: String(h.total_score || 0),
-        totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: Number(h.total_played_leaderboards || 0),
-        totalPlayedRankedLeaderboards: Number(h.total_played_ranked_leaderboards || 0), totalSubmittedPlays: Number(h.total_plays || 0),
+        totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: playedLeaderboards,
+        totalPlayedRankedLeaderboards: rankedLeaderboards, totalSubmittedPlays: totalPlays,
         totalReplayViews: 0, averageAccuracy: Number(h.average_accuracy || 0),
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
-      }] : [];
+      }];
       return json({ player: { ...p, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
     }
     const p = players.find((x) => x.id === requestedId || x.steamId === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
