@@ -185,23 +185,13 @@ function dbPlayer(r: any) {
     bio: r.bio ?? null, country: r.country || 'XX', permissions: 0, banned: false, silenced: false, inactive: false,
     vanity: r.vanity || r.name?.toLowerCase(), publicLivePresenceOptOut: false,
     stats: {
-      realmId: 1, realmName: 'SnoreSaber', rank: Number(r.rank || 0), countryRank: Number(r.country_rank || 0), rankChange: 0,
+      realmId: 1, realmName: 'SnoreSaber', rank: r.rank || 0, countryRank: r.country_rank || 0, rankChange: 0,
       totalPP: Number(r.pp || 0), plusOnePP: Number(r.pp || 0), totalScore: String(r.total_score || 0), totalRankedScore: String(r.total_ranked_score || 0),
       totalPlayedLeaderboards: Number(r.total_played_leaderboards || 0), totalPlayedRankedLeaderboards: Number(r.total_played_ranked_leaderboards || 0),
       totalSubmittedPlays: Number(r.total_plays || 0), totalReplayViews: 0, averageAccuracy: Number(r.average_accuracy || 0),
       weightedAverageAccuracy: Number(r.average_accuracy || 0), completionAccuracy: Number(r.average_accuracy || 0),
       device: { hmd: null, controllerLeft: null, controllerRight: null }
-    },
-    profileCustomization: {
-      backgroundImage: null, backgroundImageVersion: null, accentColor: '#f06ab7',
-      accentForegroundColor: '#160d16', accentForegroundActiveColor: '#ffffff',
-      supporterNameColorEnabled: false, badgeOrder: null, badgeComments: null,
-      statOrder: null, enabledStatIds: null, chartMetricIds: null, sectionOrder: null
-    },
-    createdAt: r.created_at ? new Date(r.created_at).toISOString() : NOW(),
-    lastSeenAt: r.last_seen_at ? new Date(r.last_seen_at).toISOString() : NOW(),
-    badges: [],
-    relationships: { following: [], mutuals: [] }
+    }, relationships: { following: [], mutuals: [] }
   };
 }
 
