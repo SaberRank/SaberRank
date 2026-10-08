@@ -685,10 +685,9 @@
 	}
 
 
-		.idol-avatar {
-			width: 40px;
-			height: 40px;
-		}
+	.idol-avatar {
+		width: 40px;
+		height: 40px;
 	}
 
 	@media (max-width: 768px) {
