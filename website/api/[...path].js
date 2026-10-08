@@ -33,10 +33,21 @@ function sign(value) { const secret = process.env.SESSION_SECRET || 'development
 function verify(token) { if (!token) return null; const [value, sig] = token.split('.'); if (!value || !sig) return null; const secret = process.env.SESSION_SECRET || 'development-only-secret'; const expected = crypto.createHmac('sha256', secret).update(value).digest('base64url'); try { return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? value : null; } catch { return null; } }
 
 export default async function handler(req, res) {
-  const rawPath = req.query?.path;
-  const pathParts = Array.isArray(rawPath) ? rawPath : (rawPath ? [rawPath] : []);
-  const parts = pathParts.map((part) => decodeURIComponent(String(part)));
-  const route = parts.join('/');
+  // Vercel does not expose catch-all parameters consistently across
+  // deployments. Build the route from the actual request URL first, then
+  // fall back to req.query.path. This makes /api/stats, /api/maps, etc.
+  // work regardless of how Vercel represents the catch-all parameter.
+  const requestUrl = String(req.url || '');
+  const pathname = requestUrl.split('?')[0].replace(/^\/+/, '');
+  let route = pathname.startsWith('api/') ? pathname.slice(4) : pathname;
+  if (route === 'api') route = '';
+  if (!route) {
+    const rawPath = req.query?.path;
+    const pathParts = Array.isArray(rawPath) ? rawPath : (rawPath ? [rawPath] : []);
+    route = pathParts.map((part) => decodeURIComponent(String(part))).join('/');
+    if (route.startsWith('api/')) route = route.slice(4);
+  }
+  const parts = route.split('/').filter(Boolean).map((part) => decodeURIComponent(part));
   const q = req.query || {};
   try {
     if (route === 'stats') {
