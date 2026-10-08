@@ -11,6 +11,21 @@ CREATE TABLE IF NOT EXISTS players (
   total_score NUMERIC(20,0) NOT NULL DEFAULT 0,
   total_ranked_score NUMERIC(20,0) NOT NULL DEFAULT 0,
   total_plays INTEGER NOT NULL DEFAULT 0,
+  total_ranked_plays INTEGER NOT NULL DEFAULT 0,
+  total_played_leaderboards INTEGER NOT NULL DEFAULT 0,
+  total_played_ranked_leaderboards INTEGER NOT NULL DEFAULT 0,
+  permissions INTEGER NOT NULL DEFAULT 0,
+  role TEXT,
+  bio TEXT,
+  vanity TEXT,
+  banned BOOLEAN NOT NULL DEFAULT false,
+  silenced BOOLEAN NOT NULL DEFAULT false,
+  ban_reason TEXT,
+  ban_notes TEXT,
+  ban_created_at TIMESTAMPTZ,
+  ban_auto_unban BOOLEAN NOT NULL DEFAULT false,
+  ban_auto_unbans_at TIMESTAMPTZ,
+  ban_earliest_appeal_date TIMESTAMPTZ,
   average_accuracy DOUBLE PRECISION NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -71,3 +86,15 @@ CREATE INDEX IF NOT EXISTS idx_players_pp ON players(pp DESC);
 CREATE INDEX IF NOT EXISTS idx_scores_leaderboard ON scores(leaderboard_id, score DESC);
 CREATE INDEX IF NOT EXISTS idx_scores_player ON scores(player_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_maps_name ON maps(song_name);
+
+
+CREATE TABLE IF NOT EXISTS player_follows (
+  follower_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  following_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (follower_id, following_id),
+  CHECK (follower_id <> following_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_follows_following ON player_follows(following_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_follows_follower ON player_follows(follower_id, created_at DESC);

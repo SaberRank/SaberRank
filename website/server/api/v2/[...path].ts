@@ -37,7 +37,7 @@ function player(id: string, name: string, country: string, rank: number, pp: num
   return {
     id, name, playerNameInGame: name, country, role: null,
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=16131f&color=ff79bd&bold=true`,
-    avatarVersion: 1, permissions: 0, banned: false, silenced: false, inactive: false,
+    avatarVersion: 1, permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank, countryRank: rank, rankChange: 0,
       totalPP: pp, plusOnePP: pp + 1, totalScore: '0', totalRankedScore: '0',
@@ -176,18 +176,82 @@ async function fetchSteamProfile(steamId: string) {
   }
 }
 
+
+async function getFollowRelationship(sql: any, viewerId: string, targetId: string) {
+  if (!sql || !viewerId || !targetId || viewerId === targetId) return { following: false, followsViewer: false, mutual: false };
+  const rows: any[] = await sql`
+    SELECT
+      EXISTS(SELECT 1 FROM player_follows WHERE follower_id=${viewerId} AND following_id=${targetId}) AS following,
+      EXISTS(SELECT 1 FROM player_follows WHERE follower_id=${targetId} AND following_id=${viewerId}) AS follows_viewer
+  `;
+  const following = Boolean(rows[0]?.following);
+  const followsViewer = Boolean(rows[0]?.follows_viewer);
+  return { following, followsViewer, mutual: following && followsViewer };
+}
+
+async function relationshipSummary(sql: any, playerId: string, viewerId?: string | null) {
+  if (!sql) return { followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [], viewerRelationship: { following: false, followsViewer: false, mutual: false } };
+  const counts: any[] = await sql`
+    SELECT
+      (SELECT COUNT(*)::int FROM player_follows WHERE following_id=${playerId}) AS followers,
+      (SELECT COUNT(*)::int FROM player_follows WHERE follower_id=${playerId}) AS following
+  `;
+  const recentFollowers: any[] = await sql`
+    SELECT p.id,p.name,p.country,p.avatar
+    FROM player_follows f JOIN players p ON p.id=f.follower_id
+    WHERE f.following_id=${playerId}
+    ORDER BY f.created_at DESC LIMIT 5
+  `;
+  const recentFollowing: any[] = await sql`
+    SELECT p.id,p.name,p.country,p.avatar
+    FROM player_follows f JOIN players p ON p.id=f.following_id
+    WHERE f.follower_id=${playerId}
+    ORDER BY f.created_at DESC LIMIT 5
+  `;
+  const rel = viewerId ? await getFollowRelationship(sql, viewerId, playerId) : { following: false, followsViewer: false, mutual: false };
+  const mapRelationship = (r: any) => ({ id: String(r.id), name: r.name, playerNameInGame: r.name, country: r.country || 'XX', role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1, permissions: Number(r.permissions || 0) });
+  return {
+    followers: Number(counts[0]?.followers || 0),
+    following: Number(counts[0]?.following || 0),
+    platformFriends: 0,
+    recentFollowers: recentFollowers.map(mapRelationship),
+    recentFollowing: recentFollowing.map(mapRelationship),
+    viewerRelationship: rel
+  };
+}
+
+async function userRelationships(sql: any, playerId: string) {
+  if (!sql) return { following: [], mutuals: [] };
+  const rows: any[] = await sql`
+    SELECT f.following_id AS id, p.name,p.country,p.avatar,p.role,p.permissions,
+      EXISTS(SELECT 1 FROM player_follows back WHERE back.follower_id=f.following_id AND back.following_id=${playerId}) AS follows_back
+    FROM player_follows f JOIN players p ON p.id=f.following_id
+    WHERE f.follower_id=${playerId}
+    ORDER BY f.created_at DESC
+  `;
+  const following = rows.filter((r) => !r.follows_back).map((r) => ({ id: String(r.id), relation: 'follow', name: r.name, playerNameInGame: r.name, country: r.country || 'XX', role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1, permissions: Number(r.permissions || 0) }));
+  const mutuals = rows.filter((r) => r.follows_back).map((r) => ({ id: String(r.id), relation: 'follow', name: r.name, playerNameInGame: r.name, country: r.country || 'XX', role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1, permissions: Number(r.permissions || 0) }));
+  return { following, mutuals };
+}
+
+async function isAdmin(sql: any, playerId: string | null) {
+  if (!sql || !playerId) return false;
+  const rows: any[] = await sql`SELECT permissions FROM players WHERE id=${playerId} LIMIT 1`;
+  return Boolean(Number(rows[0]?.permissions || 0) & 16);
+}
+
 function dbPlayer(r: any) {
   const publicId = String(r.id);
   return {
     id: publicId,
     playerId: publicId,
-    steamId: r.steam_id || null, name: r.name, playerNameInGame: r.name, role: null, avatar: r.avatar || '', avatarVersion: 1,
-    bio: r.bio ?? null, country: r.country || 'XX', permissions: 0, banned: false, silenced: false, inactive: false,
+    steamId: r.steam_id || null, name: r.name, playerNameInGame: r.name, role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1,
+    bio: r.bio ?? null, country: r.country || 'XX', permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
     vanity: r.vanity || r.name?.toLowerCase(), publicLivePresenceOptOut: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank: Number(r.rank || 0), countryRank: Number(r.country_rank || 0), rankChange: 0,
       totalPP: Number(r.pp || 0), plusOnePP: Number(r.pp || 0), totalScore: String(r.total_score || 0), totalRankedScore: String(r.total_ranked_score || 0),
-      totalPlayedLeaderboards: Number(r.total_played_leaderboards || 0), totalPlayedRankedLeaderboards: Number(r.total_played_ranked_leaderboards || 0),
+      totalPlayedLeaderboards: Number(r.total_plays || 0), totalPlayedRankedLeaderboards: Number(r.total_ranked_plays || 0),
       totalSubmittedPlays: Number(r.total_plays || 0), totalReplayViews: 0, averageAccuracy: Number(r.average_accuracy || 0),
       weightedAverageAccuracy: Number(r.average_accuracy || 0), completionAccuracy: Number(r.average_accuracy || 0),
       device: { hmd: null, controllerLeft: null, controllerRight: null }
@@ -256,26 +320,47 @@ async function resolveInternalPlayerId(sql: any, publicOrInternalId: string) {
 
 async function recalculatePlayerStats(sql: any, playerId: string) {
   const rows: any[] = await sql`
-    SELECT s.player_id, s.leaderboard_id, s.score, s.accuracy, s.pp, s.created_at
-    FROM scores s
-    JOIN leaderboards l ON l.id=s.leaderboard_id
-    WHERE s.player_id=${playerId} AND l.status='RANKED'
+    SELECT s.player_id, s.leaderboard_id, s.score, s.accuracy, s.pp, s.created_at, l.status
+    FROM scores s JOIN leaderboards l ON l.id=s.leaderboard_id
+    WHERE s.player_id=${playerId}
     ORDER BY s.pp DESC, s.score DESC, s.created_at DESC`;
 
-  const best = new Map<number, any>();
-  for (const row of rows) if (!best.has(Number(row.leaderboard_id))) best.set(Number(row.leaderboard_id), row);
-  const plays = [...best.values()];
+  const bestAll = new Map<number, any>();
+  const bestRanked = new Map<number, any>();
+  for (const row of rows) {
+    const id = Number(row.leaderboard_id);
+    if (!bestAll.has(id)) bestAll.set(id, row);
+    if (row.status === 'RANKED' && !bestRanked.has(id)) bestRanked.set(id, row);
+  }
+
+  const rankedBest = [...bestRanked.values()].sort((a, b) => Number(b.pp) - Number(a.pp));
   let pp = 0;
-  let totalScore = 0;
+  let rankedScore = 0;
+  let allScore = 0;
   let accuracySum = 0;
-  plays.sort((a, b) => Number(b.pp) - Number(a.pp));
-  plays.forEach((row, index) => {
+  for (const [index, row] of rankedBest.entries()) {
     pp += Number(row.pp || 0) * Math.pow(0.965, index);
-    totalScore += Number(row.score || 0);
+    rankedScore += Number(row.score || 0);
     accuracySum += Number(row.accuracy || 0);
-  });
-  const average = plays.length ? accuracySum / plays.length : 0;
-  await sql`UPDATE players SET pp=${pp}, total_score=${Math.round(totalScore)}, total_ranked_score=${Math.round(totalScore)}, total_plays=${plays.length}, average_accuracy=${average}, last_seen_at=now() WHERE id=${playerId}`;
+  }
+  for (const row of bestAll) allScore += Number(row[1].score || 0);
+
+  const average = rankedBest.length ? accuracySum / rankedBest.length : 0;
+  const totalPlays = rows.length;
+  const rankedPlays = rows.filter((r) => r.status === 'RANKED').length;
+  const totalLeaderboards = bestAll.size;
+  const rankedLeaderboards = bestRanked.size;
+
+  await sql`
+    UPDATE players SET
+      pp=${pp},
+      total_score=${Math.round(allScore)},
+      total_ranked_score=${Math.round(rankedScore)},
+      total_played_leaderboards=${totalLeaderboards},
+      total_played_ranked_leaderboards=${rankedLeaderboards},
+      average_accuracy=${average},
+      last_seen_at=now()
+    WHERE id=${playerId}`;
 
   const all: any[] = await sql`SELECT id, country, pp FROM players ORDER BY pp DESC, id ASC`;
   const countryCounters = new Map<string, number>();
@@ -409,6 +494,8 @@ export default defineHandler(async (event: any) => {
       const pr: any[] = await sql`SELECT * FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
       if (!pr[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
       const p = dbPlayer(pr[0]);
+      const viewerId = await authPlayerId(request, sql);
+      const rel = await relationshipSummary(sql, pr[0].id, viewerId);
       const historyRows: any[] = await sql`
         SELECT rank, pp, total_score, total_ranked_score, total_plays, average_accuracy, created_at
         FROM players WHERE id=${pr[0].id} LIMIT 1`;
@@ -421,11 +508,61 @@ export default defineHandler(async (event: any) => {
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
       }] : [];
-      return json({ player: { ...p, pinnedScores: [], followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [] }, history, aliases: [] });
+      return json({ player: { ...p, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
     }
     const p = players.find((x) => x.id === requestedId || x.steamId === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
     if (!p) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     return json({ player: { ...p, pinnedScores: [], followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [] }, history: [], aliases: [] });
+  }
+
+  // ------------------------- PLAYER RELATIONSHIPS -------------------------
+  if (route.startsWith('/player/') && route.endsWith('/relationships') && method === 'GET') {
+    const seg = route.split('/');
+    const requestedId = decodeURIComponent(seg[2]);
+    const type = query.get('type') || 'followers';
+    const page = Math.max(1, Number(query.get('page') || 1));
+    const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 20)));
+    if (!sql) return json({ data: [], metadata: metadata(0, page, limit) });
+    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+    if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    const targetId = targetRows[0].id;
+    let rows: any[];
+    if (type === 'following') {
+      rows = await sql`SELECT p.id,p.name,p.country,p.avatar,p.role,p.permissions FROM player_follows f JOIN players p ON p.id=f.following_id WHERE f.follower_id=${targetId} ORDER BY f.created_at DESC`;
+    } else if (type === 'platform-friends') {
+      rows = [];
+    } else {
+      rows = await sql`SELECT p.id,p.name,p.country,p.avatar,p.role,p.permissions FROM player_follows f JOIN players p ON p.id=f.follower_id WHERE f.following_id=${targetId} ORDER BY f.created_at DESC`;
+    }
+    const data = rows.slice((page-1)*limit, (page-1)*limit+limit).map((r) => ({
+      player: { id:String(r.id), name:r.name, playerNameInGame:r.name, country:r.country || 'XX', role:r.role ?? null, avatar:r.avatar || '', avatarVersion:1, permissions:Number(r.permissions || 0) },
+      relation: 'follow'
+    }));
+    return json({data,metadata:metadata(rows.length,page,limit)});
+  }
+
+  if (route.startsWith('/player/') && route.endsWith('/follow') && method === 'POST') {
+    const requestedId = decodeURIComponent(route.split('/')[2]);
+    const viewerId = await authPlayerId(request, sql);
+    if (!viewerId) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if (!sql) return json({success:true});
+    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+    if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    const targetId = targetRows[0].id;
+    if (targetId === viewerId) return json({statusCode:400,error:'Bad Request',code:'INVALID_OPERATION',message:'You cannot follow yourself'},400);
+    await sql`INSERT INTO player_follows (follower_id, following_id) VALUES (${viewerId},${targetId}) ON CONFLICT (follower_id, following_id) DO NOTHING`;
+    return json({success:true});
+  }
+
+  if (route.startsWith('/player/') && route.endsWith('/unfollow') && method === 'POST') {
+    const requestedId = decodeURIComponent(route.split('/')[2]);
+    const viewerId = await authPlayerId(request, sql);
+    if (!viewerId) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if (!sql) return json({success:true});
+    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+    if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    await sql`DELETE FROM player_follows WHERE follower_id=${viewerId} AND following_id=${targetRows[0].id}`;
+    return json({success:true});
   }
 
   if (route.startsWith('/players/') && method === 'GET') {
@@ -532,6 +669,43 @@ export default defineHandler(async (event: any) => {
     return json({id:lb.id,map:m,difficulty:{id:lb.id,difficulty:lb.difficulty,rawDifficulty:lb.rawDifficulty,gameMode:lb.gameMode},maxScore:lb.maxScore,totalScores:lb.totalScores,dailyScores:lb.dailyScores,createdAt:lb.createdAt,realm:lb.realm});
   }
 
+  // ------------------------- ADMIN MODERATION -------------------------
+  if (route.startsWith('/admin/user/') && route.endsWith('/ban') && method === 'GET') {
+    const targetId = decodeURIComponent(route.split('/')[3]);
+    if (!sql) return json(null);
+    const rows: any[] = await sql`SELECT banned,ban_reason,ban_notes,ban_created_at,ban_auto_unban,ban_auto_unbans_at,ban_earliest_appeal_date FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
+    if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    if (!rows[0].banned) return json(null);
+    return json({reason:rows[0].ban_reason || '',notes:rows[0].ban_notes || null,createdAt:rows[0].ban_created_at ? new Date(rows[0].ban_created_at).toISOString() : NOW(),autoUnban:Boolean(rows[0].ban_auto_unban),autoUnbansAt:rows[0].ban_auto_unbans_at ? new Date(rows[0].ban_auto_unbans_at).toISOString() : null,earliestAppealDate:rows[0].ban_earliest_appeal_date ? new Date(rows[0].ban_earliest_appeal_date).toISOString() : null});
+  }
+
+  if (route.startsWith('/admin/user/') && route.endsWith('/ban') && method === 'POST') {
+    const targetId = decodeURIComponent(route.split('/')[3]);
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    if (!sql) return json({success:true});
+    let body:any = {}; try { body = JSON.parse(await request.text() || '{}'); } catch { return json({error:'Invalid JSON'},400); }
+    const reason = String(body.reason || '').trim();
+    if (!reason) return json({error:'reason is required'},400);
+    const autoUnban = Boolean(body.autoUnban);
+    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
+    if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    const target = targetRows[0].id;
+    await sql`UPDATE players SET banned=true, ban_reason=${reason}, ban_notes=${body.notes ? String(body.notes) : null}, ban_created_at=now(), ban_auto_unban=${autoUnban}, ban_auto_unbans_at=${body.autoUnbansAt ? new Date(body.autoUnbansAt) : null}, ban_earliest_appeal_date=${body.earliestAppealDate ? new Date(body.earliestAppealDate) : null} WHERE id=${target}`;
+    return json({success:true});
+  }
+
+  if (route.startsWith('/admin/user/') && route.endsWith('/unban') && method === 'POST') {
+    const targetId = decodeURIComponent(route.split('/')[3]);
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    if (!sql) return json({success:true});
+    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
+    if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    await sql`UPDATE players SET banned=false, ban_reason=null, ban_notes=null, ban_created_at=null, ban_auto_unban=false, ban_auto_unbans_at=null, ban_earliest_appeal_date=null WHERE id=${targetRows[0].id}`;
+    return json({success:true});
+  }
+
   // ------------------------- SCORE DETAIL / SUBMISSION -------------------------
   if (route.startsWith('/scores/') && method === 'GET') {
     const id=Number(route.split('/')[2]);
@@ -559,10 +733,15 @@ export default defineHandler(async (event: any) => {
       const lbRows:any[]=await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${mapHash}) ORDER BY l.difficulty DESC LIMIT 1`; if(!lbRows[0])return json({error:'Unknown map'},404);
       const lb=lbRows[0];
       const existing:any[]=await sql`SELECT id,score,pp FROM scores WHERE leaderboard_id=${lb.id} AND player_id=${playerId} ORDER BY score DESC LIMIT 1`;
-      if(existing[0] && Number(existing[0].score)>=scoreValue) return json({accepted:false,reason:'not_a_personal_best',scoreId:Number(existing[0].id),score:Number(existing[0].score),pp:Number(existing[0].pp)});
+      const isPB = !existing[0] || Number(existing[0].score) < scoreValue;
+      const rankedPlay = String(lb.status || 'UNRANKED') === 'RANKED';
+      await sql`UPDATE players SET total_plays=COALESCE(total_plays,0)+1, total_ranked_plays=COALESCE(total_ranked_plays,0)+${rankedPlay ? 1 : 0}, last_seen_at=now() WHERE id=${playerId}`;
+      if(!isPB) {
+        return json({accepted:false,reason:'not_a_personal_best',scoreId:Number(existing[0].id),score:Number(existing[0].score),pp:Number(existing[0].pp),playCounted:true});
+      }
       const inserted:any[]=await sql`INSERT INTO scores (leaderboard_id,player_id,score,accuracy,pp,weight,mods,bad_cuts,missed_notes,max_combo,full_combo,has_replay) VALUES (${lb.id},${playerId},${scoreValue},${accuracy},${pp},1,${Array.isArray(body.mods)?body.mods.join(','):String(body.mods||'')},${Number(body.badCuts||0)},${Number(body.missedNotes||0)},${Number(body.maxCombo||0)},${Boolean(body.fullCombo)},${Boolean(body.hasReplay)}) RETURNING id`;
       await recalculatePlayerStats(sql,playerId);
-      return json({accepted:true,personalBest:true,playerId,mapHash,score:scoreValue,accuracy,pp,scoreId:Number(inserted[0].id)});
+      return json({accepted:true,personalBest:true,playerId,mapHash,score:scoreValue,accuracy,pp,scoreId:Number(inserted[0].id),playCounted:true});
     }
     const p=players.find((x)=>x.id===playerId); const m=maps.find((x)=>x.hash.toLowerCase()===mapHash.toLowerCase()); if(!p)return json({error:'Unknown player'},404); if(!m)return json({error:'Unknown map'},404);
     const existing=scores.find((x)=>x.player.id===playerId&&x.leaderboard.id===m.leaderboards[0].id); if(existing&&existing.modifiedScore>=scoreValue)return json({accepted:false,reason:'not_a_personal_best',scoreId:existing.id});
@@ -573,7 +752,7 @@ export default defineHandler(async (event: any) => {
   // ------------------------- AUTH -------------------------
   if (route === '/user/@me' && method === 'GET') {
     const pid=await authPlayerId(request, sql); if(!pid)return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
-    if(sql){const rows:any[]=await sql`SELECT * FROM players WHERE id=${pid} LIMIT 1`; return rows[0]?json(dbPlayer(rows[0])):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);}
+    if(sql){const rows:any[]=await sql`SELECT * FROM players WHERE id=${pid} LIMIT 1`; if(!rows[0]) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401); const p=dbPlayer(rows[0]); const relationships=await userRelationships(sql,pid); return json({...p,relationships});}
     const p=players.find((x)=>x.id===pid); return p?json(p):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
   }
   if (route === '/auth/steam' && method === 'GET') {
