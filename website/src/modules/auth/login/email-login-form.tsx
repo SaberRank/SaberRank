@@ -4,6 +4,7 @@ import type { ReactNode, SubmitEvent } from 'react';
 import { useState } from 'react';
 
 import { useRouter } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { CircleCheck, Info, Loader2, Mail, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useTranslations } from 'use-intl';
@@ -38,6 +39,7 @@ const metaInfoStrong = (chunks: ReactNode) => <strong className="font-semibold">
 export function EmailLoginForm({ redirectTo, onSignupSelect }: { redirectTo: string; onSignupSelect: () => void }) {
    const t = useTranslations();
    const router = useRouter();
+   const queryClient = useQueryClient();
    const [notice, setNotice] = useState<NoticeState>(null);
    const [feedback, setFeedback] = useState<FeedbackState>(null);
    const { email, setEmail, code, setCode, challenge, resendSeconds, expirySeconds, startMutation, verifyMutation } = useEmailChallenge<

@@ -3,7 +3,7 @@
 import type { SubmitEvent } from 'react';
 import { useRef, useState } from 'react';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { CircleCheck, KeyRound, Loader2, Mail, ShieldCheck, TriangleAlert } from 'lucide-react';
@@ -42,6 +42,7 @@ export function PasswordLoginForm({
 }) {
    const t = useTranslations();
    const router = useRouter();
+   const queryClient = useQueryClient();
    const [mode, setMode] = useState<'login' | 'reset'>(initialMode);
    const loginPasswordInputRef = useRef<HTMLInputElement>(null);
    const hasLoginPasswordRef = useRef(false);
@@ -52,6 +53,7 @@ export function PasswordLoginForm({
 
    const onAuthenticated = async (value: CredentialAuthActionValue) => {
       if (value.status === 'authenticated') {
+         queryClient.removeQueries({ queryKey: ['root-shell'] });
          await router.invalidate();
          await router.navigate({ href: redirectTo, replace: true });
          return;
