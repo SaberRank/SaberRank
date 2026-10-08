@@ -148,7 +148,10 @@ export function AccountSection({ countryReset, vanity, patreonConnected, beforeA
          () => uploadAvatar(formData),
          t('settings.account.avatarSaved'),
          t('settings.account.avatarSaveFailed'),
-         () => void router.invalidate().finally(clearAvatarFile)
+         () => {
+            clearAvatarFile();
+            void router.invalidate().finally(() => window.location.reload());
+         }
       );
    };
    const clearAvatarFile = () => {

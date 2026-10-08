@@ -72,3 +72,41 @@ CREATE TABLE IF NOT EXISTS pinned_scores (
   comment TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (player_id, score_id)
 );
+
+
+-- Ranking requests
+CREATE TABLE IF NOT EXISTS rank_requests (
+  id BIGSERIAL PRIMARY KEY,
+  map_id BIGINT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+  description TEXT NOT NULL DEFAULT '',
+  request_type TEXT NOT NULL DEFAULT 'RANK',
+  approval_status TEXT NOT NULL DEFAULT 'PENDING',
+  weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+  created_by TEXT REFERENCES players(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS rank_request_difficulties (
+  id BIGSERIAL PRIMARY KEY,
+  request_id BIGINT NOT NULL REFERENCES rank_requests(id) ON DELETE CASCADE,
+  leaderboard_id BIGINT NOT NULL REFERENCES leaderboards(id) ON DELETE CASCADE,
+  description TEXT NOT NULL DEFAULT '',
+  approval_status TEXT NOT NULL DEFAULT 'PENDING',
+  UNIQUE(request_id, leaderboard_id)
+);
+CREATE TABLE IF NOT EXISTS rank_request_votes (
+  difficulty_id BIGINT NOT NULL REFERENCES rank_request_difficulties(id) ON DELETE CASCADE,
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  group_name TEXT NOT NULL,
+  vote TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY(difficulty_id, player_id, group_name)
+);
+CREATE TABLE IF NOT EXISTS rank_request_comments (
+  id BIGSERIAL PRIMARY KEY,
+  difficulty_id BIGINT NOT NULL REFERENCES rank_request_difficulties(id) ON DELETE CASCADE,
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  group_name TEXT NOT NULL,
+  comment TEXT NOT NULL,
+  edited BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

@@ -318,6 +318,49 @@ async function ensureModerationTables(sql: any) {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS rank_requests (
+      id BIGSERIAL PRIMARY KEY,
+      map_id BIGINT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+      description TEXT NOT NULL DEFAULT '',
+      request_type TEXT NOT NULL DEFAULT 'RANK',
+      approval_status TEXT NOT NULL DEFAULT 'PENDING',
+      weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+      created_by TEXT REFERENCES players(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS rank_request_difficulties (
+      id BIGSERIAL PRIMARY KEY,
+      request_id BIGINT NOT NULL REFERENCES rank_requests(id) ON DELETE CASCADE,
+      leaderboard_id BIGINT NOT NULL REFERENCES leaderboards(id) ON DELETE CASCADE,
+      description TEXT NOT NULL DEFAULT '',
+      approval_status TEXT NOT NULL DEFAULT 'PENDING',
+      UNIQUE(request_id, leaderboard_id)
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS rank_request_votes (
+      difficulty_id BIGINT NOT NULL REFERENCES rank_request_difficulties(id) ON DELETE CASCADE,
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      group_name TEXT NOT NULL,
+      vote TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY(difficulty_id, player_id, group_name)
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS rank_request_comments (
+      id BIGSERIAL PRIMARY KEY,
+      difficulty_id BIGINT NOT NULL REFERENCES rank_request_difficulties(id) ON DELETE CASCADE,
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      group_name TEXT NOT NULL,
+      comment TEXT NOT NULL,
+      edited BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
   const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM badges`;
   await sql`
     CREATE TABLE IF NOT EXISTS profile_customizations (
@@ -404,9 +447,19 @@ async function getPlayerBadges(sql: any, playerId: string) {
     }
   }
 
+  const badgeAsset = (description: string, image: string) => {
+    const key = String(description || '').toLowerCase();
+    if (key === 'snoresaber developer') return '/assets/badges/developer.svg';
+    if (key === 'snoresaber tester') return '/assets/badges/tester.svg';
+    if (key === 'snoresaber staff') return '/assets/badges/staff.svg';
+    if (key === 'verified player') return '/assets/badges/verified.svg';
+    if (key === 'map contributor') return '/assets/badges/mapper.svg';
+    if (key === 'tournament staff') return '/assets/badges/tournament.svg';
+    return String(image || '');
+  };
   return rows.map((r) => ({
     id: Number(r.id),
-    image: r.image_url || r.image,
+    image: badgeAsset(r.description, r.image_url || r.image),
     description: r.description_override || r.description
   }));
 }
@@ -522,6 +575,82 @@ function dbScore(r: any, p: any, lb: any, mapRow: any, rank: number, personalBes
   };
 }
 
+async function rankRequestDifficultyVotes(sql: any, difficultyId: number, viewerId: string | null) {
+  const rows: any[] = await sql`
+    SELECT group_name, vote, COUNT(*)::int AS count
+    FROM rank_request_votes
+    WHERE difficulty_id=${difficultyId}
+    GROUP BY group_name, vote
+  `;
+  const get = (group: string, vote: string) => Number(rows.find((r) => r.group_name === group && r.vote === vote)?.count || 0);
+  const myRows: any[] = viewerId ? await sql`SELECT group_name,vote FROM rank_request_votes WHERE difficulty_id=${difficultyId} AND player_id=${viewerId}` : [];
+  const my = (group: string) => myRows.find((r) => r.group_name === group)?.vote || null;
+  return {
+    rtVotes: { upvotes: get('RT','UPVOTE'), downvotes: get('RT','DOWNVOTE'), myVote: my('RT') },
+    qatVotes: { upvotes: get('QAT','UPVOTE'), downvotes: get('QAT','DOWNVOTE'), neutrals: get('QAT','NEUTRAL'), myVote: my('QAT') }
+  };
+}
+
+async function rankRequestDifficultyDetails(sql: any, row: any, viewerId: string | null) {
+  const lb = await sql`SELECT l.*, m.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE l.id=${row.leaderboard_id} LIMIT 1`;
+  if (!lb[0]) return null;
+  const r = lb[0];
+  const scoreCount: any[] = await sql`SELECT COUNT(*)::int AS count FROM scores WHERE leaderboard_id=${r.leaderboard_id || r.id}`;
+  const votes = await rankRequestDifficultyVotes(sql, Number(row.id), viewerId);
+  const comments: any[] = await sql`
+    SELECT c.id,c.comment,c.created_at,c.edited,c.group_name,p.id AS p_id,p.name,p.country,p.avatar,p.role,p.permissions
+    FROM rank_request_comments c JOIN players p ON p.id=c.player_id
+    WHERE c.difficulty_id=${row.id}
+    ORDER BY c.created_at ASC,c.id ASC
+  `;
+  const mapObj = dbMap(r);
+  const leaderboardObj = {
+    id:Number(r.id), map:mapObj,
+    difficulty:{id:Number(r.id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode},
+    maxScore:Number(r.max_score||1000000), totalScores:Number(scoreCount[0]?.count||0), dailyScores:0,
+    createdAt:new Date(r.created_at).toISOString(), realm:realm(Number(r.stars||0),r.status)
+  };
+  return {
+    id:Number(row.id), description:String(row.description||''), approvalStatus:row.approval_status,
+    leaderboard:leaderboardObj,
+    rtVotes:votes.rtVotes, qatVotes:votes.qatVotes,
+    rtComments:comments.filter((c)=>c.group_name==='RT').map((c)=>({id:Number(c.id),player:{id:String(c.p_id),name:c.name,playerNameInGame:c.name,country:c.country||'XX',role:c.role||null,avatar:c.avatar||'',avatarVersion:1,permissions:Number(c.permissions||0)},comment:c.comment,createdAt:new Date(c.created_at).toISOString(),edited:Boolean(c.edited)})),
+    qatComments:comments.filter((c)=>c.group_name==='QAT').map((c)=>({id:Number(c.id),player:{id:String(c.p_id),name:c.name,playerNameInGame:c.name,country:c.country||'XX',role:c.role||null,avatar:c.avatar||'',avatarVersion:1,permissions:Number(c.permissions||0)},comment:c.comment,createdAt:new Date(c.created_at).toISOString(),edited:Boolean(c.edited)}))
+  };
+}
+
+async function getRankRequestDetails(sql: any, requestId: number, viewerId: string | null) {
+  const rows:any[] = await sql`SELECT rr.*,m.* FROM rank_requests rr JOIN maps m ON m.id=rr.map_id WHERE rr.id=${requestId} LIMIT 1`;
+  if (!rows[0]) return null;
+  const r=rows[0];
+  const diffRows:any[] = await sql`SELECT * FROM rank_request_difficulties WHERE request_id=${requestId} ORDER BY id ASC`;
+  const difficulties=[];
+  for (const d of diffRows) { const detail=await rankRequestDifficultyDetails(sql,d,viewerId); if(detail) difficulties.push(detail); }
+  return {
+    id:Number(r.id), description:String(r.description||''), requestType:r.request_type, approvalStatus:r.approval_status,
+    replacedBy:null, replacedFrom:null, weight:Number(r.weight||1), createdAt:new Date(r.created_at).toISOString(), map:dbMap(r),
+    difficulties, commentsObfuscated:false
+  };
+}
+
+async function getRankRequestSummary(sql:any, requestId:number, viewerId:string|null) {
+  const r:any[] = await sql`SELECT rr.*,m.* FROM rank_requests rr JOIN maps m ON m.id=rr.map_id WHERE rr.id=${requestId} LIMIT 1`;
+  if(!r[0]) return null;
+  const row=r[0];
+  const diffs:any[]=await sql`SELECT * FROM rank_request_difficulties WHERE request_id=${requestId} ORDER BY id ASC`;
+  let rtUp=0,rtDown=0,qatUp=0,qatDown=0,qatNeutral=0,readyVotes=0;
+  for(const d of diffs){ const v=await rankRequestDifficultyVotes(sql,Number(d.id),viewerId); rtUp+=v.rtVotes.upvotes;rtDown+=v.rtVotes.downvotes;qatUp+=v.qatVotes.upvotes;qatDown+=v.qatVotes.downvotes;qatNeutral+=v.qatVotes.neutrals; if(v.rtVotes.upvotes>=2 && v.rtVotes.downvotes===0) readyVotes++; }
+  const missing=Math.max(0,2-rtUp);
+  const readiness=rtDown>0?'BLOCKED':missing===0?'READY':missing===1?'CLOSE':'QUEUED';
+  return {
+    id:Number(row.id),description:String(row.description||''),requestType:row.request_type,approvalStatus:row.approval_status,weight:Number(row.weight||1),createdAt:new Date(row.created_at).toISOString(),
+    map:dbMap(row),difficultyCount:diffs.length,
+    rtVoteReadiness:{status:readiness,missingUpvotes:missing,downvotes:rtDown},
+    totalRtVotes:{upvotes:rtUp,downvotes:rtDown,myVote:diffs.map(async()=>null) && null},
+    totalQatVotes:{upvotes:qatUp,downvotes:qatDown,neutrals:qatNeutral,myVote:null}
+  };
+}
+
 async function dbMapWithLeaderboards(sql: any, mapId: number) {
   const mapsRows: any[] = await sql`SELECT * FROM maps WHERE id=${mapId} LIMIT 1`;
   if (!mapsRows[0]) return null;
@@ -530,7 +659,11 @@ async function dbMapWithLeaderboards(sql: any, mapId: number) {
     FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id
     WHERE l.map_id=${mapId}
     GROUP BY l.id ORDER BY l.difficulty ASC, l.id ASC`;
-  return dbMap(mapsRows[0], lbRows.map((x) => dbLeaderboard(x, Number(x.total_scores || 0))));
+  const mapData:any = dbMap(mapsRows[0], lbRows.map((x) => dbLeaderboard(x, Number(x.total_scores || 0))));
+  const active:any[] = await sql`SELECT id FROM rank_requests WHERE map_id=${mapId} AND approval_status NOT IN ('DENIED','REPLACED') ORDER BY created_at DESC LIMIT 1`;
+  if (active[0]) mapData.rankRequest = await getRankRequestDetails(sql, Number(active[0].id), null);
+  else mapData.rankRequest = null;
+  return mapData;
 }
 
 async function resolveInternalPlayerId(sql: any, publicOrInternalId: string) {
@@ -902,6 +1035,81 @@ export default defineHandler(async (event: any) => {
     return json({id:lb.id,map:m,difficulty:{id:lb.id,difficulty:lb.difficulty,rawDifficulty:lb.rawDifficulty,gameMode:lb.gameMode},maxScore:lb.maxScore,totalScores:lb.totalScores,dailyScores:lb.dailyScores,createdAt:lb.createdAt,realm:lb.realm});
   }
 
+  // ------------------------- RANK REQUESTS -------------------------
+  if (route === '/ranking/requests' && method === 'GET') {
+    if (!sql) return json({data:[],metadata:metadata(0,1,24)});
+    await ensureModerationTables(sql);
+    const page=Math.max(1,Number(query.get('page')||1));
+    const limit=Math.min(100,Math.max(1,Number(query.get('limit')||24)));
+    const viewerId=await authPlayerId(request,sql);
+    const rows:any[]=await sql`SELECT id FROM rank_requests WHERE approval_status NOT IN ('DENIED','REPLACED') ORDER BY weight DESC,created_at ASC,id ASC`;
+    const data=[];
+    for(const row of rows.slice((page-1)*limit,(page-1)*limit+limit)){ const item=await getRankRequestSummary(sql,Number(row.id),viewerId); if(item) data.push(item); }
+    return json({data,metadata:metadata(rows.length,page,limit)});
+  }
+
+  if (route.startsWith('/ranking/requests/') && method === 'GET') {
+    if (!sql) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request not found'},404);
+    await ensureModerationTables(sql);
+    const id=Number(route.split('/')[3]);
+    const viewerId=await authPlayerId(request,sql);
+    const item=await getRankRequestDetails(sql,id,viewerId);
+    return item ? json(item) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request not found'},404);
+  }
+
+  if (route === '/ranking/requests' && method === 'POST') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({statusCode:500,error:'Internal Server Error',code:'INTERNAL_SERVER_ERROR',message:'Database unavailable'},500);
+    await ensureModerationTables(sql);
+    let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const mapId=Number(body.mapId); const description=String(body.description||'').trim();
+    const leaderboardIds=Array.isArray(body.leaderboardIds)?body.leaderboardIds.map(Number).filter((x:number)=>Number.isInteger(x)&&x>0):[];
+    if(!Number.isInteger(mapId)||mapId<=0||!description||leaderboardIds.length===0||leaderboardIds.length>32) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'mapId, description and leaderboardIds are required'},400);
+    const mapRows:any[]=await sql`SELECT * FROM maps WHERE id=${mapId} LIMIT 1`; if(!mapRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
+    const lbRows:any[]=await sql`SELECT id FROM leaderboards WHERE map_id=${mapId} AND id=ANY(${leaderboardIds})`;
+    if(lbRows.length!==new Set(leaderboardIds).size) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'One or more leaderboards do not belong to this map'},400);
+    const existing:any[]=await sql`SELECT id FROM rank_requests WHERE map_id=${mapId} AND approval_status NOT IN ('DENIED','REPLACED') LIMIT 1`;
+    if(existing[0]) return json({statusCode:409,error:'Conflict',code:'ALREADY_EXISTS',message:'This map already has an active rank request'},409);
+    const inserted:any[]=await sql`INSERT INTO rank_requests(map_id,description,request_type,approval_status,weight,created_by) VALUES(${mapId},${description},'RANK','PENDING',1,${pid}) RETURNING id`;
+    const requestId=Number(inserted[0].id);
+    for(const lbId of [...new Set(leaderboardIds)]) await sql`INSERT INTO rank_request_difficulties(request_id,leaderboard_id,description,approval_status) VALUES(${requestId},${lbId},'', 'PENDING')`;
+    return json(await getRankRequestDetails(sql,requestId,pid));
+  }
+
+  if (route.startsWith('/ranking/requests/') && route.endsWith('/rt/vote') && method === 'POST') {
+    const pid=await authPlayerId(request,sql); if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true}); await ensureModerationTables(sql);
+    const difficultyId=Number(route.split('/')[3]); let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const vote=body.vote==='DOWNVOTE'?'DOWNVOTE':body.vote==='UPVOTE'?'UPVOTE':null; if(!vote)return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid vote'},400);
+    const d:any[]=await sql`SELECT id FROM rank_request_difficulties WHERE id=${difficultyId} LIMIT 1`; if(!d[0])return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request difficulty not found'},404);
+    const old:any[]=await sql`SELECT vote FROM rank_request_votes WHERE difficulty_id=${difficultyId} AND player_id=${pid} AND group_name='RT' LIMIT 1`;
+    if(old[0]?.vote===vote) await sql`DELETE FROM rank_request_votes WHERE difficulty_id=${difficultyId} AND player_id=${pid} AND group_name='RT'`;
+    else await sql`INSERT INTO rank_request_votes(difficulty_id,player_id,group_name,vote) VALUES(${difficultyId},${pid},'RT',${vote}) ON CONFLICT(difficulty_id,player_id,group_name) DO UPDATE SET vote=EXCLUDED.vote,created_at=now()`;
+    return json({success:true});
+  }
+
+  if (route.startsWith('/ranking/requests/') && route.endsWith('/qat/vote') && method === 'POST') {
+    const pid=await authPlayerId(request,sql); if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true}); await ensureModerationTables(sql);
+    const difficultyId=Number(route.split('/')[3]); let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const vote=['UPVOTE','DOWNVOTE','NEUTRAL'].includes(body.vote)?body.vote:null; if(!vote)return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid vote'},400);
+    const d:any[]=await sql`SELECT id FROM rank_request_difficulties WHERE id=${difficultyId} LIMIT 1`; if(!d[0])return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request difficulty not found'},404);
+    const old:any[]=await sql`SELECT vote FROM rank_request_votes WHERE difficulty_id=${difficultyId} AND player_id=${pid} AND group_name='QAT' LIMIT 1`;
+    if(old[0]?.vote===vote) await sql`DELETE FROM rank_request_votes WHERE difficulty_id=${difficultyId} AND player_id=${pid} AND group_name='QAT'`;
+    else await sql`INSERT INTO rank_request_votes(difficulty_id,player_id,group_name,vote) VALUES(${difficultyId},${pid},'QAT',${vote}) ON CONFLICT(difficulty_id,player_id,group_name) DO UPDATE SET vote=EXCLUDED.vote,created_at=now()`;
+    return json({success:true});
+  }
+
+  if (route.startsWith('/ranking/requests/') && (route.endsWith('/rt/comment') || route.endsWith('/qat/comment')) && method === 'POST') {
+    const pid=await authPlayerId(request,sql); if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true}); await ensureModerationTables(sql);
+    const difficultyId=Number(route.split('/')[3]); const group=route.endsWith('/rt/comment')?'RT':'QAT'; let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const comment=String(body.comment||'').trim().slice(0,4096); if(!comment)return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Comment is required'},400);
+    const d:any[]=await sql`SELECT id FROM rank_request_difficulties WHERE id=${difficultyId} LIMIT 1`; if(!d[0])return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request difficulty not found'},404);
+    await sql`INSERT INTO rank_request_comments(difficulty_id,player_id,group_name,comment) VALUES(${difficultyId},${pid},${group},${comment})`; return json({success:true});
+  }
+
   // ------------------------- ADMIN MODERATION -------------------------
   if (route.startsWith('/admin/user/') && route.endsWith('/ban') && method === 'GET') {
     const targetId = decodeURIComponent(route.split('/')[3]);
@@ -957,8 +1165,10 @@ export default defineHandler(async (event: any) => {
       GROUP BY b.id ORDER BY b.id ASC
     `;
     return json(rows.map((r) => ({
-      id:Number(r.id), image:r.image, description:r.description,
-      imageUrl:r.image_url || r.image, assignmentCount:Number(r.assignment_count || 0)
+      id:Number(r.id),
+      image:(String(r.description)==='SnoreSaber Developer' ? '/assets/badges/developer.svg' : String(r.description)==='SnoreSaber Tester' ? '/assets/badges/tester.svg' : String(r.description)==='SnoreSaber Staff' ? '/assets/badges/staff.svg' : String(r.description)==='Verified Player' ? '/assets/badges/verified.svg' : String(r.description)==='Map Contributor' ? '/assets/badges/mapper.svg' : String(r.description)==='Tournament Staff' ? '/assets/badges/tournament.svg' : (r.image_url || r.image)),
+      description:r.description,
+      imageUrl:(String(r.description)==='SnoreSaber Developer' ? '/assets/badges/developer.svg' : String(r.description)==='SnoreSaber Tester' ? '/assets/badges/tester.svg' : String(r.description)==='SnoreSaber Staff' ? '/assets/badges/staff.svg' : String(r.description)==='Verified Player' ? '/assets/badges/verified.svg' : String(r.description)==='Map Contributor' ? '/assets/badges/mapper.svg' : String(r.description)==='Tournament Staff' ? '/assets/badges/tournament.svg' : (r.image_url || r.image)), assignmentCount:Number(r.assignment_count || 0)
     })));
   }
 
@@ -1228,7 +1438,7 @@ export default defineHandler(async (event: any) => {
     let binary=''; for(let i=0;i<bytes.length;i+=0x8000) binary += String.fromCharCode(...bytes.subarray(i,i+0x8000));
     const dataUrl=`data:${file.type||'image/png'};base64,${Buffer.from(binary,'binary').toString('base64')}`;
     await sql`UPDATE players SET avatar=${dataUrl},last_seen_at=now() WHERE id=${pid}`;
-    return json({success:true});
+    return json({success:true,avatar:dataUrl,avatarVersion:Date.now()});
   }
 
   // ------------------------- PROFILE CUSTOMIZATION -------------------------
