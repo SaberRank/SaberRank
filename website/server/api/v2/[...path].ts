@@ -240,7 +240,7 @@ async function dbMapWithLeaderboards(sql: any, mapId: number) {
 
 async function resolveInternalPlayerId(sql: any, publicOrInternalId: string) {
   if (!sql) return publicOrInternalId;
-  const rows: any[] = await sql`SELECT id FROM players WHERE id=${publicOrInternalId} OR player_number::text=${publicOrInternalId} OR steam_id=${publicOrInternalId} LIMIT 1`;
+  const rows: any[] = await sql`SELECT id FROM players WHERE id=${publicOrInternalId} OR steam_id=${publicOrInternalId} LIMIT 1`;
   return rows[0]?.id ?? null;
 }
 
@@ -330,7 +330,7 @@ export default defineHandler(async (event: any) => {
     if (sql) {
       const rows: any[] = await sql`SELECT * FROM players`;
       let filtered = rows.filter((p) => {
-        const matchesSearch = !search || p.name.toLowerCase().includes(search) || String(p.player_number || p.id).includes(search);
+        const matchesSearch = !search || p.name.toLowerCase().includes(search) || String(p.id).includes(search) || String(p.steam_id || '').includes(search);
         const matchesCountry = !countries.length || countries.includes(String(p.country || 'XX').toUpperCase());
         return matchesSearch && matchesCountry;
       });
@@ -338,7 +338,7 @@ export default defineHandler(async (event: any) => {
         const av = sortValue(dbPlayer(a));
         const bv = sortValue(dbPlayer(b));
         const primary = direction === 'desc' ? bv - av : av - bv;
-        return primary || Number(a.player_number || 0) - Number(b.player_number || 0);
+        return primary || String(a.id).localeCompare(String(b.id));
       });
       const start = (page - 1) * limit;
       return json({
@@ -354,7 +354,7 @@ export default defineHandler(async (event: any) => {
     });
     filtered.sort((a, b) => {
       const primary = direction === 'desc' ? sortValue(b) - sortValue(a) : sortValue(a) - sortValue(b);
-      return primary || Number(a.player_number || 0) - Number(b.player_number || 0);
+      return primary || String(a.id).localeCompare(String(b.id));
     });
     const start = (page - 1) * limit;
     return json({ data: filtered.slice(start, start + limit), metadata: metadata(filtered.length, page, limit) });
@@ -386,7 +386,7 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/players/vanity/') && method === 'GET') {
     const slug = decodeURIComponent(route.split('/').pop()!).toLowerCase();
     if (sql) {
-      const rows: any[] = await sql`SELECT * FROM players WHERE lower(name)=${slug} OR lower(id)=${slug} OR player_number::text=${slug} LIMIT 1`;
+      const rows: any[] = await sql`SELECT * FROM players WHERE lower(name)=${slug} OR lower(id)=${slug} OR lower(steam_id)=${slug} LIMIT 1`;
       return rows[0] ? json(dbPlayer(rows[0])) : json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
     }
     const p = players.find((x) => x.vanity === slug || x.name.toLowerCase() === slug);
@@ -396,7 +396,7 @@ export default defineHandler(async (event: any) => {
     const seg = route.split('/');
     const requestedId = decodeURIComponent(seg[2]);
     if (sql) {
-      const pr: any[] = await sql`SELECT * FROM players WHERE id=${requestedId} OR player_number::text=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+      const pr: any[] = await sql`SELECT * FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
       if (!pr[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
       const p = dbPlayer(pr[0]);
       const historyRows: any[] = await sql`
@@ -413,7 +413,7 @@ export default defineHandler(async (event: any) => {
       }] : [];
       return json({ player: { ...p, pinnedScores: [], followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [] }, history, aliases: [] });
     }
-    const p = players.find((x) => x.id === requestedId || String(x.player_number) === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
+    const p = players.find((x) => x.id === requestedId || x.steamId === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
     if (!p) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     return json({ player: { ...p, pinnedScores: [], followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [] }, history: [], aliases: [] });
   }
@@ -421,7 +421,7 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/players/') && method === 'GET') {
     const seg = route.split('/'); const id = decodeURIComponent(seg[2]);
     if (sql) {
-      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} OR player_number::text=${id} OR steam_id=${id} LIMIT 1`;
+      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} OR steam_id=${id} LIMIT 1`;
       if (!pr[0]) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
       const p = dbPlayer(pr[0]);
       if (seg[3] === 'scores') {

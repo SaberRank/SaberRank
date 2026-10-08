@@ -1,7 +1,6 @@
 -- SnoreSaber 3.0 core database
 CREATE TABLE IF NOT EXISTS players (
   id TEXT PRIMARY KEY,
-  player_number BIGSERIAL UNIQUE,
   steam_id TEXT UNIQUE,
   name TEXT NOT NULL,
   country TEXT NOT NULL DEFAULT 'XX',
