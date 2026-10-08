@@ -41,13 +41,12 @@ export function HeroSection() {
    return (
       <section className="relative z-10 overflow-hidden px-4 pt-16 pb-12 sm:px-6 sm:pt-20 sm:pb-16 lg:px-10 lg:pb-14">
          <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 mx-auto h-[30rem] max-w-[1180px] overflow-hidden rounded-b-3xl opacity-90">
-            <img src="/assets/snoresaber-hero-art.png" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+            <img src="/assets/snoresaber-hero-art@2x.png" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--background))_0%,hsl(var(--background)/.94)_28%,hsl(var(--background)/.72)_58%,hsl(var(--background)/.30)_100%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/.05),hsl(var(--background))_96%)]" />
          </div>
 
          <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
-            <Image src="/assets/snoresaber-logo-transparent.png" alt="SnoreSaber" width={96} height={96} priority className="drop-shadow-[0_14px_36px_hsl(0_0%_0%/.65)]" />
             <div className="flex flex-col gap-4">
                <h1 className="text-4xl leading-tight font-medium sm:text-5xl">SnoreSaber</h1>
                <p className="text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed sm:text-[16.5px]">
