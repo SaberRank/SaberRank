@@ -177,7 +177,7 @@ async function fetchSteamProfile(steamId: string) {
 }
 
 function dbPlayer(r: any) {
-  const publicId = String(r.player_number ?? r.id);
+  const publicId = String(r.id);
   return {
     id: publicId,
     playerId: publicId,

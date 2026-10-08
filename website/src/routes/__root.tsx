@@ -119,8 +119,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
          }
       ],
       links: [
-         { rel: 'icon', href: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-         { rel: 'icon', href: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+         { rel: 'icon', href: '/snoresaber-icon.png?v=2', sizes: '256x256', type: 'image/png' },
+         { rel: 'shortcut icon', href: '/snoresaber-icon.png?v=2', type: 'image/png' },
          { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
          { rel: 'manifest', href: '/site.webmanifest' }
       ]
