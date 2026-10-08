@@ -178,7 +178,9 @@ async function upsertMap(map) {
   const mapId = Number(inserted[0]?.id);
   if (!mapId) return { skipped: true, hash, uploaded };
 
-  const status = mapStatus(map);
+  // BeatSaver's ranked/qualified flags are ScoreSaber/BeatSaver metadata.
+  // SnoreSaber owns its ranking state, so imported difficulties start unranked
+  // and existing local ranking values are preserved on conflict.
   const diffs = Array.isArray(version?.diffs) ? version.diffs : [];
 
   for (const diff of diffs) {
@@ -187,7 +189,6 @@ async function upsertMap(map) {
 
     const mode = gameMode(diff?.characteristic);
     const rawDifficulty = String(diff?.difficulty || 'ExpertPlus');
-    const stars = Number(diff?.stars ?? diff?.starsBeatLeader ?? 0);
     const maxScore = Number(diff?.maxScore || 1000000);
 
     await sql`
@@ -196,15 +197,12 @@ async function upsertMap(map) {
       VALUES
         (${mapId}, ${difficulty}, ${mode}, ${rawDifficulty},
          ${Number.isFinite(maxScore) ? maxScore : 1000000},
-         ${Number.isFinite(stars) ? stars : 0},
-         ${status},
-         ${status === 'RANKED' ? (uploaded ? uploaded.toISOString() : new Date().toISOString()) : null})
+         0,
+         'UNRANKED',
+         NULL)
       ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET
         raw_difficulty=EXCLUDED.raw_difficulty,
-        max_score=EXCLUDED.max_score,
-        stars=EXCLUDED.stars,
-        status=EXCLUDED.status,
-        ranked_at=EXCLUDED.ranked_at
+        max_score=EXCLUDED.max_score
     `;
   }
 

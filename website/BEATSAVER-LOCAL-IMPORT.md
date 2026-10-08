@@ -60,3 +60,13 @@ This directly fetches these six BeatSaver map keys:
 
 It upserts each one, deletes every other cached map, and verifies that all six
 are present in Neon before exiting successfully.
+
+## Reset the six maps so SnoreSaber can use its own rankings
+
+Run this once after deploying the ranking-source change:
+
+    npm run beatsaver:reset-rankings
+
+This sets every leaderboard on the six curated maps to UNRANKED with 0 stars.
+After that, use the **Map Admin** button on the Maps page to paste a curated
+BeatSaver link and assign SnoreSaber star values per difficulty.

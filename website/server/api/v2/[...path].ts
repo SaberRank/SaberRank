@@ -408,7 +408,9 @@ async function syncBeatSaverMaps(sql: any, options: { maxPages?: number; forceBo
 
       const metadata = map.metadata || {};
       const coverUrl = String(version?.coverURL || map.coverURL || `https://eu.cdn.beatsaver.com/${hash}.jpg`).trim();
-      const status = map.ranked ? 'RANKED' : map.qualified ? 'QUALIFIED' : 'UNRANKED';
+      // BeatSaver's ranked/qualified flags are external ranking metadata.
+      // SnoreSaber owns ranking state, so new difficulties are unranked and
+      // existing local ranking state is preserved on conflict.
       const inserted: any[] = await sql`
         INSERT INTO maps (hash, bsid, song_name, song_sub_name, song_author_name, level_author_name, bpm, cover_url, verified, created_at)
         VALUES (${hash}, ${bsid}, ${String(metadata.songName || map.name || 'Unknown')}, ${String(metadata.songSubName || '')}, ${String(metadata.songAuthorName || '')}, ${String(metadata.levelAuthorName || map.uploader?.name || '')}, ${Number(metadata.bpm || 0)}, ${coverUrl}, ${Boolean(map.verified || map.uploader?.verifiedMapper)}, COALESCE(${map.uploaded ? new Date(map.uploaded).toISOString() : null}::timestamptz, now()))
@@ -426,13 +428,11 @@ async function syncBeatSaverMaps(sql: any, options: { maxPages?: number; forceBo
         if (!difficulty) continue;
         const gameMode = beatSaverGameMode(diff.characteristic);
         const rawDifficulty = String(diff.difficulty || 'ExpertPlus');
-        const stars = Number(diff.stars ?? diff.starsBeatLeader ?? 0);
         await sql`
           INSERT INTO leaderboards (map_id, difficulty, game_mode, raw_difficulty, max_score, stars, status, ranked_at)
-          VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${Number(diff.maxScore || 1000000)}, ${Number.isFinite(stars) ? stars : 0}, ${status}, ${status === 'RANKED' ? new Date().toISOString() : null})
+          VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${Number(diff.maxScore || 1000000)}, 0, 'UNRANKED', NULL)
           ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET
-            raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score, stars=EXCLUDED.stars,
-            status=EXCLUDED.status, ranked_at=EXCLUDED.ranked_at`;
+            raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score`;
       }
       synced++;
     }
@@ -1257,7 +1257,7 @@ export default defineHandler(async (event: any) => {
         const ai = Boolean(r.is_ai);
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
-        return curated && !ai && ranked && q && stars >= minStars && stars <= maxStars;
+        return curated && !ai && q && stars >= minStars && stars <= maxStars;
       });
       const sortBy = query.get('sortBy') || 'trending';
       const sortDirection = query.get('sortDirection') === 'asc' ? 1 : -1;
@@ -1420,6 +1420,142 @@ export default defineHandler(async (event: any) => {
     const comment=String(body.comment||'').trim().slice(0,4096); if(!comment)return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Comment is required'},400);
     const d:any[]=await sql`SELECT id FROM rank_request_difficulties WHERE id=${difficultyId} LIMIT 1`; if(!d[0])return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request difficulty not found'},404);
     await sql`INSERT INTO rank_request_comments(difficulty_id,player_id,group_name,comment) VALUES(${difficultyId},${pid},${group},${comment})`; return json({success:true});
+  }
+
+
+  // ------------------------- ADMIN CURATED MAP RANKING -------------------------
+  if (route === '/admin/maps/rank-from-beatsaver' && method === 'POST' && sql) {
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) {
+      return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Administrator permission required' }, 401);
+    }
+
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); }
+    catch { return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Invalid JSON' }, 400); }
+
+    const link = String(body.beatSaverLink || '').trim();
+    const keyMatch = link.match(/(?:beatsaver\.com\/maps\/|\/maps\/)([A-Za-z0-9]+)/i);
+    const key = String(body.key || keyMatch?.[1] || '').trim();
+
+    if (!key) {
+      return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Enter a BeatSaver map link or map key' }, 400);
+    }
+    if (!PUBLIC_BEATSAVER_MAP_KEYS.has(key)) {
+      return json({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: 'MAP_NOT_CURATED',
+        message: 'That BeatSaver map is not in SnoreSaber\\'s six-map catalog'
+      }, 400);
+    }
+
+    const preview = body.preview === true;
+    const rankings = Array.isArray(body.rankings) ? body.rankings : [];
+    for (const item of rankings) {
+      const stars = Number(item.stars);
+      if (!Number.isFinite(stars) || stars < 0 || stars > 100) {
+        return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Stars must be between 0 and 100' }, 400);
+      }
+    }
+
+    const response = await fetch(`${BEATSAVER_API}/maps/id/${encodeURIComponent(key)}`, {
+      headers: { accept: 'application/json', 'user-agent': 'SnoreSaber/3.0 admin map ranking' },
+      cache: 'no-store'
+    });
+    if (!response.ok) {
+      return json({ statusCode: 502, error: 'Bad Gateway', code: 'BEATSAVER_FAILED', message: `BeatSaver returned HTTP ${response.status}` }, 502);
+    }
+
+    const map = await response.json();
+    const version = Array.isArray(map?.versions)
+      ? (map.versions.find((v: any) => String(v.state || '').toLowerCase() === 'published') || map.versions[0])
+      : null;
+    const hash = String(version?.hash || '').trim();
+    if (!hash) {
+      return json({ statusCode: 502, error: 'Bad Gateway', code: 'BEATSAVER_INVALID', message: 'BeatSaver did not return a published map version' }, 502);
+    }
+
+    const metadata = map.metadata || {};
+    const coverUrl = String(version?.coverURL || map.coverURL || `https://eu.cdn.beatsaver.com/${hash}.jpg`).trim();
+    const inserted: any[] = await sql`
+      INSERT INTO maps (hash, bsid, song_name, song_sub_name, song_author_name, level_author_name, bpm, cover_url, verified, is_ai, created_at)
+      VALUES (
+        ${hash}, ${key}, ${String(metadata.songName || map.name || 'Unknown')}, ${String(metadata.songSubName || '')},
+        ${String(metadata.songAuthorName || '')}, ${String(metadata.levelAuthorName || map.uploader?.name || '')},
+        ${Number(metadata.bpm || 0)}, ${coverUrl}, ${Boolean(map.verified || map.uploader?.verifiedMapper)},
+        false, COALESCE(${map.uploaded ? new Date(map.uploaded).toISOString() : null}::timestamptz, now())
+      )
+      ON CONFLICT (hash) DO UPDATE SET
+        bsid=EXCLUDED.bsid, song_name=EXCLUDED.song_name, song_sub_name=EXCLUDED.song_sub_name,
+        song_author_name=EXCLUDED.song_author_name, level_author_name=EXCLUDED.level_author_name,
+        bpm=EXCLUDED.bpm, cover_url=EXCLUDED.cover_url, verified=EXCLUDED.verified, is_ai=false
+      RETURNING id`;
+    const mapId = Number(inserted[0]?.id);
+    if (!mapId) return json({ statusCode: 500, error: 'Internal Server Error', code: 'MAP_SAVE_FAILED', message: 'Could not save the map' }, 500);
+
+    // A preview only loads the BeatSaver difficulties. A save is authoritative:
+    // submitted star values are the complete SnoreSaber ranking for this map.
+    if (!preview) {
+      await sql`UPDATE leaderboards SET status='UNRANKED', stars=0, ranked_at=NULL WHERE map_id=${mapId}`;
+    }
+
+    const diffs = Array.isArray(version?.diffs) ? version.diffs : [];
+    const saved: any[] = [];
+
+    for (const diff of diffs) {
+      const difficulty = beatSaverDifficultyValue(diff.difficulty);
+      if (!difficulty) continue;
+      const gameMode = beatSaverGameMode(diff.characteristic);
+      const rawDifficulty = String(diff.difficulty || 'ExpertPlus');
+      const maxScore = Number(diff.maxScore || 1000000);
+
+      const row: any[] = await sql`
+        INSERT INTO leaderboards (map_id, difficulty, game_mode, raw_difficulty, max_score, stars, status, ranked_at)
+        VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${maxScore}, 0, 'UNRANKED', NULL)
+        ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET
+          raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score
+        RETURNING id`;
+
+      const leaderboardId = Number(row[0]?.id);
+      if (!leaderboardId) continue;
+
+      const submitted = rankings.find((r: any) =>
+        Number(r.leaderboardId) === leaderboardId ||
+        (Number(r.difficulty) === difficulty && String(r.gameMode || 'Standard') === gameMode)
+      );
+      const stars = Number(submitted?.stars || 0);
+
+      if (!preview && stars > 0) {
+        await sql`
+          UPDATE leaderboards
+          SET status='RANKED', stars=${Number(stars.toFixed(3))}, ranked_at=COALESCE(ranked_at, now())
+          WHERE id=${leaderboardId}`;
+        await recalculateLeaderboardPlayers(sql, leaderboardId);
+      }
+
+      const current: any[] = await sql`
+        SELECT stars, status
+        FROM leaderboards
+        WHERE id=${leaderboardId}
+        LIMIT 1
+      `;
+
+      saved.push({
+        id: leaderboardId,
+        difficulty,
+        gameMode,
+        rawDifficulty,
+        stars: Number(current[0]?.stars || 0),
+        status: String(current[0]?.status || 'UNRANKED')
+      });
+    }
+
+    return json({
+      success: true,
+      map: { id: mapId, bsid: key, songName: String(metadata.songName || map.name || 'Unknown') },
+      leaderboards: saved
+    });
   }
 
   // ------------------------- ADMIN LEADERBOARD ACTIONS -------------------------

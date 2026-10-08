@@ -19,6 +19,7 @@ import type { RouteLocationBuilder } from '@/shared/url-state/route-location';
 import type { SearchParamsRecord } from '@/shared/url-state/search-params';
 import { updateSearchParams } from '@/shared/url-state/update-search-params';
 import { mapFilterPreferences } from '@/shared/url-state/persisted-filter-preferences';
+import { CuratedMapAdmin } from '@/modules/maps/listing/curated-map-admin';
 
 const SORT_OPTIONS: { value: MapControllerGetMapListingsSortBy }[] = [
    { value: 'trending' },
@@ -77,8 +78,7 @@ export function MapFilters<TLocation>({
    function handleSortChange(sortBy: MapControllerGetMapListingsSortBy) {
       navigate({
          sortBy,
-         sortDirection: sortBy === currentSortBy && currentSortDirection === 'desc' ? 'asc' : 'desc',
-         status: 'RANKED'
+         sortDirection: sortBy === currentSortBy && currentSortDirection === 'desc' ? 'asc' : 'desc'
       });
    }
 
@@ -97,7 +97,7 @@ export function MapFilters<TLocation>({
                   clearLabel={t('common.clearSearch')}
                   srLabel={t('map.searchMaps')}
                   isSearchReady={isMapSearchReady}
-                  onSearchAction={(value) => navigate({ search: value || undefined, status: 'RANKED' })}
+                  onSearchAction={(value) => navigate({ search: value || undefined })}
                />
             </div>
 
@@ -130,10 +130,7 @@ export function MapFilters<TLocation>({
                );
             })}
             {trailingAction}
-         </div>
-
-         <div className="text-center text-xs text-muted-foreground">
-            Ranked maps only
+            <CuratedMapAdmin />
          </div>
       </div>
    );
