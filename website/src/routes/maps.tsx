@@ -68,7 +68,7 @@ const getMapsPageData = createServerFn({ method: 'GET' })
             page: searchParams.page ?? 1,
             search: search || undefined,
             status: !identifierSearch && statuses.length > 0 ? statuses : undefined,
-            verified: identifierSearch ? undefined : (searchParams.verified ?? 'true'),
+            verified: identifierSearch ? undefined : searchParams.verified,
             minStars: identifierSearch ? undefined : searchParams.minStars,
             maxStars: identifierSearch ? undefined : searchParams.maxStars,
             sortBy: searchParams.sortBy ?? 'trending',

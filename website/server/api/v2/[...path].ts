@@ -272,9 +272,111 @@ const PERMISSION_VALUES: Record<string, number> = {
 };
 
 async function resolvePlayerId(sql: any, requestedId: string) {
-  if (!sql) return requestedId;
-  const rows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+  if (!sql) {
+    const normalized = String(requestedId).toLowerCase();
+    const match = players.find((p) =>
+      String(p.id).toLowerCase() === normalized ||
+      String(p.steamId ?? '').toLowerCase() === normalized ||
+      String(p.vanity ?? '').toLowerCase() === normalized ||
+      String(p.name ?? '').toLowerCase() === normalized
+    );
+    return match?.id ?? requestedId;
+  }
+  const value = String(requestedId);
+  const rows: any[] = await sql`
+    SELECT id FROM players
+    WHERE id=${value}
+       OR steam_id=${value}
+       OR lower(vanity)=lower(${value})
+       OR lower(name)=lower(${value})
+    LIMIT 1`;
   return rows[0]?.id ?? null;
+}
+
+const BEATSAVER_API = process.env.BEATSAVER_API_URL || 'https://api.beatsaver.com';
+
+function beatSaverDifficultyValue(value: unknown) {
+  switch (String(value || '').toLowerCase()) {
+    case 'easy': return 1;
+    case 'normal': return 3;
+    case 'hard': return 5;
+    case 'expert': return 7;
+    case 'expertplus':
+    case 'expert+': return 9;
+    default: return 0;
+  }
+}
+
+function beatSaverGameMode(value: unknown) {
+  const text = String(value || 'Standard');
+  if (text === 'Standard') return 'Standard';
+  if (/one saber/i.test(text)) return 'OneSaber';
+  if (/90.?degree/i.test(text)) return '90Degree';
+  if (/360.?degree/i.test(text)) return '360Degree';
+  return text.replace(/[^a-zA-Z0-9]+/g, '');
+}
+
+async function syncBeatSaverMaps(sql: any, pageSize = 100) {
+  if (!sql) return { synced: 0, source: 'fallback' };
+  const response = await fetch(`${BEATSAVER_API}/maps/latest?pageSize=${Math.min(100, Math.max(1, pageSize))}`, {
+    headers: { 'accept': 'application/json', 'user-agent': 'SnoreSaber/2.0 BeatSaver sync' },
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`BeatSaver returned HTTP ${response.status}`);
+  const payload: any = await response.json();
+  const docs = Array.isArray(payload?.docs) ? payload.docs : [];
+  let synced = 0;
+
+  for (const map of docs) {
+    const version = Array.isArray(map.versions)
+      ? (map.versions.find((v: any) => String(v.state || '').toLowerCase() === 'published') || map.versions[0])
+      : null;
+    const hash = String(version?.hash || '').trim();
+    const bsid = String(map.id || version?.key || '').trim();
+    if (!hash || !bsid) continue;
+
+    const metadata = map.metadata || {};
+    const coverUrl = String(version?.coverURL || map.coverURL || `https://eu.cdn.beatsaver.com/${hash}.jpg`).trim();
+    const status = map.ranked ? 'RANKED' : map.qualified ? 'QUALIFIED' : 'UNRANKED';
+    const inserted: any[] = await sql`
+      INSERT INTO maps (hash, bsid, song_name, song_sub_name, song_author_name, level_author_name, bpm, cover_url, verified, created_at)
+      VALUES (${hash}, ${bsid}, ${String(metadata.songName || map.name || 'Unknown')}, ${String(metadata.songSubName || '')}, ${String(metadata.songAuthorName || '')}, ${String(metadata.levelAuthorName || map.uploader?.name || '')}, ${Number(metadata.bpm || 0)}, ${coverUrl}, ${Boolean(map.verified || map.uploader?.verifiedMapper)}, COALESCE(${map.uploaded ? new Date(map.uploaded).toISOString() : null}::timestamptz, now()))
+      ON CONFLICT (hash) DO UPDATE SET
+        bsid=EXCLUDED.bsid, song_name=EXCLUDED.song_name, song_sub_name=EXCLUDED.song_sub_name,
+        song_author_name=EXCLUDED.song_author_name, level_author_name=EXCLUDED.level_author_name,
+        bpm=EXCLUDED.bpm, cover_url=EXCLUDED.cover_url, verified=EXCLUDED.verified
+      RETURNING id`;
+    const mapId = Number(inserted[0]?.id);
+    if (!mapId) continue;
+
+    const diffs = Array.isArray(version?.diffs) ? version.diffs : [];
+    for (const diff of diffs) {
+      const difficulty = beatSaverDifficultyValue(diff.difficulty);
+      if (!difficulty) continue;
+      const gameMode = beatSaverGameMode(diff.characteristic);
+      const rawDifficulty = String(diff.difficulty || 'ExpertPlus');
+      const stars = Number(diff.stars ?? diff.starsBeatLeader ?? 0);
+      await sql`
+        INSERT INTO leaderboards (map_id, difficulty, game_mode, raw_difficulty, max_score, stars, status, ranked_at)
+        VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${Number(diff.maxScore || 1000000)}, ${Number.isFinite(stars) ? stars : 0}, ${status}, ${status === 'RANKED' ? new Date().toISOString() : null})
+        ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET
+          raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score, stars=EXCLUDED.stars,
+          status=EXCLUDED.status, ranked_at=EXCLUDED.ranked_at`;
+    }
+    synced++;
+  }
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS beatsaver_sync_state (
+      id INTEGER PRIMARY KEY CHECK (id=1),
+      last_sync_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      maps_synced INTEGER NOT NULL DEFAULT 0
+    )`;
+  await sql`
+    INSERT INTO beatsaver_sync_state (id, last_sync_at, maps_synced) VALUES (1, now(), ${synced})
+    ON CONFLICT (id) DO UPDATE SET last_sync_at=now(), maps_synced=${synced}`;
+
+  return { synced, source: 'beatsaver' };
 }
 
 async function ensureModerationTables(sql: any) {
@@ -836,7 +938,7 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/players/vanity/') && method === 'GET') {
     const slug = decodeURIComponent(route.split('/').pop()!).toLowerCase();
     if (sql) {
-      const rows: any[] = await sql`SELECT * FROM players WHERE lower(name)=${slug} OR lower(id)=${slug} OR lower(steam_id)=${slug} LIMIT 1`;
+      const rows: any[] = await sql`SELECT * FROM players WHERE lower(vanity)=${slug} OR lower(name)=${slug} OR lower(id)=${slug} OR lower(steam_id)=${slug} LIMIT 1`;
       return rows[0] ? json(dbPlayer(rows[0])) : json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
     }
     const p = players.find((x) => x.vanity === slug || x.name.toLowerCase() === slug);
@@ -846,7 +948,8 @@ export default defineHandler(async (event: any) => {
     const seg = route.split('/');
     const requestedId = decodeURIComponent(seg[2]);
     if (sql) {
-      const pr: any[] = await sql`SELECT * FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+      const resolvedId = await resolvePlayerId(sql, requestedId);
+      const pr: any[] = resolvedId ? await sql`SELECT * FROM players WHERE id=${resolvedId} LIMIT 1` : [];
       if (!pr[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
       const p = dbPlayer(pr[0]);
       const viewerId = await authPlayerId(request, sql);
@@ -890,7 +993,8 @@ export default defineHandler(async (event: any) => {
     if (!sql) return json({ data: [], metadata: metadata(0, page, limit) });
     const tableCheck: any[] = await sql`SELECT to_regclass('public.player_follows') AS table_name`;
     if (!tableCheck[0]?.table_name) return json({ data: [], metadata: metadata(0, page, limit) });
-    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+    const targetIdResolved = await resolvePlayerId(sql, requestedId);
+    const targetRows: any[] = targetIdResolved ? await sql`SELECT id FROM players WHERE id=${targetIdResolved} LIMIT 1` : [];
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     const targetId = targetRows[0].id;
     let rows: any[];
@@ -913,7 +1017,8 @@ export default defineHandler(async (event: any) => {
     const viewerId = await authPlayerId(request, sql);
     if (!viewerId) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if (!sql) return json({success:true});
-    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+    const targetIdResolved = await resolvePlayerId(sql, requestedId);
+    const targetRows: any[] = targetIdResolved ? await sql`SELECT id FROM players WHERE id=${targetIdResolved} LIMIT 1` : [];
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     const targetId = targetRows[0].id;
     if (targetId === viewerId) return json({statusCode:400,error:'Bad Request',code:'INVALID_OPERATION',message:'You cannot follow yourself'},400);
@@ -926,7 +1031,8 @@ export default defineHandler(async (event: any) => {
     const viewerId = await authPlayerId(request, sql);
     if (!viewerId) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if (!sql) return json({success:true});
-    const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+    const targetIdResolved = await resolvePlayerId(sql, requestedId);
+    const targetRows: any[] = targetIdResolved ? await sql`SELECT id FROM players WHERE id=${targetIdResolved} LIMIT 1` : [];
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     await sql`DELETE FROM player_follows WHERE follower_id=${viewerId} AND following_id=${targetRows[0].id}`;
     return json({success:true});
@@ -935,7 +1041,8 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/players/') && method === 'GET') {
     const seg = route.split('/'); const id = decodeURIComponent(seg[2]);
     if (sql) {
-      const pr: any[] = await sql`SELECT * FROM players WHERE id=${id} OR steam_id=${id} LIMIT 1`;
+      const resolvedId = await resolvePlayerId(sql, id);
+      const pr: any[] = resolvedId ? await sql`SELECT * FROM players WHERE id=${resolvedId} LIMIT 1` : [];
       if (!pr[0]) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
       const p = dbPlayer(pr[0]);
       if (seg[3] === 'scores') {
@@ -964,16 +1071,36 @@ export default defineHandler(async (event: any) => {
   }
 
   // ------------------------- MAPS -------------------------
+  if (route === '/maps/sync' && (method === 'POST' || method === 'GET')) {
+    if (!sql) return json({ synced: 0, source: 'fallback' });
+    const cronSecret = process.env.CRON_SECRET || '';
+    const authHeader = request.headers.get('authorization') || '';
+    const cronAuthorized = cronSecret && authHeader === `Bearer ${cronSecret}`;
+    const viewerId = await authPlayerId(request, sql);
+    const adminAuthorized = viewerId ? await isAdmin(sql, viewerId) : false;
+    if (!cronAuthorized && !adminAuthorized) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Map sync requires admin access'},401);
+    try {
+      const result = await syncBeatSaverMaps(sql, Number(query.get('limit') || 100));
+      return json(result);
+    } catch (error) {
+      console.error('[SnoreSaber] BeatSaver sync failed', error);
+      return json({statusCode:502,error:'Bad Gateway',code:'BEATSAVER_SYNC_FAILED',message:error instanceof Error ? error.message : 'BeatSaver sync failed'},502);
+    }
+  }
   if (route === '/maps' && method === 'GET') {
     const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
     const search = (query.get('search') || '').toLowerCase(); const verified = query.get('verified');
     const minStars = Number(query.get('minStars') || 0); const maxStars = Number(query.get('maxStars') || 99);
     if (sql) {
+      const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM maps`;
+      if (Number(countRows[0]?.count || 0) < 25 || query.get('sync') === '1') {
+        try { await syncBeatSaverMaps(sql, 100); } catch (error) { console.error('[SnoreSaber] BeatSaver sync failed', error); }
+      }
       const rows: any[] = await sql`SELECT * FROM maps ORDER BY created_at DESC`;
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));
       let filtered = dataRows.filter(({r,lbs}) => {
-        const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search);
+        const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
         const v = verified == null || String(Boolean(r.verified)) === verified;
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
         return q && v && stars >= minStars && stars <= maxStars;
@@ -982,7 +1109,7 @@ export default defineHandler(async (event: any) => {
       const slice = filtered.slice((page-1)*limit,(page-1)*limit+limit).map(({r,lbs}) => dbMap(r,lbs.map((x) => dbLeaderboard(x,Number(x.total_scores||0)))));
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
-    let filtered = maps.filter((m) => (!search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search)) && (verified == null || String(m.verified) === verified) && (m.leaderboards[0]?.realm.stars || 0) >= minStars && (m.leaderboards[0]?.realm.stars || 0) <= maxStars);
+    let filtered = maps.filter((m) => (!search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search)) && (verified == null || String(m.verified) === verified) && (m.leaderboards[0]?.realm.stars || 0) >= minStars && (m.leaderboards[0]?.realm.stars || 0) <= maxStars);
     return json({ data:filtered.slice((page-1)*limit,(page-1)*limit+limit), metadata:metadata(filtered.length,page,limit) });
   }
   if (route.startsWith('/maps/hash/') && method === 'GET') {

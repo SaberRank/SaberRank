@@ -179,3 +179,10 @@ CREATE TABLE IF NOT EXISTS rank_request_comments (
   edited BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+
+CREATE TABLE IF NOT EXISTS beatsaver_sync_state (
+  id INTEGER PRIMARY KEY CHECK (id=1),
+  last_sync_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  maps_synced INTEGER NOT NULL DEFAULT 0
+);
