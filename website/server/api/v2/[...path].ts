@@ -1446,7 +1446,7 @@ export default defineHandler(async (event: any) => {
         statusCode: 400,
         error: 'Bad Request',
         code: 'MAP_NOT_CURATED',
-        message: 'That BeatSaver map is not in SnoreSaber\\'s six-map catalog'
+        message: "That BeatSaver map is not in SnoreSaber's six-map catalog"
       }, 400);
     }
 
