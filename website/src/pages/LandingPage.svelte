@@ -1,7 +1,6 @@
 <script>
 	import {onMount} from 'svelte';
 	import {navigate} from 'svelte-routing';
-	import MetaTags from 'svelte-meta-tags';
 	import snoreAccount from '../stores/snore-account';
 
 	let data = null;
@@ -40,7 +39,6 @@
 </script>
 
 <svelte:head><title>snore saber</title></svelte:head>
-<MetaTags title="snore saber" description="A community-built Beat Saber ranking and score hub." />
 
 <div class="snore-home">
 	<section class="hero">
