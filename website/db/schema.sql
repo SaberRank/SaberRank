@@ -1,68 +1,73 @@
+-- SnoreSaber 3.0 core database
 CREATE TABLE IF NOT EXISTS players (
-  id BIGSERIAL PRIMARY KEY,
-  steam_id VARCHAR(32) UNIQUE NOT NULL,
-  name VARCHAR(64) NOT NULL,
-  alias VARCHAR(64),
-  avatar_url TEXT,
-  country VARCHAR(8),
+  id TEXT PRIMARY KEY,
+  steam_id TEXT UNIQUE,
+  name TEXT NOT NULL,
+  country TEXT NOT NULL DEFAULT 'XX',
+  avatar TEXT NOT NULL DEFAULT '',
   pp DOUBLE PRECISION NOT NULL DEFAULT 0,
-  rank INTEGER,
-  total_score BIGINT NOT NULL DEFAULT 0,
-  play_count INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  rank INTEGER NOT NULL DEFAULT 0,
+  country_rank INTEGER NOT NULL DEFAULT 0,
+  total_score NUMERIC(20,0) NOT NULL DEFAULT 0,
+  total_ranked_score NUMERIC(20,0) NOT NULL DEFAULT 0,
+  total_plays INTEGER NOT NULL DEFAULT 0,
+  average_accuracy DOUBLE PRECISION NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS maps (
   id BIGSERIAL PRIMARY KEY,
-  hash VARCHAR(64) UNIQUE NOT NULL,
+  hash TEXT UNIQUE NOT NULL,
+  bsid TEXT,
   song_name TEXT NOT NULL,
-  mapper TEXT,
-  difficulty VARCHAR(32) NOT NULL,
-  characteristic VARCHAR(64),
+  song_sub_name TEXT NOT NULL DEFAULT '',
+  song_author_name TEXT NOT NULL DEFAULT '',
+  level_author_name TEXT NOT NULL DEFAULT '',
+  bpm DOUBLE PRECISION NOT NULL DEFAULT 0,
+  cover_url TEXT NOT NULL DEFAULT '',
+  verified BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS leaderboards (
+  id BIGSERIAL PRIMARY KEY,
+  map_id BIGINT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+  difficulty INTEGER NOT NULL,
+  game_mode TEXT NOT NULL DEFAULT 'Standard',
+  raw_difficulty TEXT NOT NULL DEFAULT 'ExpertPlus',
+  max_score INTEGER NOT NULL DEFAULT 1000000,
   stars DOUBLE PRECISION NOT NULL DEFAULT 0,
-  ranked BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  status TEXT NOT NULL DEFAULT 'UNRANKED',
+  ranked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(map_id, difficulty, game_mode)
 );
 
 CREATE TABLE IF NOT EXISTS scores (
   id BIGSERIAL PRIMARY KEY,
-  player_id BIGINT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  map_id BIGINT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+  leaderboard_id BIGINT NOT NULL REFERENCES leaderboards(id) ON DELETE CASCADE,
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   score INTEGER NOT NULL,
   accuracy DOUBLE PRECISION NOT NULL,
   pp DOUBLE PRECISION NOT NULL DEFAULT 0,
-  modifiers TEXT[] NOT NULL DEFAULT '{}',
-  max_combo INTEGER,
-  misses INTEGER,
-  full_combo BOOLEAN NOT NULL DEFAULT FALSE,
-  played_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+  mods TEXT NOT NULL DEFAULT '',
+  bad_cuts INTEGER NOT NULL DEFAULT 0,
+  missed_notes INTEGER NOT NULL DEFAULT 0,
+  max_combo INTEGER NOT NULL DEFAULT 0,
+  full_combo BOOLEAN NOT NULL DEFAULT false,
+  has_replay BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS scores_player_idx ON scores(player_id);
-CREATE INDEX IF NOT EXISTS scores_map_idx ON scores(map_id);
-CREATE INDEX IF NOT EXISTS scores_pp_idx ON scores(pp DESC);
-
-CREATE TABLE IF NOT EXISTS clans (
-  id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(64) UNIQUE NOT NULL,
-  tag VARCHAR(16) UNIQUE NOT NULL,
-  owner_player_id BIGINT REFERENCES players(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash TEXT PRIMARY KEY,
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS clan_members (
-  clan_id BIGINT NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
-  player_id BIGINT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (clan_id, player_id)
-);
-
-CREATE TABLE IF NOT EXISTS events (
-  id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(128) NOT NULL,
-  description TEXT,
-  starts_at TIMESTAMPTZ,
-  ends_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+CREATE INDEX IF NOT EXISTS idx_players_pp ON players(pp DESC);
+CREATE INDEX IF NOT EXISTS idx_scores_leaderboard ON scores(leaderboard_id, score DESC);
+CREATE INDEX IF NOT EXISTS idx_scores_player ON scores(player_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_maps_name ON maps(song_name);
