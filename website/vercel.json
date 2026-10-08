@@ -4,6 +4,9 @@
   "buildCommand": "pnpm build",
   "installCommand": "corepack pnpm@11.21.0 install --no-frozen-lockfile",
   "crons": [
-    { "path": "/api/v2/maps/sync", "schedule": "0 * * * *" }
+    {
+      "path": "/api/v2/maps/sync",
+      "schedule": "0 0 * * *"
+    }
   ]
 }
