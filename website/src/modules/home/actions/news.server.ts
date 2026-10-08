@@ -212,7 +212,7 @@ async function loadHomeNewsFeed(): Promise<HomeNewsFeed> {
    if (youtubeVideos != null) cachedSources.youtube = youtubeVideos;
    if (xPosts != null) cachedSources.x = xPosts;
 
-   const currentPatreonPosts = cachedSources.patreon ?? [];
+   const currentPatreonPosts: HomeNewsPost[] = [];
    const currentYouTubeVideos = cachedSources.youtube ?? [];
    const currentXPosts = cachedSources.x ?? [];
    const latestRankedBatchVideo = await findLatestRankedBatchVideo(currentYouTubeVideos);

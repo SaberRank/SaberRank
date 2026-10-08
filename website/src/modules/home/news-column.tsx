@@ -14,12 +14,11 @@ import { Time } from '@/shared/components/time';
 import { cn } from '@/shared/format/helpers';
 import { socialLinks } from '@/shell/nav-data';
 
-const NEWS_SOCIAL_LABELS = new Set(['Patreon', 'X', 'YouTube']);
+const NEWS_SOCIAL_LABELS = new Set(['X', 'YouTube']);
 
 const NEWS_ACTION_CLASS = 'text-muted-foreground hover:text-primary rounded-md p-1.5 transition-colors';
 
 const SOURCE_ICONS = {
-   patreon: Icons.patreon,
    x: Icons.twitter,
    youtube: Icons.youtube
 };

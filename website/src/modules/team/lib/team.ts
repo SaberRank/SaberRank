@@ -1,75 +1,58 @@
+
 import '@tanstack/react-start/server-only';
 
-import * as z from 'zod';
+import { db } from '@/server/utils/db';
 
-const nullableString = z.string().nullable().optional();
-
-const teamMemberSchema = z.object({
-   Name: z.string(),
-   ProfilePicture: z.string(),
-   Discord: nullableString,
-   GitHub: nullableString,
-   Twitch: nullableString,
-   Twitter: nullableString,
-   YouTube: nullableString
-});
-
-const teamMembersSchema = z.object({
-   Backend: z.array(teamMemberSchema),
-   Frontend: z.array(teamMemberSchema),
-   Mod: z.array(teamMemberSchema),
-   PPv3: z.array(teamMemberSchema),
-   Admin: z.array(teamMemberSchema),
-   NAT: z.array(teamMemberSchema),
-   RT: z.array(teamMemberSchema),
-   QAT: z.array(teamMemberSchema),
-   CAT: z.array(teamMemberSchema),
-   CCT: z.array(teamMemberSchema)
-});
-
-const teamSchema = z.object({
-   TeamMembers: teamMembersSchema
-});
-
-type TeamData = z.infer<typeof teamSchema>;
-
-const LOCAL_TEAM: TeamData = {
-   TeamMembers: {
-      Backend: [
-         {
-            Name: 'YawningSylveon',
-            ProfilePicture: '/assets/snoresaber-icon.png',
-            Discord: null,
-            GitHub: 'SaberRank/SaberRank',
-            Twitch: null,
-            Twitter: null,
-            YouTube: null
-         }
-      ],
-      Frontend: [
-         {
-            Name: 'SnoreSaber Contributors',
-            ProfilePicture: '/assets/snoresaber-icon.png',
-            Discord: null,
-            GitHub: 'SaberRank/SaberRank',
-            Twitch: null,
-            Twitter: null,
-            YouTube: null
-         }
-      ],
-      Mod: [],
-      PPv3: [],
-      Admin: [],
-      NAT: [],
-      RT: [],
-      QAT: [],
-      CAT: [],
-      CCT: []
-   }
+export type TeamMember = {
+   id: string;
+   name: string;
+   role: string;
+   avatar: string;
 };
 
-export async function fetchTeam() {
-   // Keep the Team page self-contained so it does not fail when the optional
-   // external team repository is unavailable or has a different schema.
-   return { ok: true, value: LOCAL_TEAM } as const;
+export type TeamData = { members: TeamMember[] };
+
+const STAFF_MASK = 1 | 2 | 4 | 8 | 16 | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 32768;
+
+function fallbackRole(permissions: number) {
+   const roles: [number, string][] = [
+      [16, 'Administrator'],
+      [8, 'NAT'],
+      [4, 'QAT Lead'],
+      [2, 'QAT'],
+      [32768, 'Tournament Organizer'],
+      [512, 'PPv3 Developer'],
+      [256, 'Developer'],
+      [2048, 'CCT Lead'],
+      [1024, 'Content Creation Team'],
+      [4096, 'CAT'],
+      [8192, 'RTR'],
+      [1, 'Replay Team']
+   ];
+   return roles.find(([bit]) => (permissions & bit) !== 0)?.[1] ?? 'SnoreSaber Staff';
+}
+
+export async function fetchTeam(): Promise<{ ok: true; value: TeamData }> {
+   const sql = db();
+   if (!sql) return { ok: true, value: { members: [] } };
+
+   const rows: any[] = await sql`
+      SELECT id, name, avatar, role, permissions
+      FROM players
+      WHERE (COALESCE(permissions, 0) & ${STAFF_MASK}) <> 0
+         OR NULLIF(TRIM(COALESCE(role, '')), '') IS NOT NULL
+      ORDER BY COALESCE(NULLIF(TRIM(role), ''), 'SnoreSaber Staff'), name ASC
+   `;
+
+   return {
+      ok: true,
+      value: {
+         members: rows.map((row) => ({
+            id: String(row.id),
+            name: String(row.name || row.id),
+            role: String(row.role || fallbackRole(Number(row.permissions || 0))),
+            avatar: String(row.avatar || '/assets/snoresaber-icon.png')
+         }))
+      }
+   };
 }

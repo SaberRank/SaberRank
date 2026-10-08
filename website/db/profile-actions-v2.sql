@@ -35,12 +35,40 @@ CREATE TABLE IF NOT EXISTS account_merges (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+UPDATE badges SET description='SnoreSaber Tester', image='tester.svg', image_url='/assets/badges/tester.svg' WHERE description='Early Supporter' AND NOT EXISTS (SELECT 1 FROM badges WHERE description='SnoreSaber Tester');
+
 INSERT INTO badges (image, description, image_url)
 SELECT * FROM (VALUES
-  ('snoresaber-icon.png','SnoreSaber Staff','/assets/snoresaber-icon.png'),
-  ('snoresaber-icon.png','Early Supporter','/assets/snoresaber-icon.png'),
-  ('snoresaber-icon.png','Verified Player','/assets/snoresaber-icon.png'),
-  ('snoresaber-icon.png','Map Contributor','/assets/snoresaber-icon.png'),
-  ('snoresaber-icon.png','Tournament Staff','/assets/snoresaber-icon.png')
+  ('staff.svg','SnoreSaber Staff','/assets/badges/staff.svg'),
+  ('tester.svg','SnoreSaber Tester','/assets/badges/tester.svg'),
+  ('verified.svg','Verified Player','/assets/badges/verified.svg'),
+  ('mapper.svg','Map Contributor','/assets/badges/mapper.svg'),
+  ('tournament.svg','Tournament Staff','/assets/badges/tournament.svg'),
+  ('developer.svg','SnoreSaber Developer','/assets/badges/developer.svg')
 ) AS seed(image,description,image_url)
-WHERE NOT EXISTS (SELECT 1 FROM badges);
+WHERE NOT EXISTS (SELECT 1 FROM badges WHERE description = seed.description);
+
+CREATE TABLE IF NOT EXISTS profile_customizations (
+  player_id TEXT PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
+  background_image TEXT,
+  background_image_version BIGINT NOT NULL DEFAULT 1,
+  accent_color TEXT,
+  accent_foreground_color TEXT,
+  accent_foreground_active_color TEXT,
+  supporter_name_color_enabled BOOLEAN NOT NULL DEFAULT true,
+  badge_order BIGINT[],
+  badge_comments JSONB,
+  stat_order TEXT[],
+  enabled_stat_ids TEXT[],
+  chart_metric_ids TEXT[],
+  section_order TEXT[],
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS pinned_scores (
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  score_id BIGINT NOT NULL REFERENCES scores(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  comment TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (player_id, score_id)
+);

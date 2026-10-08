@@ -14,14 +14,13 @@ import { getRouteHref } from '@/shared/url-state/route-location';
 
 type LoginSearchParams = {
    steam?: 'failed';
-   patreon?: 'failed';
    discord?: 'failed';
    mode?: 'password-reset' | 'signup';
    redirectTo?: string;
 };
 
-type LoginOAuthProvider = 'steam' | 'patreon' | 'discord';
-const loginOAuthProviders: LoginOAuthProvider[] = ['steam', 'patreon', 'discord'];
+type LoginOAuthProvider = 'steam' | 'discord';
+const loginOAuthProviders: LoginOAuthProvider[] = ['steam', 'discord'];
 
 export function LoginScreen({ params }: { params: LoginSearchParams }) {
    const t = useTranslations();
@@ -36,7 +35,6 @@ export function LoginScreen({ params }: { params: LoginSearchParams }) {
       snoresaber: t('common.scoreSaber'),
       steam: t('common.providers.STEAM'),
       meta: t('common.providers.OCULUS'),
-      patreon: t('common.providers.PATREON'),
       discord: t('common.providers.DISCORD')
    };
 
@@ -72,7 +70,6 @@ export function LoginScreen({ params }: { params: LoginSearchParams }) {
                   router,
                   linkOptions({ to: '/auth/steam', search: { intent: 'login', returnUrl: getApiOrigin(), redirectTo: absoluteRedirectTo } })
                )}
-               patreonHref={getRouteHref(router, linkOptions({ to: '/auth/patreon', search: { intent: 'login', redirectTo: absoluteRedirectTo } }))}
                discordHref={getRouteHref(router, linkOptions({ to: '/auth/discord', search: { intent: 'login', redirectTo: absoluteRedirectTo } }))}
                redirectTo={redirectTo}
                labels={providerLabels}

@@ -1,5 +1,5 @@
 import type { RegisteredRouter, RouteIds } from '@tanstack/react-router';
-import { BookOpen, Heart, Home, MessageSquareText, RadioTower, Search, Smartphone, Users } from 'lucide-react';
+import { BookOpen, Home, MessageSquareText, RadioTower, Search, Smartphone, Users } from 'lucide-react';
 import { FaList, FaMap, FaMedal } from 'react-icons/fa';
 import type { Messages } from 'use-intl';
 
@@ -99,7 +99,6 @@ export const secondaryItems: (InternalSecondaryItem | ExternalSecondaryItem)[] =
 
 export const socialLinks = [
    { href: 'https://discord.gg/snoresaber', label: 'Discord', Icon: Icons.discord },
-   { href: 'https://patreon.com/snoresaber', label: 'Patreon', Icon: Icons.patreon },
    { href: 'https://bsky.app/profile/snoresaber.com', label: 'Bluesky', Icon: Icons.bluesky },
    { href: 'https://x.com/snoresaber', label: 'X', Icon: Icons.twitter },
    { href: 'https://youtube.com/@SnoreSaber', label: 'YouTube', Icon: Icons.youtube }

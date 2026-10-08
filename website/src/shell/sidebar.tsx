@@ -15,7 +15,6 @@ import { PlayerAvatar } from '@/modules/player/shared/player-avatar';
 import { useOmniSearch } from '@/modules/search/search-provider';
 import { Image } from '@/shared/components/image';
 import { cn } from '@/shared/format/helpers';
-import Permissions from '@/shared/permissions';
 import { isNavActive, navItems, secondaryItems } from '@/shell/nav-data';
 import { NavLink } from '@/shell/nav-link';
 import { SidebarNav } from '@/shell/sidebar-nav';
@@ -44,7 +43,6 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
    const currentPath = location.href;
 
    const visibleNavItems = navItems.filter((item) => item.route !== 'live' || canUseLivePlatform(user?.permissions));
-   const visibleSecondaryItems = secondaryItems.filter((item) => item.key !== 'support' || !Permissions.isSupporter(user?.permissions ?? 0));
 
    return (
       <>
@@ -89,7 +87,7 @@ function CollapsedSidebar({ onExpand }: { onExpand: () => void }) {
 
             <Separator className="my-2" />
 
-            {visibleSecondaryItems.map((item) => (
+            {secondaryItems.map((item) => (
                <Tooltip key={item.key}>
                   <TooltipTrigger asChild>
                      {item.external ? (

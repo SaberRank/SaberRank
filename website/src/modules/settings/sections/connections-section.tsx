@@ -14,10 +14,9 @@ import { Button } from '@/components/ui/button';
 
 import { useActionMutation } from '@/hooks/use-action-mutation';
 import { useAuth } from '@/modules/auth';
-import { refreshPatreonBenefits, removeConnection, switchPrimaryConnection } from '@/modules/settings/actions/connections';
+import { removeConnection, switchPrimaryConnection } from '@/modules/settings/actions/connections';
 import { AccountMergeDialog } from '@/modules/settings/sections/account-merge-dialog';
 import {
-   USER_CONTROLLER_REMOVE_CONNECTION_PROVIDER,
    type UserControllerGetAccountMergeChallengeResponse,
    type UserControllerGetConnectionsItem
 } from '@/shared/api/generated/ApiParams';
@@ -37,15 +36,14 @@ interface ConnectionsSectionProps {
 }
 
 type ConnectionProvider = UserControllerGetConnectionsItem['provider'];
+type DisplayProvider = Extract<ConnectionProvider, 'SCORESABER' | 'STEAM' | 'OCULUS' | 'DISCORD'>;
 type MergeProvider = Extract<ConnectionProvider, 'STEAM' | 'OCULUS'>;
 type SwitchPrimaryConnection = Extract<Awaited<ReturnType<typeof switchPrimaryConnection>>, { ok: true }>['value'];
-type RefreshPatreonBenefits = Extract<Awaited<ReturnType<typeof refreshPatreonBenefits>>, { ok: true }>['value'];
 
-const providers: ConnectionProvider[] = ['SCORESABER', ...USER_CONTROLLER_REMOVE_CONNECTION_PROVIDER];
-const primaryProviders: ConnectionProvider[] = ['SCORESABER', 'STEAM', 'OCULUS'];
+const providers: DisplayProvider[] = ['SCORESABER', 'STEAM', 'OCULUS', 'DISCORD'];
+const primaryProviders: DisplayProvider[] = ['SCORESABER', 'STEAM', 'OCULUS'];
 
 const secondaryProviderLocations = {
-   PATREON: () => linkOptions({ to: '/auth/patreon', search: { intent: 'link' } }),
    DISCORD: () => linkOptions({ to: '/auth/discord', search: { intent: 'link' } })
 };
 
@@ -57,9 +55,8 @@ const providerIcons = {
    SCORESABER: ({ className }) => <Image src="/assets/snoresaber-icon.png" width={20} height={20} alt="" className={className} aria-hidden />,
    STEAM: ({ className }) => <Icons.steam className={className} aria-hidden />,
    OCULUS: ({ className }) => <Icons.meta className={className} aria-hidden />,
-   PATREON: ({ className }) => <Icons.patreon className={className} aria-hidden />,
    DISCORD: ({ className }) => <Icons.discordColor className={className} aria-hidden />
-} satisfies Record<ConnectionProvider, ComponentType<ProviderIconProps>>;
+} satisfies Record<DisplayProvider, ComponentType<ProviderIconProps>>;
 
 export function ConnectionsSection({ connections, initialMergeChallengeId, steamFailed }: ConnectionsSectionProps) {
    const t = useTranslations();
@@ -68,7 +65,6 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
    const queryClient = useQueryClient();
    const mutation = useActionMutation();
    const primarySwitchMutation = useActionMutation<SwitchPrimaryConnection>();
-   const patreonRefreshMutation = useActionMutation<RefreshPatreonBenefits>();
    const [localConnections, setLocalConnections] = useState(connections);
    const [mergeProvider, setMergeProvider] = useState<MergeProvider | null>(initialMergeChallengeId || steamFailed ? 'STEAM' : null);
    const [mergeDialogOpen, setMergeDialogOpen] = useState(Boolean(initialMergeChallengeId || steamFailed));
@@ -78,7 +74,6 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
       SCORESABER: t('common.scoreSaber'),
       STEAM: t('common.providers.STEAM'),
       OCULUS: t('common.providers.OCULUS'),
-      PATREON: t('common.providers.PATREON'),
       DISCORD: t('common.providers.DISCORD')
    };
 
@@ -124,7 +119,7 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
                const connection = byProvider.get(provider);
                const hasConnection = Boolean(connection);
                const isVerified = connection?.state === 'VERIFIED';
-               const isSecondary = provider === 'PATREON' || provider === 'DISCORD';
+               const isSecondary = provider === 'DISCORD';
                const isPrimary = provider === 'SCORESABER' || provider === 'STEAM' || provider === 'OCULUS';
                const canConnectSecondary = isSecondary && (!connection || isVerified);
                const canConnectPrimary = isPrimary && !connection;
@@ -132,10 +127,8 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
                const connectHref = isSecondary ? getRouteHref(router, secondaryProviderLocations[provider]()) : undefined;
                const ProviderIcon = providerIcons[provider];
                const disconnectPending = mutation.isPendingKey(`disconnect-${provider}`);
-               const refreshPatreonPending = patreonRefreshMutation.isPending && provider === 'PATREON';
                const switchPrimaryPending = primarySwitchMutation.isPendingKey(`primary-${provider}`);
                const canSwitchPrimary = isPrimary && hasMultiplePrimary && connection && !connection.isPrimary;
-               const canRefreshPatreon = provider === 'PATREON' && hasConnection;
                const hasPrimaryConnection = isPrimary && hasConnection;
                const hasHelperText = Boolean(hasPrimaryConnection || (isVerified && isSecondary));
 
@@ -256,31 +249,6 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
                                  <ExternalLink data-icon="inline-start" />
                                  {isVerified ? t('settings.connections.upgrade') : t('settings.connections.connect')}
                               </a>
-                           </Button>
-                        )}
-                        {canRefreshPatreon && (
-                           <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={patreonRefreshMutation.isPending || mutation.isPending}
-                              onClick={() =>
-                                 patreonRefreshMutation.mutate(() => refreshPatreonBenefits(), {
-                                    onSuccess: () => {
-                                       queryClient.clear();
-                                       toast.success(t('settings.connections.refreshed'));
-                                    },
-                                    onError: () => toast.error(t('settings.connections.refreshFailed'))
-                                 })
-                              }
-                              className="h-7 cursor-pointer rounded-sm px-2 text-xs md:h-8 md:rounded-md md:px-2.5 md:text-sm"
-                           >
-                              {refreshPatreonPending ? (
-                                 <Loader2 data-icon="inline-start" className="animate-spin" />
-                              ) : (
-                                 <RefreshCw data-icon="inline-start" />
-                              )}
-                              {t('settings.connections.refresh')}
                            </Button>
                         )}
                         {canDisconnect && (

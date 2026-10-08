@@ -22,7 +22,6 @@ import { Image } from '@/shared/components/image';
 import { parseCountryRegionParam } from '@/shared/country-region';
 import { cn, formatNumber, rankToPage } from '@/shared/format/helpers';
 import { getPlayerRoleStyleAndTitle } from '@/shared/format/styling';
-import Permissions from '@/shared/permissions';
 import { isNavActive, navItems, secondaryItems, socialLinks } from '@/shell/nav-data';
 import { SidebarNavLink } from '@/shell/sidebar-nav-link';
 import { useSidebar } from '@/shell/sidebar-provider';
@@ -74,7 +73,6 @@ export function SidebarNav({ onNavigateAction }: { onNavigateAction?: () => void
    const [playerNameClass] = getPlayerRoleStyleAndTitle(user);
    const currentPath = location.href;
    const visibleNavItems = navItems.filter((item) => item.route !== 'live' || canUseLivePlatform(user?.permissions));
-   const visibleSecondaryItems = secondaryItems.filter((item) => item.key !== 'support' || !Permissions.isSupporter(user?.permissions ?? 0));
 
    const realmSwitcherTrigger = (
       <Button variant="ghost" size="icon-xs" className="text-muted-foreground" aria-label={t('sidebar.switchRealm')}>
@@ -201,7 +199,7 @@ export function SidebarNav({ onNavigateAction }: { onNavigateAction?: () => void
 
             <Separator className="my-2" />
 
-            {visibleSecondaryItems.map((item) => (
+            {secondaryItems.map((item) => (
                <SidebarNavLink
                   key={item.key}
                   {...(item.external ? { external: true, href: item.href } : { route: item.route })}

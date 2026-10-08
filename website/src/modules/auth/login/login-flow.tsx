@@ -20,14 +20,12 @@ export type LoginPanel = 'providers' | 'email' | 'password' | 'signup';
 
 interface LoginFlowProps {
    steamHref: string;
-   patreonHref: string;
    discordHref: string;
    redirectTo: string;
    labels: {
       snoresaber: string;
       steam: string;
       meta: string;
-      patreon: string;
       discord: string;
    };
    metaTooltip: string;
@@ -43,7 +41,6 @@ interface LoginFlowProps {
 
 export function LoginFlow({
    steamHref,
-   patreonHref,
    discordHref,
    redirectTo,
    labels,
@@ -141,7 +138,6 @@ export function LoginFlow({
             <div className="flex w-full flex-col items-center gap-3">
                <LoginProviderPicker
                   steamHref={steamHref}
-                  patreonHref={patreonHref}
                   discordHref={discordHref}
                   labels={labels}
                   metaTooltip={metaTooltip}

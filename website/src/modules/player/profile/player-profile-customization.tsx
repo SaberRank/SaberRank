@@ -49,7 +49,6 @@ import {
 import { PlayerProfileCustomizationStyleTab } from '@/modules/player/profile/player-profile-customization-style-tab';
 import type { PlayerControllerGetPlayerResponse, PlayerControllerGetPlayerScoresDataItem } from '@/shared/api/generated/ApiParams';
 import { cn } from '@/shared/format/helpers';
-import Permissions from '@/shared/permissions';
 import type { ActionResult } from '@/shared/result/action';
 
 type ProfileCustomizationTab = 'account' | 'style' | 'layout' | 'pinned-scores' | 'badges';
@@ -80,15 +79,13 @@ interface PlayerProfileCustomizationProps {
 export function PlayerProfileCustomization({ player, patreonConnected, children }: PlayerProfileCustomizationProps) {
    const t = useTranslations();
    const { user } = useAuth();
-   const userPerms = user?.permissions ?? 0;
    const isOwnProfile = user?.id === player.id;
-   const isStaffProfile = Permissions.checkPermissionNumber(userPerms, Permissions.groups.ALL_STAFF);
-   const canUseAccentStyle = Permissions.isPPFarmer(userPerms);
-   const canToggleSupporterNameColor = Permissions.isSupporter(userPerms) && !isStaffProfile;
-   const canUseStyle = canUseAccentStyle || canToggleSupporterNameColor;
-   const canUsePinnedScores = Permissions.isPPFarmer(userPerms);
-   const canUseBadgeCustomization = Permissions.isPPFarmer(userPerms);
-   const canUseLayoutCustomization = Permissions.isPPFarmer(userPerms);
+   const canUseAccentStyle = true;
+   const canToggleSupporterNameColor = true;
+   const canUseStyle = true;
+   const canUsePinnedScores = true;
+   const canUseBadgeCustomization = true;
+   const canUseLayoutCustomization = true;
    const canShowCustomization = isOwnProfile && !player.banned;
    const rawStyle = player.profileCustomization;
    const initialStyle = useMemo(

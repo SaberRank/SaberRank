@@ -1,7 +1,7 @@
 'use client';
 
 import { getRouteApi } from '@tanstack/react-router';
-import { Database, ExternalLink, Loader2, LockKeyhole, LogIn, ShieldCheck } from 'lucide-react';
+import { Database, Loader2, LockKeyhole, LogIn, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,9 @@ import { useAuth } from '@/modules/auth';
 import { claimReplaySlot, releaseReplaySlot } from '@/modules/settings/actions/perks';
 import type { ScoreControllerGetScoreResponse, UserControllerGetReplaySlotsResponse } from '@/shared/api/generated/ApiParams';
 import { FadeInImage } from '@/shared/components/fade-in-image';
-import { Icons } from '@/shared/components/icons';
 import { cn, formatNumber, formatPP, formatStars } from '@/shared/format/helpers';
 import { getDifficultyLabel } from '@/shared/format/strings';
 import { isLeaderboardRanked } from '@/shared/format/styling';
-import Permissions from '@/shared/permissions';
 
 const loginRoute = getRouteApi('/login');
 const mapDifficultyRoute = getRouteApi('/map/$id/difficulty/$leaderboardId');
@@ -63,10 +61,6 @@ export function ReplaySlotsSection({ replaySlots, scoreDetails }: ReplaySlotsSec
    }
 
    const isAtLimit = replaySlots.used >= replaySlots.limit;
-   const permissions = user.permissions;
-   const isPPFarmer = Permissions.isPPFarmer(permissions);
-   const isSupporter = Permissions.isSupporter(permissions);
-   const showCta = !isPPFarmer && (isSupporter || replaySlots.limit <= 25);
 
    return (
       <Card variant="settings">
@@ -82,15 +76,6 @@ export function ReplaySlotsSection({ replaySlots, scoreDetails }: ReplaySlotsSec
                      {formatNumber(replaySlots.used)} / {formatNumber(replaySlots.limit)} {t('settings.perks.replaySlots.used')}
                   </span>
                </div>
-               {showCta && (
-                  <Button variant="outline" size="sm" asChild className="cursor-pointer justify-start">
-                     <a href="https://patreon.com/snoresaber/membership" target="_blank" rel="noreferrer">
-                        <Icons.patreon data-icon="inline-start" className="size-4 fill-current text-[#ff424d]" />
-                        {isSupporter ? t('settings.perks.replaySlots.supporterCta') : t('settings.perks.replaySlots.patreonCta')}
-                        <ExternalLink className="size-3" aria-hidden />
-                     </a>
-                  </Button>
-               )}
             </CardAction>
          </CardHeader>
          <CardContent className="flex flex-col gap-6 px-5">

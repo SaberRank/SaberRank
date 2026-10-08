@@ -10,6 +10,7 @@ type PlayerAvatarProps = Omit<ComponentProps<typeof FadeInImage>, 'onError'> & {
 };
 
 export function versionedImageUrl(src: string, version?: number | null) {
+   if (src.startsWith('data:')) return src;
    return version ? `${src}?v=${version}` : src;
 }
 

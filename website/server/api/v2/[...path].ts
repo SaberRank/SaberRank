@@ -320,16 +320,49 @@ async function ensureModerationTables(sql: any) {
     )
   `;
   const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM badges`;
-  if (Number(countRows[0]?.count || 0) === 0) {
-    await sql`
-      INSERT INTO badges (image, description, image_url)
-      VALUES
-        ('snoresaber-icon.png', 'SnoreSaber Staff', '/assets/snoresaber-icon.png'),
-        ('snoresaber-icon.png', 'Early Supporter', '/assets/snoresaber-icon.png'),
-        ('snoresaber-icon.png', 'Verified Player', '/assets/snoresaber-icon.png'),
-        ('snoresaber-icon.png', 'Map Contributor', '/assets/snoresaber-icon.png'),
-        ('snoresaber-icon.png', 'Tournament Staff', '/assets/snoresaber-icon.png')
-    `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS profile_customizations (
+      player_id TEXT PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
+      background_image TEXT,
+      background_image_version BIGINT NOT NULL DEFAULT 1,
+      accent_color TEXT,
+      accent_foreground_color TEXT,
+      accent_foreground_active_color TEXT,
+      supporter_name_color_enabled BOOLEAN NOT NULL DEFAULT true,
+      badge_order BIGINT[],
+      badge_comments JSONB,
+      stat_order TEXT[],
+      enabled_stat_ids TEXT[],
+      chart_metric_ids TEXT[],
+      section_order TEXT[],
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS pinned_scores (
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      score_id BIGINT NOT NULL REFERENCES scores(id) ON DELETE CASCADE,
+      position INTEGER NOT NULL,
+      comment TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (player_id, score_id)
+    )
+  `;
+  await sql`UPDATE badges SET description='SnoreSaber Tester', image='tester.svg', image_url='/assets/badges/tester.svg' WHERE description='Early Supporter' AND NOT EXISTS (SELECT 1 FROM badges WHERE description='SnoreSaber Tester')`;
+  const defaultBadges = [
+    ['staff.svg', 'SnoreSaber Staff', '/assets/badges/staff.svg'],
+    ['tester.svg', 'SnoreSaber Tester', '/assets/badges/tester.svg'],
+    ['verified.svg', 'Verified Player', '/assets/badges/verified.svg'],
+    ['mapper.svg', 'Map Contributor', '/assets/badges/mapper.svg'],
+    ['tournament.svg', 'Tournament Staff', '/assets/badges/tournament.svg'],
+    ['developer.svg', 'SnoreSaber Developer', '/assets/badges/developer.svg']
+  ];
+  for (const [image, description, imageUrl] of defaultBadges) {
+    const existing:any[] = await sql`SELECT id FROM badges WHERE description=${description} LIMIT 1`;
+    if (existing[0]) {
+      await sql`UPDATE badges SET image=${image}, image_url=${imageUrl} WHERE id=${existing[0].id}`;
+    } else {
+      await sql`INSERT INTO badges (image, description, image_url) VALUES (${image}, ${description}, ${imageUrl})`;
+    }
   }
 }
 
@@ -348,6 +381,56 @@ async function getPlayerBadges(sql: any, playerId: string) {
     id: Number(r.id),
     image: r.image_url || r.image,
     description: r.description_override || r.description
+  }));
+}
+
+
+async function getProfileCustomization(sql: any, playerId: string) {
+  if (!sql) return { backgroundImage:null, backgroundImageVersion:null, accentColor:'#f06ab7', accentForegroundColor:'#160d16', accentForegroundActiveColor:'#ffffff', supporterNameColorEnabled:true, badgeOrder:null, badgeComments:null, statOrder:null, enabledStatIds:null, chartMetricIds:null, sectionOrder:null };
+  await ensureModerationTables(sql);
+  const rows:any[] = await sql`SELECT * FROM profile_customizations WHERE player_id=${playerId} LIMIT 1`;
+  if (!rows[0]) return { backgroundImage:null, backgroundImageVersion:null, accentColor:'#f06ab7', accentForegroundColor:'#160d16', accentForegroundActiveColor:'#ffffff', supporterNameColorEnabled:true, badgeOrder:null, badgeComments:null, statOrder:null, enabledStatIds:null, chartMetricIds:null, sectionOrder:null };
+  const r=rows[0];
+  return {
+    backgroundImage:r.background_image || null,
+    backgroundImageVersion:r.background_image_version == null ? null : Number(r.background_image_version),
+    accentColor:r.accent_color || '#f06ab7',
+    accentForegroundColor:r.accent_foreground_color || '#160d16',
+    accentForegroundActiveColor:r.accent_foreground_active_color || '#ffffff',
+    supporterNameColorEnabled:r.supporter_name_color_enabled !== false,
+    badgeOrder:Array.isArray(r.badge_order) ? r.badge_order.map(Number) : null,
+    badgeComments:r.badge_comments || null,
+    statOrder:r.stat_order || null,
+    enabledStatIds:r.enabled_stat_ids || null,
+    chartMetricIds:r.chart_metric_ids || null,
+    sectionOrder:r.section_order || null
+  };
+}
+
+async function getPinnedScores(sql:any, playerId:string) {
+  if (!sql) return [];
+  await ensureModerationTables(sql);
+  const rows:any[] = await sql`
+    SELECT ps.position, ps.comment, s.*, p.id AS p_id,p.name,p.country,p.avatar,
+      l.id AS lb_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.created_at AS lb_created_at,
+      m.id AS map_id,m.hash AS map_hash,m.bsid AS map_bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.created_at AS map_created_at,
+      RANK() OVER (PARTITION BY s.leaderboard_id ORDER BY s.score DESC, s.accuracy DESC, s.created_at ASC) AS board_rank
+    FROM pinned_scores ps
+    JOIN scores s ON s.id=ps.score_id
+    JOIN players p ON p.id=s.player_id
+    JOIN leaderboards l ON l.id=s.leaderboard_id
+    JOIN maps m ON m.id=l.map_id
+    WHERE ps.player_id=${playerId}
+    ORDER BY ps.position ASC
+    LIMIT 6
+  `;
+  return rows.map((r)=>({
+    score: dbScore(r,
+      {id:r.p_id,name:r.name,country:r.country,avatar:r.avatar},
+      {id:r.lb_id,difficulty:r.difficulty,game_mode:r.game_mode,raw_difficulty:r.raw_difficulty,max_score:r.max_score,stars:r.stars,status:r.status,created_at:r.lb_created_at},
+      {id:r.map_id,hash:r.map_hash,bsid:r.map_bsid,song_name:r.song_name,song_sub_name:r.song_sub_name,song_author_name:r.song_author_name,level_author_name:r.level_author_name,bpm:r.bpm,cover_url:r.cover_url,verified:r.verified,created_at:r.map_created_at},
+      Number(r.board_rank||1), true),
+    comment:String(r.comment||'')
   }));
 }
 
@@ -608,6 +691,8 @@ export default defineHandler(async (event: any) => {
       const viewerId = await authPlayerId(request, sql);
       const rel = await relationshipSummary(sql, pr[0].id, viewerId);
       const badges = await getPlayerBadges(sql, pr[0].id);
+      const profileCustomization = await getProfileCustomization(sql, pr[0].id);
+      const pinnedScores = await getPinnedScores(sql, pr[0].id);
       // Do not assume optional play-count columns exist. Older SnoreSaber databases
       // may have the original players schema, so derive play counts from scores.
       const playRows: any[] = await sql`
@@ -627,7 +712,7 @@ export default defineHandler(async (event: any) => {
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
       }];
-      return json({ player: { ...p, badges, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
+      return json({ player: { ...p, badges, pinnedScores, profileCustomization, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
     }
     const p = players.find((x) => x.id === requestedId || x.steamId === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
     if (!p) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
@@ -1069,10 +1154,124 @@ export default defineHandler(async (event: any) => {
     const id=Math.max(...scores.map(s=>Number(s.id)),1000)+1; scores.push(score(id,p,m,accuracy,scoreValue,pp)); return json({accepted:true,personalBest:true,scoreId:id});
   }
 
+
+  // ------------------------- ACCOUNT / PROFILE -------------------------
+  if (route === '/user/@me/name' && method === 'PUT') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const name=String(body.name||'').trim().slice(0,128);
+    if(!name) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Name is required'},400);
+    await sql`UPDATE players SET name=${name},last_seen_at=now() WHERE id=${pid}`;
+    return json({success:true});
+  }
+
+  if (route === '/user/@me/bio' && method === 'PUT') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const bio=String(body.bio||'').slice(0,4096);
+    await sql`UPDATE players SET bio=${bio||null},last_seen_at=now() WHERE id=${pid}`;
+    return json({success:true});
+  }
+
+  if (route === '/user/@me/vanity' && method === 'POST') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const slug=String(body.slug||'').trim().toLowerCase();
+    if(!/^[a-z0-9_-]{3,32}$/.test(slug)) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Vanity must be 3-32 characters using letters, numbers, _ or -'},400);
+    const taken:any[]=await sql`SELECT id FROM players WHERE lower(vanity)=${slug} AND id<>${pid} LIMIT 1`;
+    if(taken[0]) return json({statusCode:409,error:'Conflict',code:'ALREADY_EXISTS',message:'Vanity is already in use'},409);
+    await sql`UPDATE players SET vanity=${slug} WHERE id=${pid}`;
+    return json({success:true,vanity:slug});
+  }
+
+  if (route === '/user/@me/avatar' && method === 'POST') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    const form=await request.formData(); const file=form.get('avatar');
+    if(!(file instanceof File)||file.size===0) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Avatar is required'},400);
+    if(file.size>2*1024*1024) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Avatar must be 2MB or smaller'},400);
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    let binary=''; for(let i=0;i<bytes.length;i+=0x8000) binary += String.fromCharCode(...bytes.subarray(i,i+0x8000));
+    const dataUrl=`data:${file.type||'image/png'};base64,${Buffer.from(binary,'binary').toString('base64')}`;
+    await sql`UPDATE players SET avatar=${dataUrl},last_seen_at=now() WHERE id=${pid}`;
+    return json({success:true});
+  }
+
+  // ------------------------- PROFILE CUSTOMIZATION -------------------------
+  if (route === '/user/@me/profile-customization' && method === 'PUT') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    let body:any={}; try{ body=JSON.parse(await request.text()||'{}'); }catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    const hex=(v:any)=>v==null?null:(/^#[0-9A-Fa-f]{6}$/.test(String(v))?String(v):null);
+    const arr=(v:any,max:number)=>Array.isArray(v)?v.slice(0,max).map(String):null;
+    const badgeOrder=Array.isArray(body.badgeOrder)?body.badgeOrder.slice(0,128).map(Number).filter((x:number)=>Number.isInteger(x)&&x>0):null;
+    const badgeComments=body.badgeComments && typeof body.badgeComments==='object' ? body.badgeComments : null;
+    await ensureModerationTables(sql);
+    await sql`
+      INSERT INTO profile_customizations (player_id,accent_color,accent_foreground_color,accent_foreground_active_color,supporter_name_color_enabled,badge_order,badge_comments,stat_order,enabled_stat_ids,chart_metric_ids,section_order,updated_at)
+      VALUES (${pid},${hex(body.accentColor)},${hex(body.accentForegroundColor)},${hex(body.accentForegroundActiveColor)},${body.supporterNameColorEnabled!==false},${badgeOrder},${badgeComments?JSON.stringify(badgeComments):null},${arr(body.statOrder,16)},${arr(body.enabledStatIds,16)},${arr(body.chartMetricIds,8)},${arr(body.sectionOrder,8)},now())
+      ON CONFLICT (player_id) DO UPDATE SET accent_color=EXCLUDED.accent_color,accent_foreground_color=EXCLUDED.accent_foreground_color,accent_foreground_active_color=EXCLUDED.accent_foreground_active_color,supporter_name_color_enabled=EXCLUDED.supporter_name_color_enabled,badge_order=EXCLUDED.badge_order,badge_comments=EXCLUDED.badge_comments,stat_order=EXCLUDED.stat_order,enabled_stat_ids=EXCLUDED.enabled_stat_ids,chart_metric_ids=EXCLUDED.chart_metric_ids,section_order=EXCLUDED.section_order,updated_at=now()
+    `;
+    return json(await getProfileCustomization(sql,pid));
+  }
+
+  if (route === '/user/@me/pinned-scores' && method === 'PUT') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    let body:any={}; try{ body=JSON.parse(await request.text()||'{}'); }catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    if(!Array.isArray(body.pinnedScores)||body.pinnedScores.length>6) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Up to 6 pinned scores are allowed'},400);
+    await ensureModerationTables(sql);
+    const ids=body.pinnedScores.map((x:any)=>Number(x.scoreId)).filter((x:number)=>Number.isInteger(x)&&x>0);
+    if(ids.length){
+      const valid:any[]=await sql`SELECT id FROM scores WHERE player_id=${pid} AND id = ANY(${ids})`;
+      if(valid.length!==ids.length) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'One or more scores do not belong to this player'},400);
+    }
+    await sql`DELETE FROM pinned_scores WHERE player_id=${pid}`;
+    let position=0;
+    for(const item of body.pinnedScores){
+      const scoreId=Number(item.scoreId); if(!Number.isInteger(scoreId)||scoreId<=0) continue;
+      await sql`INSERT INTO pinned_scores(player_id,score_id,position,comment) VALUES(${pid},${scoreId},${position++},${String(item.comment||'').slice(0,512)})`;
+    }
+    return json({success:true});
+  }
+
+  if (route === '/user/@me/profile-customization/background' && method === 'POST') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    const form=await request.formData(); const file=form.get('backgroundImage');
+    if(!(file instanceof File)||file.size===0) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Background image is required'},400);
+    if(file.size>2*1024*1024) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Background image must be 2MB or smaller'},400);
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    let binary=''; for(let i=0;i<bytes.length;i+=0x8000) binary += String.fromCharCode(...bytes.subarray(i,i+0x8000));
+    const mime=file.type||'image/jpeg'; const dataUrl=`data:${mime};base64,${Buffer.from(binary,'binary').toString('base64')}`;
+    await ensureModerationTables(sql);
+    await sql`INSERT INTO profile_customizations(player_id,background_image,background_image_version,updated_at) VALUES(${pid},${dataUrl},1,now()) ON CONFLICT(player_id) DO UPDATE SET background_image=EXCLUDED.background_image,background_image_version=profile_customizations.background_image_version+1,updated_at=now()`;
+    return json(await getProfileCustomization(sql,pid));
+  }
+
+  if (route === '/user/@me/profile-customization/background' && method === 'DELETE') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({success:true});
+    await ensureModerationTables(sql);
+    await sql`UPDATE profile_customizations SET background_image=null,background_image_version=background_image_version+1,updated_at=now() WHERE player_id=${pid}`;
+    return json(await getProfileCustomization(sql,pid));
+  }
+
   // ------------------------- AUTH -------------------------
   if (route === '/user/@me' && method === 'GET') {
     const pid=await authPlayerId(request, sql); if(!pid)return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
-    if(sql){const rows:any[]=await sql`SELECT * FROM players WHERE id=${pid} LIMIT 1`; if(!rows[0]) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401); const p=dbPlayer(rows[0]); const relationships=await userRelationships(sql,pid); return json({...p,relationships});}
+    if(sql){const rows:any[]=await sql`SELECT * FROM players WHERE id=${pid} LIMIT 1`; if(!rows[0]) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401); const p=dbPlayer(rows[0]); const profileCustomization=await getProfileCustomization(sql,pid); const pinnedScores=await getPinnedScores(sql,pid); const badges=await getPlayerBadges(sql,pid); const relationships=await userRelationships(sql,pid); return json({...p,profileCustomization,pinnedScores,badges,relationships});}
     const p=players.find((x)=>x.id===pid); return p?json(p):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
   }
   if (route === '/auth/steam' && method === 'GET') {

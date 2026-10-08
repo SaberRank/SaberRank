@@ -44,12 +44,14 @@ function checkPermissionNumber(userPermissions: number, permission: number) {
    return (userPermissions & permission) !== 0;
 }
 
-function isSupporter(userPermissions: number) {
-   return checkPermissionNumber(userPermissions, permissions.SUPPORTER) || isPPFarmer(userPermissions);
+function isSupporter(_userPermissions: number) {
+   // SnoreSaber currently has no paid/Patreon feature tier.
+   return true;
 }
 
-function isPPFarmer(userPermissions: number) {
-   return checkPermissionNumber(userPermissions, permissions.PPFARMER) || checkPermissionNumber(userPermissions, group_permissions.ALL_STAFF);
+function isPPFarmer(_userPermissions: number) {
+   // All profile customization features are currently free for every signed-in user.
+   return true;
 }
 
 export default {

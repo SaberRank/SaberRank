@@ -98,3 +98,45 @@ CREATE TABLE IF NOT EXISTS player_follows (
 
 CREATE INDEX IF NOT EXISTS idx_player_follows_following ON player_follows(following_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_player_follows_follower ON player_follows(follower_id, created_at DESC);
+
+-- SnoreSaber profile customization / badges
+CREATE TABLE IF NOT EXISTS badges (
+  id BIGSERIAL PRIMARY KEY,
+  image TEXT NOT NULL,
+  description TEXT NOT NULL,
+  image_url TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS player_badges (
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  badge_id BIGINT NOT NULL REFERENCES badges(id) ON DELETE CASCADE,
+  description_override TEXT,
+  added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (player_id, badge_id)
+);
+
+CREATE TABLE IF NOT EXISTS profile_customizations (
+  player_id TEXT PRIMARY KEY REFERENCES players(id) ON DELETE CASCADE,
+  background_image TEXT,
+  background_image_version BIGINT NOT NULL DEFAULT 1,
+  accent_color TEXT,
+  accent_foreground_color TEXT,
+  accent_foreground_active_color TEXT,
+  supporter_name_color_enabled BOOLEAN NOT NULL DEFAULT true,
+  badge_order BIGINT[],
+  badge_comments JSONB,
+  stat_order TEXT[],
+  enabled_stat_ids TEXT[],
+  chart_metric_ids TEXT[],
+  section_order TEXT[],
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS pinned_scores (
+  player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  score_id BIGINT NOT NULL REFERENCES scores(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  comment TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (player_id, score_id)
+);
