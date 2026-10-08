@@ -670,17 +670,6 @@
 		text-align: center;
 	}
 
-	.faq p {
-		margin: 0;
-	}
-
-	.faq b {
-		font-weight: bold;
-	}
-
-	.faq p:not(:last-child) {
-		margin-bottom: 10px;
-	}
 
 	.playlist-button-container {
 		display: flex;
@@ -695,12 +684,6 @@
 		justify-content: center !important;
 	}
 
-	/* Responsive */
-	@media (max-width: 1024px) {
-		.song-card {
-			width: 150px;
-			height: 200px;
-		}
 
 		.idol-avatar {
 			width: 40px;
@@ -713,10 +696,6 @@
 			font-size: 1.8rem;
 		}
 
-		.song-card {
-			width: 140px;
-			height: 180px;
-		}
 
 		.sticker-canvas {
 			height: 300px;
@@ -750,11 +729,6 @@
 			justify-content: center;
 		}
 
-		.song-card {
-			width: 120px;
-			height: 160px;
-			font-size: 0.85rem;
-		}
 
 		.idol-avatar {
 			width: 35px;
