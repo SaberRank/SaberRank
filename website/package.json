@@ -1,16 +1,17 @@
 {
   "name": "snoresaber",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
+    "dev": "vite",
     "preview": "vite preview"
   },
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
-    "vite": "^6.0.0",
-    "svelte": "^5.12.0"
+    "@neondatabase/serverless": "^0.10.4",
+    "svelte": "^5.12.0",
+    "vite": "^6.4.4"
   }
 }

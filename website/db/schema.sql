@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS players (
   id BIGSERIAL PRIMARY KEY,
   steam_id VARCHAR(32) UNIQUE NOT NULL,
-  username VARCHAR(64) NOT NULL,
+  name VARCHAR(64) NOT NULL,
+  alias VARCHAR(64),
   avatar_url TEXT,
   country VARCHAR(8),
   pp DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -38,17 +39,9 @@ CREATE TABLE IF NOT EXISTS scores (
   played_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_scores_player ON scores(player_id);
-CREATE INDEX IF NOT EXISTS idx_scores_map ON scores(map_id);
-CREATE INDEX IF NOT EXISTS idx_scores_pp ON scores(pp DESC);
-
-CREATE TABLE IF NOT EXISTS score_history (
-  id BIGSERIAL PRIMARY KEY,
-  player_id BIGINT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  score_id BIGINT REFERENCES scores(id) ON DELETE SET NULL,
-  pp DOUBLE PRECISION NOT NULL,
-  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+CREATE INDEX IF NOT EXISTS scores_player_idx ON scores(player_id);
+CREATE INDEX IF NOT EXISTS scores_map_idx ON scores(map_id);
+CREATE INDEX IF NOT EXISTS scores_pp_idx ON scores(pp DESC);
 
 CREATE TABLE IF NOT EXISTS clans (
   id BIGSERIAL PRIMARY KEY,
