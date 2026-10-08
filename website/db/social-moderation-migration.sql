@@ -1,5 +1,4 @@
 -- SnoreSaber social/moderation + play-count migration
-ALTER TABLE players ADD COLUMN IF NOT EXISTS total_plays INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE players ADD COLUMN IF NOT EXISTS total_ranked_plays INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE players ADD COLUMN IF NOT EXISTS total_played_leaderboards INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE players ADD COLUMN IF NOT EXISTS total_played_ranked_leaderboards INTEGER NOT NULL DEFAULT 0;

@@ -509,41 +509,10 @@ export default defineHandler(async (event: any) => {
       const p = dbPlayer(pr[0]);
       const viewerId = await authPlayerId(request, sql);
       const rel = await relationshipSummary(sql, pr[0].id, viewerId);
-      // Keep profile reads compatible with older SnoreSaber databases.  Play-count
-      // columns were added later, so derive the counts from the score tables here
-      // instead of making the entire profile fail when an older database has not
-      // received the optional migration yet.
       const historyRows: any[] = await sql`
-        SELECT p.rank, p.pp, p.total_score, p.total_ranked_score, p.average_accuracy, p.created_at,
-          COUNT(s.id)::int AS total_plays,
-          COUNT(s.id) FILTER (WHERE l.status='RANKED')::int AS total_ranked_plays,
-          COUNT(DISTINCT s.leaderboard_id)::int AS total_played_leaderboards,
-          COUNT(DISTINCT s.leaderboard_id) FILTER (WHERE l.status='RANKED')::int AS total_played_ranked_leaderboards
-        FROM players p
-        LEFT JOIN scores s ON s.player_id=p.id
-        LEFT JOIN leaderboards l ON l.id=s.leaderboard_id
-        WHERE p.id=${pr[0].id}
-        GROUP BY p.id
-        LIMIT 1`;
+        SELECT rank, pp, total_score, total_ranked_score, total_plays, total_ranked_plays, total_played_leaderboards, total_played_ranked_leaderboards, average_accuracy, created_at
+        FROM players WHERE id=${pr[0].id} LIMIT 1`;
       const h = historyRows[0];
-      const playerWithStats = {
-        ...p,
-        stats: {
-          ...p.stats,
-          rank: Number(h?.rank ?? p.stats.rank ?? 0),
-          totalPP: Number(h?.pp ?? p.stats.totalPP ?? 0),
-          totalScore: String(h?.total_score ?? p.stats.totalScore ?? 0),
-          totalRankedScore: String(h?.total_ranked_score ?? p.stats.totalRankedScore ?? 0),
-          totalPlayedLeaderboards: Number(h?.total_played_leaderboards ?? 0),
-          totalPlayedRankedLeaderboards: Number(h?.total_played_ranked_leaderboards ?? 0),
-          totalSubmittedPlays: Number(h?.total_plays ?? 0),
-          averageAccuracy: Number(h?.average_accuracy ?? p.stats.averageAccuracy ?? 0),
-          weightedAverageAccuracy: Number(h?.average_accuracy ?? p.stats.weightedAverageAccuracy ?? 0),
-          completionAccuracy: Number(h?.average_accuracy ?? p.stats.completionAccuracy ?? 0)
-        },
-        followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends,
-        recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing
-      };
       const history = h ? [{
         rank: Number(h.rank || 0), totalPP: Number(h.pp || 0), totalScore: String(h.total_score || 0),
         totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: Number(h.total_played_leaderboards || 0),
@@ -552,7 +521,7 @@ export default defineHandler(async (event: any) => {
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
       }] : [];
-      return json({ player: playerWithStats, history, aliases: [] });
+      return json({ player: { ...p, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
     }
     const p = players.find((x) => x.id === requestedId || x.steamId === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
     if (!p) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
