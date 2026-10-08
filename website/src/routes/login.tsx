@@ -9,7 +9,6 @@ import { SetPageBackground } from '@/shell/background/page-background-provider';
 const loginSearchSchema = z.object({
    steam: optionalSearchParamEnum(['failed']),
    patreon: optionalSearchParamEnum(['failed']),
-   discord: optionalSearchParamEnum(['failed']),
    mode: optionalSearchParamEnum(['password-reset', 'signup']),
    redirectTo: optionalSearchParamString
 });

@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS players (
   role TEXT,
   bio TEXT,
   vanity TEXT,
+  vanity_changed_at TIMESTAMPTZ,
   banned BOOLEAN NOT NULL DEFAULT false,
   silenced BOOLEAN NOT NULL DEFAULT false,
   ban_reason TEXT,

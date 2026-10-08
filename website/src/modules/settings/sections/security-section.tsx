@@ -3,7 +3,6 @@
 import type { SubmitEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
-import { startRegistration } from '@simplewebauthn/browser';
 import { getRouteApi, useRouter } from '@tanstack/react-router';
 import { Result } from 'better-result';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
@@ -23,18 +22,12 @@ import { useActionMutation } from '@/hooks/use-action-mutation';
 import { useEmailChallenge } from '@/hooks/use-email-challenge';
 import { useAuth } from '@/modules/auth';
 import { changePassword, completePasswordSetup, startPasswordSetup, type PasswordCredentialSummary } from '@/modules/auth/actions/credentials';
-import { deletePasskey, getPasskeyRegistrationOptions, renamePasskey, verifyPasskeyRegistration } from '@/modules/auth/actions/passkey';
 import { DeviceCodePanel } from '@/modules/auth/device-code-panel';
-import type { PasskeyControllerListPasskeysResponse } from '@/shared/api/generated/ApiParams';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog';
-import { Time } from '@/shared/components/time';
 import { cn } from '@/shared/format/helpers';
 import { unwrapAction } from '@/shared/result/action';
 
-type PasskeySummary = PasskeyControllerListPasskeysResponse['passkeys'][number];
-
 interface SecuritySectionProps {
-   passkeys: PasskeySummary[] | null;
    credential: PasswordCredentialSummary | null;
    openPasswordSetup?: boolean;
 }
@@ -43,7 +36,7 @@ const iconClass = 'border-border/60 bg-primary/10 text-primary flex size-10 shri
 const loginRoute = getRouteApi('/login');
 const settingsAccountRoute = getRouteApi('/settings/account');
 
-export function SecuritySection({ passkeys, credential, openPasswordSetup }: SecuritySectionProps) {
+export function SecuritySection({ credential, openPasswordSetup }: SecuritySectionProps) {
    const t = useTranslations();
    const { user } = useAuth();
 
@@ -58,7 +51,6 @@ export function SecuritySection({ passkeys, credential, openPasswordSetup }: Sec
          </CardHeader>
          <CardContent className="flex flex-col px-5">
             {credential?.hasPassword ? <ChangePasswordRow /> : <SetPasswordLoginRow autoOpen={openPasswordSetup} />}
-            <PasskeysRow passkeys={passkeys ?? []} />
             <DeviceLoginRow />
          </CardContent>
       </Card>
@@ -298,161 +290,6 @@ function ChangePasswordRow() {
             </form>
          </CollapsibleContent>
       </Collapsible>
-   );
-}
-
-function PasskeysRow({ passkeys }: { passkeys: PasskeySummary[] }) {
-   const t = useTranslations();
-   const router = useRouter();
-   const mutation = useActionMutation();
-   const [addPending, setAddPending] = useState(false);
-   const [renameTarget, setRenameTarget] = useState<PasskeySummary | null>(null);
-   const [renameValue, setRenameValue] = useState('');
-   const [deleteTarget, setDeleteTarget] = useState<PasskeySummary | null>(null);
-
-   const addPasskey = async () => {
-      setAddPending(true);
-      const result = await Result.tryPromise(async () => {
-         const options = unwrapAction(await getPasskeyRegistrationOptions());
-         const response = await startRegistration({ optionsJSON: options });
-         unwrapAction(await verifyPasskeyRegistration({ response }));
-      });
-
-      if (Result.isOk(result)) {
-         toast.success(t('settings.security.passkeyAdded'));
-         void router.invalidate();
-      } else if (!(result.error instanceof Error) || result.error.name !== 'NotAllowedError') {
-         // user dismissing the browser prompt is not an error
-         toast.error(t('settings.security.passkeyAddFailed'), { description: result.error instanceof Error ? result.error.message : undefined });
-      }
-
-      setAddPending(false);
-   };
-
-   const submitRename = () => {
-      if (!renameTarget || !renameValue.trim()) {
-         return;
-      }
-
-      mutation.runKeyed(
-         'passkey-rename',
-         () => renamePasskey(renameTarget.id, renameValue.trim()),
-         t('settings.security.passkeyRenamed'),
-         t('settings.security.passkeyRenameFailed'),
-         () => setRenameTarget(null)
-      );
-   };
-
-   const submitDelete = () => {
-      if (!deleteTarget) {
-         return;
-      }
-
-      mutation.runKeyed(
-         'passkey-delete',
-         () => deletePasskey(deleteTarget.id),
-         t('settings.security.passkeyDeleted'),
-         t('settings.security.passkeyDeleteFailed'),
-         () => setDeleteTarget(null)
-      );
-   };
-
-   return (
-      <>
-         <div className="border-border/70 flex flex-col gap-3 border-b py-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-               <div className="flex min-w-0 gap-4">
-                  <span className={iconClass}>
-                     <Fingerprint className="size-5" aria-hidden />
-                  </span>
-                  <div className="flex min-h-10 min-w-0 flex-col justify-center">
-                     <h3 className="leading-5 font-semibold">{t('settings.security.passkeys')}</h3>
-                     <p className="text-muted-foreground text-sm">{t('settings.security.passkeysHelper')}</p>
-                  </div>
-               </div>
-               <Button type="button" variant="outline" disabled={addPending} onClick={() => void addPasskey()} className="w-fit cursor-pointer">
-                  {addPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <Plus data-icon="inline-start" />}
-                  {t('settings.security.addPasskey')}
-               </Button>
-            </div>
-
-            {passkeys.length > 0 && (
-               <ul className="flex flex-col gap-2">
-                  {passkeys.map((passkey) => (
-                     <li
-                        key={passkey.id}
-                        className="border-border/60 bg-background/40 flex items-center justify-between gap-3 rounded-md border px-3 py-2"
-                     >
-                        <div className="flex min-w-0 flex-col">
-                           <span className="truncate text-sm font-medium">{passkey.label}</span>
-                           <span className="text-muted-foreground text-xs">
-                              {passkey.lastUsedAt
-                                 ? t.rich('settings.security.passkeyLastUsed', {
-                                      date: () => <Time date={passkey.lastUsedAt} dateStyle="medium" />
-                                   })
-                                 : t.rich('settings.security.passkeyCreated', {
-                                      date: () => <Time date={passkey.createdAt} dateStyle="medium" />
-                                   })}
-                           </span>
-                        </div>
-                        <div className="flex shrink-0 gap-1">
-                           <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={t('settings.security.renamePasskey')}
-                              onClick={() => {
-                                 setRenameTarget(passkey);
-                                 setRenameValue(passkey.label);
-                              }}
-                              className="cursor-pointer"
-                           >
-                              <Pencil data-icon />
-                           </Button>
-                           <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={t('settings.security.deletePasskey')}
-                              onClick={() => setDeleteTarget(passkey)}
-                              className="text-destructive hover:text-destructive cursor-pointer"
-                           >
-                              <Trash2 data-icon />
-                           </Button>
-                        </div>
-                     </li>
-                  ))}
-               </ul>
-            )}
-         </div>
-
-         <ConfirmDialog
-            open={renameTarget !== null}
-            onOpenChangeAction={(open) => !open && setRenameTarget(null)}
-            title={t('settings.security.renamePasskey')}
-            description={t('settings.security.renamePasskeyDesc')}
-            confirmLabel={t('common.save')}
-            pending={mutation.isPendingKey('passkey-rename')}
-            textInput={{
-               label: t('settings.security.passkeyLabel'),
-               value: renameValue,
-               onValueChangeAction: setRenameValue,
-               required: true
-            }}
-            onConfirmAction={submitRename}
-         />
-
-         <ConfirmDialog
-            open={deleteTarget !== null}
-            onOpenChangeAction={(open) => !open && setDeleteTarget(null)}
-            title={t('settings.security.deletePasskey')}
-            description={t('settings.security.deletePasskeyDesc', { label: deleteTarget?.label ?? '' })}
-            confirmLabel={t('settings.security.deletePasskey')}
-            pending={mutation.isPendingKey('passkey-delete')}
-            variant="destructive"
-            onConfirmAction={submitDelete}
-         />
-      </>
    );
 }
 

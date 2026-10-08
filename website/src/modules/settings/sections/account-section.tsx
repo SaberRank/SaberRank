@@ -30,12 +30,10 @@ import { SupporterRequiredOverlay } from '@/shared/components/supporter-required
 import { Time } from '@/shared/components/time';
 import { getCountryName } from '@/shared/country-region/countries';
 import { cn } from '@/shared/format/helpers';
-import Permissions from '@/shared/permissions';
 
 interface AccountSectionProps {
    countryReset: UserControllerCanResetCountryResponse | null;
    vanity: UserControllerGetVanityResponse | null;
-   patreonConnected: boolean;
    beforeActions?: ReactNode;
 }
 
@@ -48,7 +46,7 @@ const settingsAccountRoute = getRouteApi('/settings/account');
 const playerRoute = getRouteApi('/u/$playerId');
 const BioEditorForm = dynamic(() => import('@/shared/components/bio-editor-form').then((mod) => mod.BioEditorForm));
 
-export function AccountSection({ countryReset, vanity, patreonConnected, beforeActions }: AccountSectionProps) {
+export function AccountSection({ countryReset, vanity, beforeActions }: AccountSectionProps) {
    const t = useTranslations();
    const router = useRouter();
    const { user } = useAuth();
@@ -109,8 +107,8 @@ export function AccountSection({ countryReset, vanity, patreonConnected, beforeA
    const avatarSaveDisabled = mutation.isPending || !avatarFile;
    const countryResetPending = mutation.isPendingKey('country-reset');
    const countryResetAvailableAt = getCountryResetAvailableAt(countryReset?.lastReset);
-   const canUseProfilePerks = Permissions.isSupporter(user.permissions);
-   const canEditBio = canUseProfilePerks;
+   const canUseProfilePerks = true;
+   const canEditBio = true;
    const saveName = () => {
       if (nameSaveDisabled) {
          return;
@@ -320,7 +318,6 @@ export function AccountSection({ countryReset, vanity, patreonConnected, beforeA
 
                   <SupporterFeatureLock
                      locked={!canUseProfilePerks}
-                     patreonConnected={patreonConnected}
                      variant="field"
                      className="border-border/70 border-b"
                      contentClassName="py-5"
@@ -397,7 +394,7 @@ export function AccountSection({ countryReset, vanity, patreonConnected, beforeA
                                        minLength={3}
                                        maxLength={32}
                                        placeholder={vanity.slug || t('settings.perks.vanity.placeholder')}
-                                       disabled={!canUseProfilePerks || !canChangeVanity || mutation.isPending}
+                                       disabled={!canChangeVanity || mutation.isPending}
                                        autoComplete="off"
                                        spellCheck={false}
                                        onChange={(event) => setVanitySlug(event.target.value)}
@@ -415,7 +412,7 @@ export function AccountSection({ countryReset, vanity, patreonConnected, beforeA
                                        </InputGroupButton>
                                     </InputGroupAddon>
                                  </InputGroup>
-                                 <Button type="submit" disabled={vanitySaveDisabled || !canUseProfilePerks} className="cursor-pointer sm:min-w-24">
+                                 <Button type="submit" disabled={vanitySaveDisabled} className="cursor-pointer sm:min-w-24">
                                     {vanitySavePending ? (
                                        <Loader2 data-icon="inline-start" className="animate-spin" />
                                     ) : (
@@ -454,7 +451,6 @@ export function AccountSection({ countryReset, vanity, patreonConnected, beforeA
                            <ConditionalOverlay
                               shouldShow={() => !canEditBio}
                               component={SupporterRequiredOverlay}
-                              componentProps={{ patreonConnected }}
                               className="rounded-md"
                               overlayClassName="min-h-36"
                            >

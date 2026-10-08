@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { ArrowLeft, Fingerprint, KeyRound, Loader2, UserRoundPlus } from 'lucide-react';
+import { ArrowLeft, KeyRound, UserRoundPlus } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,6 @@ import { EmailLoginForm } from '@/modules/auth/login/email-login-form';
 import { LoginProviderPicker } from '@/modules/auth/login/login-provider-picker';
 import { PasswordLoginForm } from '@/modules/auth/login/password-login-form';
 import { SignupForm } from '@/modules/auth/login/signup-form';
-import { usePasskeyLogin } from '@/modules/auth/login/use-passkey-login';
 import { Icons } from '@/shared/components/icons';
 import { cn } from '@/shared/format/helpers';
 
@@ -20,13 +19,11 @@ export type LoginPanel = 'providers' | 'email' | 'password' | 'signup';
 
 interface LoginFlowProps {
    steamHref: string;
-   discordHref: string;
    redirectTo: string;
    labels: {
       snoresaber: string;
       steam: string;
       meta: string;
-      discord: string;
    };
    metaTooltip: string;
    showOtherMethodsLabel: string;
@@ -41,7 +38,6 @@ interface LoginFlowProps {
 
 export function LoginFlow({
    steamHref,
-   discordHref,
    redirectTo,
    labels,
    metaTooltip,
@@ -59,7 +55,6 @@ export function LoginFlow({
    const [panelHeight, setPanelHeight] = useState(176);
    const [formKey, setFormKey] = useState(0);
    const panelRefs = useRef<Partial<Record<LoginPanel, HTMLDivElement | null>>>({});
-   const passkeyLogin = usePasskeyLogin(redirectTo);
 
    useEffect(() => {
       onPanelChange?.(activePanel);
@@ -138,7 +133,6 @@ export function LoginFlow({
             <div className="flex w-full flex-col items-center gap-3">
                <LoginProviderPicker
                   steamHref={steamHref}
-                  discordHref={discordHref}
                   labels={labels}
                   metaTooltip={metaTooltip}
                   showOtherMethodsLabel={showOtherMethodsLabel}
@@ -148,23 +142,6 @@ export function LoginFlow({
                   onMetaSelect={() => setActivePanel('email')}
                />
 
-               <div className="text-muted-foreground flex items-center gap-1 text-sm">
-                  <Button
-                     type="button"
-                     variant="ghost"
-                     size="sm"
-                     disabled={passkeyLogin.isPending}
-                     onClick={() => passkeyLogin.mutate()}
-                     className="cursor-pointer gap-1.5"
-                  >
-                     {passkeyLogin.isPending ? (
-                        <Loader2 data-icon="inline-start" className="animate-spin" />
-                     ) : (
-                        <Fingerprint data-icon="inline-start" />
-                     )}
-                     {t('login.passkey.method')}
-                  </Button>
-               </div>
             </div>
          </div>
 

@@ -361,6 +361,7 @@ async function ensureModerationTables(sql: any) {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `;
+  await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS vanity_changed_at TIMESTAMPTZ`;
   const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM badges`;
   await sql`
     CREATE TABLE IF NOT EXISTS profile_customizations (
@@ -389,14 +390,14 @@ async function ensureModerationTables(sql: any) {
       PRIMARY KEY (player_id, score_id)
     )
   `;
-  await sql`UPDATE badges SET description='SnoreSaber Tester', image='tester.svg', image_url='/assets/badges/tester.svg' WHERE description='Early Supporter' AND NOT EXISTS (SELECT 1 FROM badges WHERE description='SnoreSaber Tester')`;
+  await sql`UPDATE badges SET description='SnoreSaber Tester', image='tester.png', image_url='/assets/badges/tester.png' WHERE description='Early Supporter' AND NOT EXISTS (SELECT 1 FROM badges WHERE description='SnoreSaber Tester')`;
   const defaultBadges = [
-    ['staff.svg', 'SnoreSaber Staff', '/assets/badges/staff.svg'],
-    ['tester.svg', 'SnoreSaber Tester', '/assets/badges/tester.svg'],
-    ['verified.svg', 'Verified Player', '/assets/badges/verified.svg'],
-    ['mapper.svg', 'Map Contributor', '/assets/badges/mapper.svg'],
-    ['tournament.svg', 'Tournament Staff', '/assets/badges/tournament.svg'],
-    ['developer.svg', 'SnoreSaber Developer', '/assets/badges/developer.svg']
+    ['staff.png', 'SnoreSaber Staff', '/assets/badges/staff.png'],
+    ['tester.png', 'SnoreSaber Tester', '/assets/badges/tester.png'],
+    ['verified.png', 'Verified Player', '/assets/badges/verified.png'],
+    ['mapper.png', 'Map Contributor', '/assets/badges/mapper.png'],
+    ['tournament.png', 'Tournament Staff', '/assets/badges/tournament.png'],
+    ['developer.png', 'SnoreSaber Developer', '/assets/badges/developer.png']
   ];
   for (const [image, description, imageUrl] of defaultBadges) {
     const existing:any[] = await sql`SELECT id FROM badges WHERE description=${description} LIMIT 1`;
@@ -449,12 +450,12 @@ async function getPlayerBadges(sql: any, playerId: string) {
 
   const badgeAsset = (description: string, image: string) => {
     const key = String(description || '').toLowerCase();
-    if (key === 'snoresaber developer') return '/assets/badges/developer.svg';
-    if (key === 'snoresaber tester') return '/assets/badges/tester.svg';
-    if (key === 'snoresaber staff') return '/assets/badges/staff.svg';
-    if (key === 'verified player') return '/assets/badges/verified.svg';
-    if (key === 'map contributor') return '/assets/badges/mapper.svg';
-    if (key === 'tournament staff') return '/assets/badges/tournament.svg';
+    if (key === 'snoresaber developer') return '/assets/badges/developer.png';
+    if (key === 'snoresaber tester') return '/assets/badges/tester.png';
+    if (key === 'snoresaber staff') return '/assets/badges/staff.png';
+    if (key === 'verified player') return '/assets/badges/verified.png';
+    if (key === 'map contributor') return '/assets/badges/mapper.png';
+    if (key === 'tournament staff') return '/assets/badges/tournament.png';
     return String(image || '');
   };
   return rows.map((r) => ({
@@ -1166,9 +1167,9 @@ export default defineHandler(async (event: any) => {
     `;
     return json(rows.map((r) => ({
       id:Number(r.id),
-      image:(String(r.description)==='SnoreSaber Developer' ? '/assets/badges/developer.svg' : String(r.description)==='SnoreSaber Tester' ? '/assets/badges/tester.svg' : String(r.description)==='SnoreSaber Staff' ? '/assets/badges/staff.svg' : String(r.description)==='Verified Player' ? '/assets/badges/verified.svg' : String(r.description)==='Map Contributor' ? '/assets/badges/mapper.svg' : String(r.description)==='Tournament Staff' ? '/assets/badges/tournament.svg' : (r.image_url || r.image)),
+      image:(String(r.description)==='SnoreSaber Developer' ? '/assets/badges/developer.png' : String(r.description)==='SnoreSaber Tester' ? '/assets/badges/tester.png' : String(r.description)==='SnoreSaber Staff' ? '/assets/badges/staff.png' : String(r.description)==='Verified Player' ? '/assets/badges/verified.png' : String(r.description)==='Map Contributor' ? '/assets/badges/mapper.png' : String(r.description)==='Tournament Staff' ? '/assets/badges/tournament.png' : (r.image_url || r.image)),
       description:r.description,
-      imageUrl:(String(r.description)==='SnoreSaber Developer' ? '/assets/badges/developer.svg' : String(r.description)==='SnoreSaber Tester' ? '/assets/badges/tester.svg' : String(r.description)==='SnoreSaber Staff' ? '/assets/badges/staff.svg' : String(r.description)==='Verified Player' ? '/assets/badges/verified.svg' : String(r.description)==='Map Contributor' ? '/assets/badges/mapper.svg' : String(r.description)==='Tournament Staff' ? '/assets/badges/tournament.svg' : (r.image_url || r.image)), assignmentCount:Number(r.assignment_count || 0)
+      imageUrl:(String(r.description)==='SnoreSaber Developer' ? '/assets/badges/developer.png' : String(r.description)==='SnoreSaber Tester' ? '/assets/badges/tester.png' : String(r.description)==='SnoreSaber Staff' ? '/assets/badges/staff.png' : String(r.description)==='Verified Player' ? '/assets/badges/verified.png' : String(r.description)==='Map Contributor' ? '/assets/badges/mapper.png' : String(r.description)==='Tournament Staff' ? '/assets/badges/tournament.png' : (r.image_url || r.image)), assignmentCount:Number(r.assignment_count || 0)
     })));
   }
 
@@ -1393,7 +1394,7 @@ export default defineHandler(async (event: any) => {
 
 
   // ------------------------- ACCOUNT / PROFILE -------------------------
-  if (route === '/user/@me/name' && method === 'PUT') {
+  if ((route === '/user/@me/name' && method === 'PUT') || (route === '/user/update-name' && method === 'POST')) {
     const pid=await authPlayerId(request,sql);
     if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if(!sql) return json({success:true});
@@ -1404,7 +1405,7 @@ export default defineHandler(async (event: any) => {
     return json({success:true});
   }
 
-  if (route === '/user/@me/bio' && method === 'PUT') {
+  if ((route === '/user/@me/bio' && method === 'PUT') || (route === '/user/update-bio' && method === 'POST')) {
     const pid=await authPlayerId(request,sql);
     if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if(!sql) return json({success:true});
@@ -1414,20 +1415,28 @@ export default defineHandler(async (event: any) => {
     return json({success:true});
   }
 
-  if (route === '/user/@me/vanity' && method === 'POST') {
+  if ((route === '/user/@me/vanity' && (method === 'GET' || method === 'PUT')) || (route === '/user/@me/vanity' && method === 'POST')) {
     const pid=await authPlayerId(request,sql);
     if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
-    if(!sql) return json({success:true});
+    if(!sql) return json({slug:null,canChangeAt:null});
+    await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS vanity_changed_at TIMESTAMPTZ`;
+    const rows:any[]=await sql`SELECT vanity,vanity_changed_at FROM players WHERE id=${pid} LIMIT 1`;
+    const current=rows[0];
+    const changedAt=current?.vanity_changed_at ? new Date(current.vanity_changed_at) : null;
+    const canChangeAt=changedAt ? new Date(changedAt.getTime()+7*24*60*60*1000) : null;
+    if (method === 'GET') return json({slug:current?.vanity || null,canChangeAt:canChangeAt?.toISOString() || null});
     let body:any={}; try{body=JSON.parse(await request.text()||'{}')}catch{return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400)}
+    if (canChangeAt && canChangeAt.getTime() > Date.now()) return json({statusCode:429,error:'Too Many Requests',code:'VANITY_COOLDOWN',message:'Vanity can only be changed once every 7 days',details:{canChangeAt:canChangeAt.toISOString()}},429);
     const slug=String(body.slug||'').trim().toLowerCase();
     if(!/^[a-z0-9_-]{3,32}$/.test(slug)) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Vanity must be 3-32 characters using letters, numbers, _ or -'},400);
     const taken:any[]=await sql`SELECT id FROM players WHERE lower(vanity)=${slug} AND id<>${pid} LIMIT 1`;
     if(taken[0]) return json({statusCode:409,error:'Conflict',code:'ALREADY_EXISTS',message:'Vanity is already in use'},409);
-    await sql`UPDATE players SET vanity=${slug} WHERE id=${pid}`;
-    return json({success:true,vanity:slug});
+    await sql`UPDATE players SET vanity=${slug},vanity_changed_at=now(),last_seen_at=now() WHERE id=${pid}`;
+    const next=new Date(Date.now()+7*24*60*60*1000).toISOString();
+    return json({slug,canChangeAt:next});
   }
 
-  if (route === '/user/@me/avatar' && method === 'POST') {
+  if ((route === '/user/@me/avatar' && method === 'POST') || (route === '/user/avatar' && method === 'POST')) {
     const pid=await authPlayerId(request,sql);
     if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if(!sql) return json({success:true});
@@ -1439,6 +1448,26 @@ export default defineHandler(async (event: any) => {
     const dataUrl=`data:${file.type||'image/png'};base64,${Buffer.from(binary,'binary').toString('base64')}`;
     await sql`UPDATE players SET avatar=${dataUrl},last_seen_at=now() WHERE id=${pid}`;
     return json({success:true,avatar:dataUrl,avatarVersion:Date.now()});
+  }
+
+  if (route === '/user/can-reset-country' && method === 'GET') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    if(!sql) return json({canReset:true,lastReset:null,country:'XX'});
+    const rows:any[]=await sql`SELECT country FROM players WHERE id=${pid} LIMIT 1`;
+    return json({canReset:true,lastReset:null,country:String(rows[0]?.country || 'XX')});
+  }
+
+  if (route === '/user/reset-country' && method === 'POST') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    return json({success:true});
+  }
+
+  if (route === '/user/connections' && method === 'GET') {
+    const pid=await authPlayerId(request,sql);
+    if(!pid) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    return json([]);
   }
 
   // ------------------------- PROFILE CUSTOMIZATION -------------------------

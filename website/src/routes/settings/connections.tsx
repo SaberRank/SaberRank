@@ -14,8 +14,8 @@ import { buildNoindexHead } from '@/shared/seo/metadata';
 import { optionalSearchParamEnum, optionalSearchParamString, requestOrNotFound } from '@/shared/url-state/params';
 import { SetPageBackground } from '@/shell/background/page-background-provider';
 
-type ConnectionOAuthProvider = 'steam' | 'patreon' | 'discord';
-const connectionOAuthProviders: ConnectionOAuthProvider[] = ['steam', 'patreon', 'discord'];
+type ConnectionOAuthProvider = 'steam';
+const connectionOAuthProviders: ConnectionOAuthProvider[] = ['steam'];
 type SettingsConnectionsSearch = ReturnType<typeof settingsConnectionsSearchSchema.parse>;
 
 const settingsConnectionsSearchSchema = z.object({
@@ -48,8 +48,6 @@ function SettingsConnectionsRoute() {
    const oauthStatus = getOAuthStatus(params);
    const oauthProviderLabels = {
       steam: t('common.providers.STEAM'),
-      patreon: t('common.providers.PATREON'),
-      discord: t('common.providers.DISCORD')
    };
 
    return (

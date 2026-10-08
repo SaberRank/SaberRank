@@ -16,12 +16,10 @@ type ProviderIcon = ComponentType<HTMLAttributes<SVGElement>>;
 
 interface LoginProviderPickerProps {
    steamHref: string;
-   discordHref: string;
    labels: {
       snoresaber: string;
       steam: string;
       meta: string;
-      discord: string;
    };
    metaTooltip: string;
    showOtherMethodsLabel: string;
@@ -47,7 +45,6 @@ interface ProviderIconButtonProps {
 
 export function LoginProviderPicker({
    steamHref,
-   discordHref,
    labels,
    metaTooltip,
    showOtherMethodsLabel,
@@ -121,7 +118,6 @@ export function LoginProviderPicker({
                   usePointerCursor={false}
                   tabIndex={isExpanded ? undefined : -1}
                />
-               <ProviderIconButton icon={Icons.discordColor} label={labels.discord} href={discordHref} tabIndex={isExpanded ? undefined : -1} />
                <Button
                   variant="ghost"
                   size="icon-sm"

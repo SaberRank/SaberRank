@@ -5,14 +5,13 @@ import { useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, linkOptions, useRouter } from '@tanstack/react-router';
-import { ExternalLink, KeyRound, Loader2, LockKeyhole, LogIn, RefreshCw, Trash2 } from 'lucide-react';
+import { ExternalLink, KeyRound, Loader2, LockKeyhole, LogIn, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-import { useActionMutation } from '@/hooks/use-action-mutation';
 import { useAuth } from '@/modules/auth';
 import { removeConnection, switchPrimaryConnection } from '@/modules/settings/actions/connections';
 import { AccountMergeDialog } from '@/modules/settings/sections/account-merge-dialog';
@@ -36,16 +35,12 @@ interface ConnectionsSectionProps {
 }
 
 type ConnectionProvider = UserControllerGetConnectionsItem['provider'];
-type DisplayProvider = Extract<ConnectionProvider, 'SCORESABER' | 'STEAM' | 'OCULUS' | 'DISCORD'>;
+type DisplayProvider = Extract<ConnectionProvider, 'SCORESABER' | 'STEAM' | 'OCULUS'>;
 type MergeProvider = Extract<ConnectionProvider, 'STEAM' | 'OCULUS'>;
 type SwitchPrimaryConnection = Extract<Awaited<ReturnType<typeof switchPrimaryConnection>>, { ok: true }>['value'];
 
-const providers: DisplayProvider[] = ['SCORESABER', 'STEAM', 'OCULUS', 'DISCORD'];
+const providers: DisplayProvider[] = ['SCORESABER', 'STEAM', 'OCULUS'];
 const primaryProviders: DisplayProvider[] = ['SCORESABER', 'STEAM', 'OCULUS'];
-
-const secondaryProviderLocations = {
-   DISCORD: () => linkOptions({ to: '/auth/discord', search: { intent: 'link' } })
-};
 
 type ProviderIconProps = {
    className?: string;
@@ -55,7 +50,6 @@ const providerIcons = {
    SCORESABER: ({ className }) => <Image src="/assets/snoresaber-icon.png" width={20} height={20} alt="" className={className} aria-hidden />,
    STEAM: ({ className }) => <Icons.steam className={className} aria-hidden />,
    OCULUS: ({ className }) => <Icons.meta className={className} aria-hidden />,
-   DISCORD: ({ className }) => <Icons.discordColor className={className} aria-hidden />
 } satisfies Record<DisplayProvider, ComponentType<ProviderIconProps>>;
 
 export function ConnectionsSection({ connections, initialMergeChallengeId, steamFailed }: ConnectionsSectionProps) {
@@ -63,7 +57,6 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
    const { user } = useAuth();
    const router = useRouter();
    const queryClient = useQueryClient();
-   const mutation = useActionMutation();
    const primarySwitchMutation = useActionMutation<SwitchPrimaryConnection>();
    const [localConnections, setLocalConnections] = useState(connections);
    const [mergeProvider, setMergeProvider] = useState<MergeProvider | null>(initialMergeChallengeId || steamFailed ? 'STEAM' : null);
@@ -74,7 +67,6 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
       SCORESABER: t('common.scoreSaber'),
       STEAM: t('common.providers.STEAM'),
       OCULUS: t('common.providers.OCULUS'),
-      DISCORD: t('common.providers.DISCORD')
    };
 
    useEffect(() => {
@@ -118,19 +110,13 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
             {providers.map((provider) => {
                const connection = byProvider.get(provider);
                const hasConnection = Boolean(connection);
-               const isVerified = connection?.state === 'VERIFIED';
-               const isSecondary = provider === 'DISCORD';
                const isPrimary = provider === 'SCORESABER' || provider === 'STEAM' || provider === 'OCULUS';
-               const canConnectSecondary = isSecondary && (!connection || isVerified);
                const canConnectPrimary = isPrimary && !connection;
-               const canDisconnect = isSecondary && hasConnection;
-               const connectHref = isSecondary ? getRouteHref(router, secondaryProviderLocations[provider]()) : undefined;
                const ProviderIcon = providerIcons[provider];
-               const disconnectPending = mutation.isPendingKey(`disconnect-${provider}`);
                const switchPrimaryPending = primarySwitchMutation.isPendingKey(`primary-${provider}`);
                const canSwitchPrimary = isPrimary && hasMultiplePrimary && connection && !connection.isPrimary;
                const hasPrimaryConnection = isPrimary && hasConnection;
-               const hasHelperText = Boolean(hasPrimaryConnection || (isVerified && isSecondary));
+               const hasHelperText = Boolean(hasPrimaryConnection);
 
                return (
                   <div
@@ -153,10 +139,7 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
                            {hasPrimaryConnection && (
                               <p className="text-muted-foreground text-xs leading-4 text-pretty">{t('settings.connections.primaryHelper')}</p>
                            )}
-                           {isVerified && isSecondary && (
-                              <p className="text-muted-foreground text-xs leading-4 text-pretty">{t('settings.connections.legacyUpgradeHelper')}</p>
-                           )}
-                        </div>
+                           </div>
                      </div>
                      <div
                         className={cn(
@@ -236,43 +219,6 @@ export function ConnectionsSection({ connections, initialMergeChallengeId, steam
                                  <RefreshCw data-icon="inline-start" />
                               )}
                               {t('settings.connections.merge.switchPrimary')}
-                           </Button>
-                        )}
-                        {canConnectSecondary && connectHref && (
-                           <Button
-                              type="button"
-                              size="sm"
-                              asChild
-                              className="h-7 cursor-pointer rounded-sm px-2 text-xs md:h-8 md:rounded-md md:px-2.5 md:text-sm"
-                           >
-                              <a href={connectHref}>
-                                 <ExternalLink data-icon="inline-start" />
-                                 {isVerified ? t('settings.connections.upgrade') : t('settings.connections.connect')}
-                              </a>
-                           </Button>
-                        )}
-                        {canDisconnect && (
-                           <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              disabled={mutation.isPending}
-                              onClick={() =>
-                                 mutation.runKeyed(
-                                    `disconnect-${provider}`,
-                                    () => removeConnection(provider),
-                                    t('settings.connections.removed'),
-                                    t('settings.connections.removeFailed')
-                                 )
-                              }
-                              className="h-7 cursor-pointer rounded-sm px-2 text-xs md:h-8 md:rounded-md md:px-2.5 md:text-sm"
-                           >
-                              {disconnectPending ? (
-                                 <Loader2 data-icon="inline-start" className="animate-spin" />
-                              ) : (
-                                 <Trash2 data-icon="inline-start" />
-                              )}
-                              {t('settings.connections.disconnect')}
                            </Button>
                         )}
                      </div>

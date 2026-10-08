@@ -14,13 +14,12 @@ import { getRouteHref } from '@/shared/url-state/route-location';
 
 type LoginSearchParams = {
    steam?: 'failed';
-   discord?: 'failed';
    mode?: 'password-reset' | 'signup';
    redirectTo?: string;
 };
 
-type LoginOAuthProvider = 'steam' | 'discord';
-const loginOAuthProviders: LoginOAuthProvider[] = ['steam', 'discord'];
+type LoginOAuthProvider = 'steam';
+const loginOAuthProviders: LoginOAuthProvider[] = ['steam'];
 
 export function LoginScreen({ params }: { params: LoginSearchParams }) {
    const t = useTranslations();
@@ -35,7 +34,6 @@ export function LoginScreen({ params }: { params: LoginSearchParams }) {
       snoresaber: t('common.scoreSaber'),
       steam: t('common.providers.STEAM'),
       meta: t('common.providers.OCULUS'),
-      discord: t('common.providers.DISCORD')
    };
 
    return (
@@ -70,7 +68,6 @@ export function LoginScreen({ params }: { params: LoginSearchParams }) {
                   router,
                   linkOptions({ to: '/auth/steam', search: { intent: 'login', returnUrl: getApiOrigin(), redirectTo: absoluteRedirectTo } })
                )}
-               discordHref={getRouteHref(router, linkOptions({ to: '/auth/discord', search: { intent: 'login', redirectTo: absoluteRedirectTo } }))}
                redirectTo={redirectTo}
                labels={providerLabels}
                metaTooltip={t('login.metaProviderTooltip')}
