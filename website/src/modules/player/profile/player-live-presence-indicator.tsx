@@ -54,15 +54,10 @@ export function useLivePlayersState() {
    return ludus.rooms.some((room) => room.playerIds.length > 0) ? 'available' : 'unavailable';
 }
 
-export function PlayerLivePresenceIndicator({ playerId, className, size }: PlayerLivePresenceIndicatorProps) {
-   const ludus = useLudus({
-      enabled: true,
-      ludusBaseUrl: env.NEXT_PUBLIC_LUDUS_URL,
-      roomContext: 'PUBLIC_PRESENCE',
-      clientType: 'WEBSITE'
-   });
-
-   return <PlayerLivePresenceIndicatorContent playerId={playerId} className={className} size={size} ludus={ludus} />;
+export function PlayerLivePresenceIndicator({ playerId: _playerId, className: _className, size: _size }: PlayerLivePresenceIndicatorProps) {
+   // SnoreSaber does not run a Ludus service yet.  Do not make profile pages
+   // depend on the optional live-session endpoint.
+   return null;
 }
 
 export function PlayerListLivePresenceIndicator({ playerId, className }: PlayerLivePresenceIndicatorProps) {
