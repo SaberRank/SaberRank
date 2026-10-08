@@ -2,10 +2,16 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { defineHandler } from 'nitro';
 import { db } from '../../utils/db';
 
+import { CURATED_BEATSAVER_MAP_KEYS } from "../../beatsaver-curated";
 const SECRET = process.env.SESSION_SECRET || 'snoresaber-development-secret-change-me';
 const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
 const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
 const NOW = () => new Date().toISOString();
+
+// SnoreSaber's initial curated map set. These are BeatSaver map keys, not
+// SnoreSaber's internal numeric map IDs. Keep this list as the source of truth
+// for the public map catalog until more maps are intentionally added.
+const PUBLIC_BEATSAVER_MAP_KEYS = new Set(['25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10']);
 
 // Development/demo data is deliberately kept as a fallback. Once DATABASE_URL is
 // configured, every read/write below uses PostgreSQL instead of these arrays.
@@ -901,6 +907,26 @@ async function resolveInternalPlayerId(sql: any, publicOrInternalId: string) {
   return rows[0]?.id ?? null;
 }
 
+async function recalculateLeaderboardPlayers(sql: any, leaderboardId: number) {
+  const lbRows: any[] = await sql`SELECT stars, max_score, status FROM leaderboards WHERE id=${leaderboardId} LIMIT 1`;
+  if (!lbRows[0]) return 0;
+  const lb = lbRows[0];
+  const maxPP = Number(lb.stars || 0) * 450 / 10.685333512;
+
+  // Reweight every score on this leaderboard from its stored accuracy. This keeps
+  // recalculation deterministic and makes a star/weight change immediately visible.
+  await sql`
+    UPDATE scores
+    SET pp = ROUND((${maxPP}) * GREATEST(0, LEAST(1, accuracy / 100.0)), 2),
+        weight = CASE WHEN ${String(lb.status)} = 'RANKED' THEN 1 ELSE 0 END
+    WHERE leaderboard_id=${leaderboardId}
+  `;
+
+  const players: any[] = await sql`SELECT DISTINCT player_id FROM scores WHERE leaderboard_id=${leaderboardId}`;
+  for (const row of players) await recalculatePlayerStats(sql, String(row.player_id));
+  return players.length;
+}
+
 async function recalculatePlayerStats(sql: any, playerId: string) {
   const rows: any[] = await sql`
     SELECT s.player_id, s.leaderboard_id, s.score, s.accuracy, s.pp, s.created_at, l.status
@@ -1226,12 +1252,12 @@ export default defineHandler(async (event: any) => {
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));
       let filtered = dataRows.filter(({r,lbs}) => {
+        const curated = PUBLIC_BEATSAVER_MAP_KEYS.has(String(r.bsid || ''));
+        const ranked = lbs.some((l) => String(l.status || '').toUpperCase() === 'RANKED');
+        const ai = Boolean(r.is_ai);
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
-        const v = verified == null || String(Boolean(r.verified)) === verified;
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
-        const statuses = [...new Set(lbs.map((l) => String(l.status || 'UNRANKED').toUpperCase()))];
-        const statusMatch = requestedStatuses.length === 0 || requestedStatuses.some((status) => statuses.includes(status));
-        return q && v && statusMatch && stars >= minStars && stars <= maxStars;
+        return curated && !ai && ranked && q && stars >= minStars && stars <= maxStars;
       });
       const sortBy = query.get('sortBy') || 'trending';
       const sortDirection = query.get('sortDirection') === 'asc' ? 1 : -1;
@@ -1246,12 +1272,11 @@ export default defineHandler(async (event: any) => {
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
     let filtered = maps.filter((m) => {
+      const curated = PUBLIC_BEATSAVER_MAP_KEYS.has(String(m.bsid || ''));
+      const ranked = (m.leaderboards || []).some((l:any) => String(l.realm?.leaderboardStatus || '').toUpperCase() === 'RANKED');
       const q = !search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search);
-      const v = verified == null || String(m.verified) === verified;
-      const statuses = [...new Set((m.leaderboards || []).map((l:any) => String(l.realm?.leaderboardStatus || 'UNRANKED').toUpperCase()))];
-      const statusMatch = requestedStatuses.length === 0 || requestedStatuses.some((status) => statuses.includes(status));
       const stars = Math.max(0,...(m.leaderboards || []).map((l:any)=>Number(l.realm?.stars||0)));
-      return q && v && statusMatch && stars >= minStars && stars <= maxStars;
+      return curated && ranked && q && stars >= minStars && stars <= maxStars;
     });
     return json({ data:filtered.slice((page-1)*limit,(page-1)*limit+limit), metadata:metadata(filtered.length,page,limit) });
   }
@@ -1261,21 +1286,25 @@ export default defineHandler(async (event: any) => {
     const m = maps.find((x) => x.hash.toLowerCase() === hash.toLowerCase()); return m ? json(m) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
   }
   if (route.startsWith('/maps/') && method === 'GET') {
-    const id = Number(route.split('/')[2]);
-    if (!Number.isInteger(id) || id <= 0) return json({statusCode:400,error:'Bad Request',code:'INVALID_PATH_PARAMETER',message:'Map id must be a positive integer'},400);
+    const identifier = decodeURIComponent(route.split('/')[2] || '').trim();
+    const numericId = Number(identifier);
     if (sql) {
+      let rows: any[] = [];
+      if (Number.isInteger(numericId) && numericId > 0) rows = await sql`SELECT * FROM maps WHERE id=${numericId} LIMIT 1`;
+      if (!rows[0] && identifier) rows = await sql`SELECT * FROM maps WHERE lower(bsid)=lower(${identifier}) OR lower(hash)=lower(${identifier}) LIMIT 1`;
+      if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
+      const id = Number(rows[0].id);
       try {
         const m = await dbMapWithLeaderboards(sql,id);
         return m ? json(m) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
       } catch (error) {
-        console.error('[SnoreSaber] Map detail failed', { id, error });
-        const rows:any[] = await sql`SELECT * FROM maps WHERE id=${id} LIMIT 1`;
-        if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
+        console.error('[SnoreSaber] Map detail failed', { identifier, error });
         const lbs:any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id WHERE l.map_id=${id} GROUP BY l.id ORDER BY l.difficulty ASC,l.id ASC`;
         return json(dbMap(rows[0], lbs.map((x:any)=>dbLeaderboard(x,Number(x.total_scores||0)))));
       }
     }
-    const m = maps.find((x) => x.id === id); return m ? json({...m,reuploadVersions:[]}) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
+    const m = maps.find((x) => x.id === numericId || String(x.bsid || '').toLowerCase() === identifier.toLowerCase() || String(x.hash || '').toLowerCase() === identifier.toLowerCase());
+    return m ? json({...m,reuploadVersions:[]}) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
   }
 
   // ------------------------- LEADERBOARDS -------------------------
@@ -1391,6 +1420,74 @@ export default defineHandler(async (event: any) => {
     const comment=String(body.comment||'').trim().slice(0,4096); if(!comment)return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Comment is required'},400);
     const d:any[]=await sql`SELECT id FROM rank_request_difficulties WHERE id=${difficultyId} LIMIT 1`; if(!d[0])return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Rank request difficulty not found'},404);
     await sql`INSERT INTO rank_request_comments(difficulty_id,player_id,group_name,comment) VALUES(${difficultyId},${pid},${group},${comment})`; return json({success:true});
+  }
+
+  // ------------------------- ADMIN LEADERBOARD ACTIONS -------------------------
+  if (route.startsWith('/admin/leaderboards/') && method === 'POST' && sql) {
+    const seg = route.split('/').filter(Boolean);
+    const leaderboardId = Number(seg[2]);
+    const action = seg[3];
+    if (!Number.isInteger(leaderboardId) || leaderboardId <= 0) {
+      return json({ statusCode: 400, error: 'Bad Request', code: 'INVALID_PATH_PARAMETER', message: 'Leaderboard id must be a positive integer' }, 400);
+    }
+
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) {
+      return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Administrator permission required' }, 401);
+    }
+
+    const found: any[] = await sql`SELECT * FROM leaderboards WHERE id=${leaderboardId} LIMIT 1`;
+    if (!found[0]) {
+      return json({ statusCode: 404, error: 'Not Found', code: 'NOT_FOUND', message: 'Leaderboard not found', details: { resource: 'leaderboard', id: leaderboardId } }, 404);
+    }
+
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); } catch { body = {}; }
+
+    if (action === 'rank') {
+      const maxPP = Number(body.maxPP);
+      if (!Number.isFinite(maxPP) || maxPP <= 0) return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'maxPP must be greater than 0' }, 400);
+      // The UI sends the star-derived PP cap. Keep the actual star value in sync
+      // so the map page and ranking calculations agree.
+      const stars = Number(((maxPP * 10.685333512) / 450).toFixed(3));
+      await sql`UPDATE leaderboards SET status='RANKED', stars=${stars}, ranked_at=COALESCE(ranked_at, now()) WHERE id=${leaderboardId}`;
+      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
+      return json({ success: true, affectedPlayers: affected });
+    }
+
+    if (action === 'unrank') {
+      await sql`UPDATE leaderboards SET status='UNRANKED', ranked_at=NULL WHERE id=${leaderboardId}`;
+      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
+      return json({ success: true, affectedPlayers: affected });
+    }
+
+    if (action === 'qualify') {
+      await sql`UPDATE leaderboards SET status='QUALIFIED', ranked_at=NULL WHERE id=${leaderboardId}`;
+      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
+      return json({ success: true, affectedPlayers: affected });
+    }
+
+    if (action === 'love') {
+      await sql`UPDATE leaderboards SET status='LOVED', ranked_at=NULL WHERE id=${leaderboardId}`;
+      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
+      return json({ success: true, affectedPlayers: affected });
+    }
+
+    if (action === 'pp-manual') {
+      const maxPP = Number(body.maxPP);
+      if (!Number.isFinite(maxPP) || maxPP < 0) return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'maxPP must be non-negative' }, 400);
+      const stars = Number(((maxPP * 10.685333512) / 450).toFixed(3));
+      await sql`UPDATE leaderboards SET stars=${stars} WHERE id=${leaderboardId}`;
+      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
+      return json({ success: true, affectedPlayers: affected });
+    }
+
+    if (action === 'pp') {
+      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
+      return json({ success: true, affectedPlayers: affected });
+    }
+
+    return json({ statusCode: 404, error: 'Not Found', code: 'NOT_FOUND', message: 'Unknown leaderboard admin action' }, 404);
   }
 
   // ------------------------- ADMIN MODERATION -------------------------

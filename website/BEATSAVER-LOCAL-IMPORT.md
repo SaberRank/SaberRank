@@ -48,3 +48,15 @@ Start in:
 Set the trigger to daily at midnight.
 
 The website itself reads the cached map catalog from Neon, so browsing `/maps` does not need to contact BeatSaver.
+
+## Sync exactly the six curated maps
+
+After installing dependencies and restoring `.env`, run:
+
+    node --env-file=.env scripts/import-beatsaver.mjs --sync-curated
+
+This directly fetches these six BeatSaver map keys:
+25198, 4fdd2, 52dfb, 4e692, 4d977, 51e10
+
+It upserts each one, deletes every other cached map, and verifies that all six
+are present in Neon before exiting successfully.

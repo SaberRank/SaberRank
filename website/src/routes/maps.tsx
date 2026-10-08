@@ -4,12 +4,11 @@ import { z } from 'zod';
 
 import { MapCard } from '@/modules/maps/listing/map-card';
 import { MapDownloadActions } from '@/modules/maps/listing/map-download-actions';
-import { DEFAULT_MAX_STARS, DEFAULT_MIN_STARS, MapFilters } from '@/modules/maps/listing/map-filters';
+import { MapFilters } from '@/modules/maps/listing/map-filters';
 import { isMapIdentifierSearch } from '@/modules/maps/shared/map-search';
 import {
    MAP_CONTROLLER_GET_MAP_LISTINGS_SORT_BY,
    MAP_CONTROLLER_GET_MAP_LISTINGS_SORT_DIRECTION,
-   MAP_CONTROLLER_GET_MAP_LISTINGS_STATUS
 } from '@/shared/api/generated/ApiParams';
 import { publicApi } from '@/shared/api/server-api';
 import { PageError } from '@/shared/components/error/page-error';
@@ -25,10 +24,6 @@ import { updateSearchParams } from '@/shared/url-state/update-search-params';
 import { SetPageBackground } from '@/shell/background/page-background-provider';
 
 const isOptionalNumber = z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().min(0).optional());
-
-const mapStatusListSchema = z
-   .array(z.enum(MAP_CONTROLLER_GET_MAP_LISTINGS_STATUS).optional().catch(undefined))
-   .transform((statuses) => statuses.filter((status) => status != null));
 
 const mapsSearchSchema = z.object({
    page: isPageNumber.optional(),
@@ -60,14 +55,13 @@ const getMapsPageData = createServerFn({ method: 'GET' })
       });
       const searchParams = mapsSearchSchema.parse({ ...data.search, ...effectiveSearchParams });
       const persistedStorage = await readPersistedSearchStorage(mapFilterPreferences.storageKey);
-      const statuses = parseMapListingStatuses(searchParams.status);
       const search = searchParams.search?.trim();
       const identifierSearch = search ? isMapIdentifierSearch(search) : false;
       const result = await pageApiData(
          publicApi.map.mapControllerGetMapListings({
             page: searchParams.page ?? 1,
             search: search || undefined,
-            status: !identifierSearch && statuses.length > 0 ? statuses : undefined,
+            status: !identifierSearch ? ['RANKED'] : undefined,
             verified: identifierSearch ? undefined : searchParams.verified,
             minStars: identifierSearch ? undefined : searchParams.minStars,
             maxStars: identifierSearch ? undefined : searchParams.maxStars,
@@ -102,16 +96,7 @@ function MapsRoute() {
    const maps = response.data;
    const meta = response.metadata;
    const expandLowest = searchParams.sortBy === 'highestStars' && (searchParams.sortDirection ?? 'desc') === 'asc';
-   const minStars = searchParams.minStars ?? DEFAULT_MIN_STARS;
-   const maxStars = searchParams.maxStars ?? DEFAULT_MAX_STARS;
    const currentPage = searchParams.page ?? 1;
-   const starRange =
-      minStars !== DEFAULT_MIN_STARS || maxStars !== DEFAULT_MAX_STARS
-         ? {
-              min: minStars,
-              max: maxStars
-           }
-         : undefined;
    const bgCandidates = maps.filter((m) => m.coverUrl).map((m) => m.coverUrl);
    const getPageLocation = (page: number) => buildMapsLocation(updateSearchParams(searchParams, { page: page > 1 ? page : undefined }));
 
@@ -132,7 +117,7 @@ function MapsRoute() {
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                {maps.map((map, index) => (
-                  <MapCard key={map.id} map={map} expandLowest={expandLowest} starRange={starRange} coverPriority={index === 0} />
+                  <MapCard key={map.id} map={map} expandLowest={expandLowest} coverPriority={index === 0} />
                ))}
             </div>
 
