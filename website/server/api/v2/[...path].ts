@@ -255,8 +255,21 @@ async function userRelationships(sql: any, playerId: string) {
 
 async function isAdmin(sql: any, playerId: string | null) {
   if (!sql || !playerId) return false;
-  const rows: any[] = await sql`SELECT permissions FROM players WHERE id=${playerId} LIMIT 1`;
-  return Boolean(Number(rows[0]?.permissions || 0) & 16);
+  const rows: any[] = await sql`
+    SELECT permissions, role
+    FROM players
+    WHERE id=${playerId}
+    LIMIT 1
+  `;
+  const permissions = Number(rows[0]?.permissions || 0);
+  const role = String(rows[0]?.role || '').trim().toLowerCase();
+  return (permissions & 16) !== 0 || role === 'admin' || role === 'administrator' || role === 'snoresaber admin';
+}
+
+async function ensureLeaderboardAdminColumns(sql: any) {
+  await sql`ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS stars DOUBLE PRECISION NOT NULL DEFAULT 0`;
+  await sql`ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'UNRANKED'`;
+  await sql`ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS ranked_at TIMESTAMPTZ`;
 }
 
 const PERMISSION_VALUES: Record<string, number> = {
@@ -1560,6 +1573,7 @@ export default defineHandler(async (event: any) => {
 
   // ------------------------- ADMIN LEADERBOARD ACTIONS -------------------------
   if (route.startsWith('/admin/leaderboards/') && method === 'POST' && sql) {
+    await ensureLeaderboardAdminColumns(sql);
     const seg = route.split('/').filter(Boolean);
     const leaderboardId = Number(seg[2]);
     const action = seg[3];
@@ -1581,11 +1595,16 @@ export default defineHandler(async (event: any) => {
     try { body = JSON.parse(await request.text() || '{}'); } catch { body = {}; }
 
     if (action === 'rank') {
-      const maxPP = Number(body.maxPP);
-      if (!Number.isFinite(maxPP) || maxPP <= 0) return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'maxPP must be greater than 0' }, 400);
-      // The UI sends the star-derived PP cap. Keep the actual star value in sync
-      // so the map page and ranking calculations agree.
-      const stars = Number(((maxPP * 10.685333512) / 450).toFixed(3));
+      const suppliedStars = Number(body.stars);
+      const suppliedPP = Number(body.maxPP);
+      const stars = Number.isFinite(suppliedStars) && suppliedStars > 0
+        ? Number(suppliedStars.toFixed(3))
+        : Number.isFinite(suppliedPP) && suppliedPP > 0
+          ? Number(((suppliedPP * 10.685333512) / 450).toFixed(3))
+          : 0;
+      if (!Number.isFinite(stars) || stars <= 0) {
+        return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Stars or maxPP must be greater than 0' }, 400);
+      }
       await sql`UPDATE leaderboards SET status='RANKED', stars=${stars}, ranked_at=COALESCE(ranked_at, now()) WHERE id=${leaderboardId}`;
       const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
       return json({ success: true, affectedPlayers: affected });
@@ -1610,9 +1629,16 @@ export default defineHandler(async (event: any) => {
     }
 
     if (action === 'pp-manual') {
-      const maxPP = Number(body.maxPP);
-      if (!Number.isFinite(maxPP) || maxPP < 0) return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'maxPP must be non-negative' }, 400);
-      const stars = Number(((maxPP * 10.685333512) / 450).toFixed(3));
+      const suppliedStars = Number(body.stars);
+      const suppliedPP = Number(body.maxPP);
+      const stars = Number.isFinite(suppliedStars) && suppliedStars >= 0
+        ? Number(suppliedStars.toFixed(3))
+        : Number.isFinite(suppliedPP) && suppliedPP >= 0
+          ? Number(((suppliedPP * 10.685333512) / 450).toFixed(3))
+          : NaN;
+      if (!Number.isFinite(stars)) {
+        return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Stars or maxPP must be a non-negative number' }, 400);
+      }
       await sql`UPDATE leaderboards SET stars=${stars} WHERE id=${leaderboardId}`;
       const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
       return json({ success: true, affectedPlayers: affected });
