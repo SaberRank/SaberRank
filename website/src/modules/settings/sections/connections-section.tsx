@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import { useAuth } from '@/modules/auth';
+import { useActionMutation } from '@/hooks/use-action-mutation';
 import { removeConnection, switchPrimaryConnection } from '@/modules/settings/actions/connections';
 import { AccountMergeDialog } from '@/modules/settings/sections/account-merge-dialog';
 import {

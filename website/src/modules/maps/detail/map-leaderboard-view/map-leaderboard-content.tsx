@@ -300,7 +300,10 @@ function ScoresList<TLocation>({
    const t = useTranslations();
    const isScoped = !!search.scope || !!search.search || !!search.pivot;
 
-   if (!leaderboardScores || leaderboardScores.data.length === 0) {
+   const scoreData = leaderboardScores?.data;
+   const scores = Array.isArray(scoreData) ? scoreData : [];
+
+   if (scores.length === 0) {
       return (
          <div className="text-muted-foreground flex flex-col items-center gap-2 py-16">
             <FaTrophy className="size-8 opacity-20" />
@@ -310,23 +313,25 @@ function ScoresList<TLocation>({
       );
    }
 
+   const metadata = leaderboardScores?.metadata ?? { itemsPerPage: scores.length, totalItems: scores.length };
+
    const getPageLocation = (page: number) => buildLocation(updateSearchParams(search, { page: page > 1 ? page : undefined }));
 
    return (
       <div className="flex flex-col gap-3">
          <LeaderboardScoresTable
-            scores={leaderboardScores.data}
+            scores={scores}
             leaderboard={leaderboard}
             mapName={mapName}
             highlight={highlight}
             scopedPage={isScoped ? currentPage : undefined}
-            scopedPageSize={isScoped ? leaderboardScores.metadata.itemsPerPage : undefined}
+            scopedPageSize={isScoped ? metadata.itemsPerPage : undefined}
          />
          <div className="flex justify-center">
             <Pagination
                currentPage={currentPage}
-               totalItems={leaderboardScores.metadata.totalItems}
-               pageSize={leaderboardScores.metadata.itemsPerPage}
+               totalItems={metadata.totalItems}
+               pageSize={metadata.itemsPerPage}
                getPageLocation={getPageLocation}
             />
          </div>

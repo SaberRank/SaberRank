@@ -38,7 +38,7 @@ export function MapInsights({ leaderboardId }: MapInsightsProps) {
       return <p className="text-destructive py-20 text-center text-sm">{t('leaderboard.failedToLoad')}</p>;
    }
 
-   if (!data || data.totalPlays < MIN_PLAYS) {
+   if (!data || !Array.isArray(data.buckets) || data.totalPlays < MIN_PLAYS) {
       return (
          <div className="text-muted-foreground flex flex-col items-center gap-2 py-20 text-center">
             <CalendarClock className="size-8 opacity-20" />
