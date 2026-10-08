@@ -190,8 +190,6 @@ function PlayerProfileRouteContent({
    const { user } = useAuth();
    const denyahContainerRef = useRef<HTMLDivElement | null>(null);
 
-   useVanityBrowserUrl(result.ok ? result.data.vanity : null);
-
    if (!result.ok) return <PageError status={result.status} />;
 
    const player = result.data;
@@ -483,16 +481,7 @@ function getFlagEmoji(countryCode: string) {
    return countryCode.toLowerCase().replace(/[a-z]/g, (char) => String.fromCodePoint(char.charCodeAt(0) - 97 + 0x1f1e6));
 }
 
-function useVanityBrowserUrl(vanity: string | null) {
-   useEffect(() => {
-      if (!vanity) return;
 
-      const nextPathname = `/u/${vanity}`;
-      if (window.location.pathname === nextPathname) return;
-
-      window.history.replaceState(window.history.state, '', `${nextPathname}${window.location.search}${window.location.hash}`);
-   }, [vanity]);
-}
 
 function PlayerScoresSection({
    playerId,
