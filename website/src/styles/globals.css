@@ -120,7 +120,6 @@
    --role-rtr: hsl(168 77% 28%);
    --role-qat: hsl(0 100% 48%);
    --role-cat: hsl(326 64% 73%);
-   --role-ppv3: hsl(271 51% 55%);
    --role-dev: hsl(0 0% 7%);
    --role-cct: hsl(99 92% 50%);
    --role-supporter: hsl(7 93% 65%);
@@ -232,7 +231,6 @@
    --color-role-rtr: var(--role-rtr);
    --color-role-qat: var(--role-qat);
    --color-role-cat: var(--role-cat);
-   --color-role-ppv3: var(--role-ppv3);
    --color-role-dev: var(--role-dev);
    --color-role-cct: var(--role-cct);
    --color-role-supporter: var(--role-supporter);

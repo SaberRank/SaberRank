@@ -81,7 +81,7 @@ export function getHighestStatus(leaderboards: MapLeaderboard[]): LeaderboardSta
 
 type RolePrefix = 'text' | 'bg';
 
-type RoleKey = 'owner' | 'admin' | 'qat-head' | 'nat' | 'rt' | 'rtr' | 'qat' | 'cat' | 'ppv3' | 'dev' | 'cct' | 'supporter' | 'default';
+type RoleKey = 'owner' | 'admin' | 'qat-head' | 'nat' | 'rt' | 'rtr' | 'qat' | 'cat' | 'dev' | 'cct' | 'supporter' | 'default';
 
 const ROLE_CLASS_MAP = {
    text: {
@@ -93,7 +93,6 @@ const ROLE_CLASS_MAP = {
       rtr: 'text-role-rtr',
       qat: 'text-role-qat',
       cat: 'text-role-cat',
-      ppv3: 'text-role-ppv3',
       dev: 'text-role-dev',
       cct: 'text-role-cct',
       supporter: 'text-role-supporter',
@@ -108,7 +107,6 @@ const ROLE_CLASS_MAP = {
       rtr: 'bg-role-rtr',
       qat: 'bg-role-qat',
       cat: 'bg-role-cat',
-      ppv3: 'bg-role-ppv3',
       dev: 'bg-role-dev',
       cct: 'bg-role-cct',
       supporter: 'bg-role-supporter',
@@ -136,7 +134,6 @@ const ROLE_TEXT_PRIORITY: { key: RoleKey; title: string; labels: string[] }[] = 
    { key: 'rtr', title: 'Ranking Team Recruit', labels: ['RTR', 'Ranking Team Recruit', 'Recruit'] },
    { key: 'qat', title: 'Quality Assurance Team', labels: ['QAT', 'Quality Assurance Team'] },
    { key: 'cat', title: 'Criteria Assurance Team', labels: ['CAT', 'Criteria Assurance Team'] },
-   { key: 'ppv3', title: 'PPv3 Developer', labels: ['PPv3'] },
    { key: 'dev', title: 'A Developer for SnoreSaber', labels: ['Developer'] },
    { key: 'cct', title: 'Content Creation Team', labels: ['CCT', 'Content Creation Lead', 'Content Creation Team'] },
    { key: 'supporter', title: 'SnoreSaber Supporter', labels: ['Supporter'] }
@@ -180,9 +177,6 @@ function resolvePlayerRole(player: PlayerRoleSource): [RoleKey, string | null] {
    }
    if (Permissions.checkPermissionNumber(player.permissions, Permissions.security.CAT)) {
       return ['cat', 'Criteria Assurance Team'];
-   }
-   if (Permissions.checkPermissionNumber(player.permissions, Permissions.security.PPV3)) {
-      return ['ppv3', 'PPv3 Developer'];
    }
    if (Permissions.checkPermissionNumber(player.permissions, Permissions.security.DEV)) {
       return ['dev', 'A Developer for SnoreSaber'];

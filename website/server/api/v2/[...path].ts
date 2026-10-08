@@ -263,7 +263,6 @@ const PERMISSION_VALUES: Record<string, number> = {
   SUPPORTER: 64,
   PPFARMER: 128,
   DEV: 256,
-  PPV3: 512,
   CCT: 1024,
   CCTHead: 2048,
   CAT: 4096,

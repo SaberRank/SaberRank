@@ -25,7 +25,7 @@ interface Permission {
 
 type UpdatePermissionsResult = Extract<Awaited<ReturnType<typeof updatePermissions>>, { ok: true }>['value'];
 
-const permissionOrder = ['PANDA', 'ADMIN', 'QATHead', 'CCTHead', 'NAT', 'RT', 'RTR', 'QAT', 'CAT', 'CCT', 'PPV3', 'DEV'];
+const permissionOrder = ['PANDA', 'ADMIN', 'QATHead', 'CCTHead', 'NAT', 'RT', 'RTR', 'QAT', 'CAT', 'CCT', 'DEV'];
 
 function getPermissionChanges(permissions: Permission[], serverPermissions: number, draftPermissions: number) {
    const add: string[] = [];

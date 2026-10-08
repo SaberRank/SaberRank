@@ -11,8 +11,7 @@
       "cat": "Criteria Assurance Team",
       "cct": "Content Creation Team",
       "frontend": "Frontend Developers",
-      "mod": "PC Mod",
-      "ppv3": "PPv3"
+      "mod": "PC Mod"
     },
     "social": {
       "discord": "Discord",
@@ -83,7 +82,7 @@
       }
     },
     "footer": {
-      "patreon": "Please consider supporting SnoreSaber on Patreon \u2764\ufe0f",
+      "patreon": "Please consider supporting SnoreSaber on Patreon ❤️",
       "patreonPerks": "You can get custom profile bios, a fancy leaderboard colour, badge and role",
       "sourceCode": "Source Code"
     },
@@ -122,7 +121,7 @@
       "primaryAction": "View Rankings",
       "secondaryAction": "Sign in with Steam",
       "secondaryActionSignedIn": "View your profile",
-      "eyebrow": "Beat Saber \u00b7 Scores \u00b7 Rankings",
+      "eyebrow": "Beat Saber · Scores · Rankings",
       "trackTitle": "Track",
       "trackDescription": "Scores, ranks, and improvement.",
       "exploreTitle": "Explore",
@@ -567,8 +566,8 @@
     "hand": "Hand",
     "leftHand": "Left hand",
     "rightHand": "Right hand",
-    "sliceAverage": "{score} average \u00b7 {count, plural, one {# note} other {# notes}}",
-    "sliceComponents": "{before} pre \u00b7 {after} post \u00b7 {accuracy} acc",
+    "sliceAverage": "{score} average · {count, plural, one {# note} other {# notes}}",
+    "sliceComponents": "{before} pre · {after} post · {accuracy} acc",
     "jumpDistance": "JD",
     "pauses": "Pauses",
     "paused": "Paused",
@@ -665,7 +664,7 @@
     "noFollowers": "No followers yet",
     "noFollowing": "Not following anyone yet",
     "noPlatformFriends": "No platform friends yet",
-    "loadingMore": "Loading more\u2026",
+    "loadingMore": "Loading more…",
     "viewSteamProfile": "View Steam profile",
     "livePresence": {
       "live": "In game",
@@ -1528,7 +1527,7 @@
       "clientId": "Client ID",
       "clientSecret": "Client secret",
       "secretTitle": "Save your client secret",
-      "secretDescription": "This secret is only shown once. Store it somewhere safe \u2014 you can't view it again",
+      "secretDescription": "This secret is only shown once. Store it somewhere safe — you can't view it again",
       "createdAt": "Created <date></date>",
       "redirectUris": "Redirect URIs"
     }
@@ -1625,7 +1624,7 @@
       "badgeDescription": "Description",
       "assignments": "Assignments",
       "actions": "Actions",
-      "mobileMetadata": "Badge #{id} \u00b7 {count, plural, one {# assignment} other {# assignments}}",
+      "mobileMetadata": "Badge #{id} · {count, plural, one {# assignment} other {# assignments}}",
       "save": "Save badge",
       "empty": "No badges yet",
       "created": "Badge created",

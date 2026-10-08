@@ -11,7 +11,7 @@ export type TeamMember = {
 
 export type TeamData = { members: TeamMember[] };
 
-const STAFF_MASK = 1 | 2 | 4 | 8 | 16 | 256 | 512 | 1024 | 2048 | 4096 | 8192 | 32768;
+const STAFF_MASK = 1 | 2 | 4 | 8 | 16 | 256 | 1024 | 2048 | 4096 | 8192 | 32768;
 
 function fallbackRole(permissions: number) {
    const roles: [number, string][] = [
@@ -20,7 +20,6 @@ function fallbackRole(permissions: number) {
       [4, 'QAT Lead'],
       [2, 'QAT'],
       [32768, 'Tournament Organizer'],
-      [512, 'PPv3 Developer'],
       [256, 'Developer'],
       [2048, 'CCT Lead'],
       [1024, 'Content Creation Team'],

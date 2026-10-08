@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react';
 
 import { getRouteApi, Link, useRouter } from '@tanstack/react-router';
-import { Book, ChevronRight, Cookie, Copyright, ExternalLink, Loader2, LogOut, Scale, Settings, Shield, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Cookie, Copyright, Loader2, LogOut, Scale, Settings, Shield, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { useAuth } from '@/modules/auth';
 import { logout } from '@/modules/auth/actions/member';
 import { cn } from '@/shared/format/helpers';
 import Permissions from '@/shared/permissions';
-import { githubLink } from '@/shell/nav-data';
 import { SidebarAppSettings } from '@/shell/sidebar/sidebar-app-settings';
 
 const privacyRoute = getRouteApi('/legal/privacy');
@@ -96,24 +95,6 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
 
                <Separator />
                <div className="flex flex-col gap-1">
-                  <Button asChild variant="menu" size="sm" className={menuActionClass}>
-                     <a href="https://docs.snoresaber.com" target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>
-                        <span className="flex min-w-0 items-center gap-2">
-                           <Book data-icon />
-                           <span className="truncate">{tNav('nav.apiDocs')}</span>
-                        </span>
-                        <ExternalLink data-icon className="ml-auto" aria-hidden="true" />
-                     </a>
-                  </Button>
-                  <Button asChild variant="menu" size="sm" className={menuActionClass}>
-                     <a href={githubLink.href} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>
-                        <span className="flex min-w-0 items-center gap-2">
-                           <githubLink.Icon data-icon className="fill-current" aria-hidden="true" />
-                           <span className="truncate">{githubLink.label}</span>
-                        </span>
-                        <ExternalLink data-icon className="ml-auto" aria-hidden="true" />
-                     </a>
-                  </Button>
                   <Popover open={isLegalOpen} onOpenChange={setIsLegalOpen}>
                      <PopoverTrigger asChild>
                         <Button variant="menu" size="sm" className={cn(menuActionClass, 'cursor-default')}>

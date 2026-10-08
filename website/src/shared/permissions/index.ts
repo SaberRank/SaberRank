@@ -8,7 +8,6 @@ const permissions = {
    SUPPORTER: 64,
    PPFARMER: 128,
    DEV: 256,
-   PPV3: 512,
    CCT: 1024,
    CCTHead: 2048,
    CAT: 4096,
@@ -26,7 +25,6 @@ const group_permissions = {
       permissions.ADMIN |
       permissions.PANDA |
       permissions.DEV |
-      permissions.PPV3 |
       permissions.CCT |
       permissions.CCTHead |
       permissions.CAT |

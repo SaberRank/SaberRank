@@ -104,7 +104,6 @@ export const socialLinks = [
    { href: 'https://youtube.com/@SnoreSaber', label: 'YouTube', Icon: Icons.youtube }
 ];
 
-export const githubLink = { href: 'https://github.com/SnoreSaber/website', label: 'GitHub', Icon: Icons.github };
 
 const navRouteIds = {
    home: '/',
