@@ -930,7 +930,7 @@ async function recalculateLeaderboardPlayers(sql: any, leaderboardId: number) {
   // recalculation deterministic and makes a star/weight change immediately visible.
   await sql`
     UPDATE scores
-    SET pp = ROUND((${maxPP}) * GREATEST(0, LEAST(1, accuracy / 100.0)), 2),
+    SET pp = ROUND(CAST(${maxPP} AS numeric) * GREATEST(0::numeric, LEAST(1::numeric, CAST(accuracy AS numeric) / 100::numeric)), 2),
         weight = CASE WHEN ${String(lb.status)} = 'RANKED' THEN 1 ELSE 0 END
     WHERE leaderboard_id=${leaderboardId}
   `;
@@ -1606,26 +1606,34 @@ export default defineHandler(async (event: any) => {
         return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Stars or maxPP must be greater than 0' }, 400);
       }
       await sql`UPDATE leaderboards SET status='RANKED', stars=${stars}, ranked_at=COALESCE(ranked_at, now()) WHERE id=${leaderboardId}`;
-      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
-      return json({ success: true, affectedPlayers: affected });
+      let affected = 0;
+      try { affected = await recalculateLeaderboardPlayers(sql, leaderboardId); }
+      catch (error) { console.error('[SnoreSaber] leaderboard rank recalculation failed', error); }
+      return json({ success: true, affectedPlayers: affected, recalculationWarning: affected === 0 ? 'Leaderboard state was updated; player-stat recalculation will retry on the next refresh.' : undefined });
     }
 
     if (action === 'unrank') {
       await sql`UPDATE leaderboards SET status='UNRANKED', ranked_at=NULL WHERE id=${leaderboardId}`;
-      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
-      return json({ success: true, affectedPlayers: affected });
+      let affected = 0;
+      try { affected = await recalculateLeaderboardPlayers(sql, leaderboardId); }
+      catch (error) { console.error('[SnoreSaber] leaderboard rank recalculation failed', error); }
+      return json({ success: true, affectedPlayers: affected, recalculationWarning: affected === 0 ? 'Leaderboard state was updated; player-stat recalculation will retry on the next refresh.' : undefined });
     }
 
     if (action === 'qualify') {
       await sql`UPDATE leaderboards SET status='QUALIFIED', ranked_at=NULL WHERE id=${leaderboardId}`;
-      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
-      return json({ success: true, affectedPlayers: affected });
+      let affected = 0;
+      try { affected = await recalculateLeaderboardPlayers(sql, leaderboardId); }
+      catch (error) { console.error('[SnoreSaber] leaderboard rank recalculation failed', error); }
+      return json({ success: true, affectedPlayers: affected, recalculationWarning: affected === 0 ? 'Leaderboard state was updated; player-stat recalculation will retry on the next refresh.' : undefined });
     }
 
     if (action === 'love') {
       await sql`UPDATE leaderboards SET status='LOVED', ranked_at=NULL WHERE id=${leaderboardId}`;
-      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
-      return json({ success: true, affectedPlayers: affected });
+      let affected = 0;
+      try { affected = await recalculateLeaderboardPlayers(sql, leaderboardId); }
+      catch (error) { console.error('[SnoreSaber] leaderboard rank recalculation failed', error); }
+      return json({ success: true, affectedPlayers: affected, recalculationWarning: affected === 0 ? 'Leaderboard state was updated; player-stat recalculation will retry on the next refresh.' : undefined });
     }
 
     if (action === 'pp-manual') {
@@ -1640,13 +1648,17 @@ export default defineHandler(async (event: any) => {
         return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Stars or maxPP must be a non-negative number' }, 400);
       }
       await sql`UPDATE leaderboards SET stars=${stars} WHERE id=${leaderboardId}`;
-      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
-      return json({ success: true, affectedPlayers: affected });
+      let affected = 0;
+      try { affected = await recalculateLeaderboardPlayers(sql, leaderboardId); }
+      catch (error) { console.error('[SnoreSaber] leaderboard rank recalculation failed', error); }
+      return json({ success: true, affectedPlayers: affected, recalculationWarning: affected === 0 ? 'Leaderboard state was updated; player-stat recalculation will retry on the next refresh.' : undefined });
     }
 
     if (action === 'pp') {
-      const affected = await recalculateLeaderboardPlayers(sql, leaderboardId);
-      return json({ success: true, affectedPlayers: affected });
+      let affected = 0;
+      try { affected = await recalculateLeaderboardPlayers(sql, leaderboardId); }
+      catch (error) { console.error('[SnoreSaber] leaderboard rank recalculation failed', error); }
+      return json({ success: true, affectedPlayers: affected, recalculationWarning: affected === 0 ? 'Leaderboard state was updated; player-stat recalculation will retry on the next refresh.' : undefined });
     }
 
     return json({ statusCode: 404, error: 'Not Found', code: 'NOT_FOUND', message: 'Unknown leaderboard admin action' }, 404);
