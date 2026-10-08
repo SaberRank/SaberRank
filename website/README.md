@@ -33,3 +33,14 @@ DATABASE_URL=<PostgreSQL connection string>
 ```
 
 Apply `db/schema.sql` to the database before enabling persistent score storage.
+
+## SnoreSaber backend
+
+The website now ships with its own `/api/v2` backend. It uses PostgreSQL when `DATABASE_URL` is configured and falls back to demo data otherwise.
+
+Required production variables:
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `SNORE_INGEST_KEY` (used by the Beat Saber score-submission plugin)
+
+Initialize a real database with `db/schema.sql`. `db/seed.sql` is optional demo data. Steam login is handled by `/api/v2/auth/steam` and creates a SnoreSaber player on first login.
