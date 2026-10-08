@@ -697,3 +697,11 @@ body[data-scroll-locked] {
       text-decoration: none !important;
    }
 }
+
+/* SnoreSaber home title: brand gradient, without changing the rest of the ScoreSaber-derived UI. */
+.snoresaber-gradient-title {
+   background: linear-gradient(100deg, #f7f4fb 0%, #f4a0d2 42%, #ef4fae 68%, #9d78ff 100%);
+   -webkit-background-clip: text;
+   background-clip: text;
+   color: transparent;
+}

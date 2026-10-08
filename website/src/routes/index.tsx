@@ -9,7 +9,6 @@ import type { HomeNewsFeed } from '@/modules/home/actions/news';
 import { getHomeNewsFeed } from '@/modules/home/actions/news.server';
 import { BeatSaberPageBackground } from '@/modules/home/beat-saber-background';
 import { BswcPromoSection } from '@/modules/home/bswc-promo-section';
-import { HeroSection } from '@/modules/home/hero-section';
 import { HomeColumn, HomeColumnLink } from '@/modules/home/home-column';
 import { HOME_TRENDING_MAP_SEARCH, TOP_PLAYER_COUNT, TRENDING_MAP_COUNT } from '@/modules/home/home-constants';
 import { InstallSection } from '@/modules/home/install-section';
@@ -144,7 +143,6 @@ export const Route = createFileRoute('/')({
 function HomeRoute() {
    const data = Route.useLoaderData();
    const search = Route.useSearch();
-   const t = useTranslations('home');
    const previewBswcLive = search.bswcLive === '1';
    const showBswcFirst = BSWC_PROMO_ENABLED && (previewBswcLive || data.prioritizeBswc);
 
@@ -152,9 +150,16 @@ function HomeRoute() {
       <div className="dark bg-background text-foreground relative flex-1 overflow-hidden">
          <BeatSaberPageBackground />
 
-         <HeroSection />
+         <section className="relative z-10 mx-auto w-full max-w-[1180px] px-4 pt-12 pb-10 sm:px-6 lg:px-10 lg:pt-14">
+            <div className="flex flex-col items-center gap-4 text-center">
+               <h1 className="snoresaber-gradient-title text-4xl font-semibold tracking-tight sm:text-5xl">SnoreSaber</h1>
+               <p className="text-muted-foreground max-w-2xl text-base leading-relaxed sm:text-[16.5px]">
+                  Your independent Beat Saber leaderboard for scores, rankings, maps, and player progress.
+               </p>
+            </div>
+         </section>
 
-         <div className="relative z-10 mx-auto flex w-full max-w-[1180px] flex-col gap-14 px-4 pt-0 pb-16 sm:px-6 lg:px-10">
+         <div className="relative z-10 mx-auto flex w-full max-w-[1180px] flex-col gap-14 px-4 pb-16 sm:px-6 lg:px-10">
             {data.prioritizeRankedBatch && (
                <section>
                   <RankedBatchSection video={data.news.latestRankedBatchVideo} />
