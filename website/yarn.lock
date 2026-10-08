@@ -267,13 +267,6 @@
   resolved "https://registry.yarnpkg.com/@sec-ant/readable-stream/-/readable-stream-0.4.1.tgz#60de891bb126abfdc5410fdc6166aca065f10a0c"
   integrity sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==
 
-"@silexlabs/grapesjs-fonts@https://github.com/NSGolova/grapesjs-fonts.git":
-  version "1.0.20"
-  resolved "https://github.com/NSGolova/grapesjs-fonts.git#ae4dd566f7df615aecbbfcbc8c9945e595829c74"
-  dependencies:
-    backbone "^1.6.0"
-    grapesjs "^0.21.10"
-    lit-html "^3.1.2"
 
 "@sindresorhus/merge-streams@^4.0.0":
   version "4.0.0"
