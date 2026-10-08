@@ -864,7 +864,7 @@ export default defineHandler(async (event: any) => {
     return json(rows.map((r) => ({badgeId:Number(r.badge_id),descriptionOverride:r.description_override ?? null,addedAt:new Date(r.added_at).toISOString()})));
   }
 
-  if (route.startsWith('/admin/badges/player/') && method === 'POST') {
+  if (route.startsWith('/admin/badges/player/') && (method === 'PUT' || method === 'POST')) {
     const playerId = decodeURIComponent(route.split('/')[4] || '');
     const viewerId = await authPlayerId(request, sql);
     if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
@@ -991,7 +991,7 @@ export default defineHandler(async (event: any) => {
   }
 
   // ------------------------- REPORTS -------------------------
-  if (route.startsWith('/player/') && route.endsWith('/report') && method === 'POST') {
+  if ((route.startsWith('/player/') || route.startsWith('/players/')) && route.endsWith('/report') && method === 'POST') {
     const targetRequested=decodeURIComponent(route.split('/')[2] || '');
     const reporter=await authPlayerId(request,sql);
     if (!reporter) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);

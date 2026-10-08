@@ -1,7 +1,7 @@
 {
   "team": {
     "errorTitle": "Couldn't load the team",
-    "errorDescription": "We weren't able to reach GitHub to load the SnoreSaber team. Please try again in a few minutes",
+    "errorDescription": "The SnoreSaber team could not be loaded. Please try again in a few minutes",
     "sections": {
       "backend": "Creator & Project Lead",
       "admin": "Admin",

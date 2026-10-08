@@ -2,7 +2,6 @@ import type { ComponentType, CSSProperties } from 'react';
 
 import { createFileRoute } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { Result } from 'better-result';
 import { AlertCircle } from 'lucide-react';
 import { FaTwitch } from 'react-icons/fa';
 import { useTranslations } from 'use-intl';
@@ -88,11 +87,15 @@ const socialMeta: SocialMetadata = {
    github: { Icon: Icons.github, href: (value) => `https://github.com/${value}` }
 };
 
-const getTeamPageData = createServerFn({ method: 'GET' }).handler(async (): Promise<TeamPageData> => {
-   const { fetchTeam } = await import('@/modules/team/lib/team');
-   const result = await fetchTeam();
-   return Result.isOk(result) ? { ok: true, team: result.value } : { ok: false };
-});
+const LOCAL_TEAM: TeamData = {
+   TeamMembers: {
+      Backend: [{ Name: 'YawningSylveon', ProfilePicture: '/assets/snoresaber-icon.png', GitHub: 'SaberRank/SaberRank' }],
+      Frontend: [{ Name: 'SnoreSaber Contributors', ProfilePicture: '/assets/snoresaber-icon.png', GitHub: 'SaberRank/SaberRank' }],
+      Mod: [], PPv3: [], Admin: [], NAT: [], RT: [], QAT: [], CAT: [], CCT: []
+   }
+};
+
+const getTeamPageData = createServerFn({ method: 'GET' }).handler(async (): Promise<TeamPageData> => ({ ok: true, team: LOCAL_TEAM }));
 
 export const Route = createFileRoute('/team')({
    loader: () => getTeamPageData(),
