@@ -23,7 +23,12 @@ export function PlayerBadges({ badges, badgeOrder, badgeComments }: PlayerBadges
    }
 
    const badgesById = new Map(safeBadges.map((badge) => [badge.id, badge]));
-   const orderedBadges = badgeOrder ? badgeOrder.map((badgeId) => badgesById.get(badgeId)).filter((badge) => badge !== undefined) : safeBadges;
+   const orderedBadges = badgeOrder
+      ? [
+           ...badgeOrder.map((badgeId) => badgesById.get(badgeId)).filter((badge) => badge !== undefined),
+           ...safeBadges.filter((badge) => !badgeOrder.includes(badge.id))
+        ]
+      : safeBadges;
    const visibleBadges = orderedBadges.filter((badge) => !failedImages.has(badge.image));
    if (visibleBadges.length === 0) return null;
 
@@ -46,16 +51,16 @@ export function PlayerBadges({ badges, badgeOrder, badgeComments }: PlayerBadges
                   <TooltipTrigger asChild>
                      <button
                         type="button"
-                        className="focus-visible:ring-ring flex max-w-28 cursor-help flex-col items-center gap-1 rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+                        className="focus-visible:ring-ring flex max-w-48 cursor-help flex-col items-center gap-1 rounded-sm focus-visible:ring-2 focus-visible:outline-none"
                         onClick={() => setOpenBadgeId((current) => (current === badge.id ? null : badge.id))}
                      >
                         <FadeInImage
                            src={badge.image}
                            alt={badge.description}
-                           width={80}
-                           height={30}
+                           width={180}
+                           height={54}
                            className="rounded-sm"
-                           style={{ width: 80, height: 30, objectFit: 'contain' }}
+                           style={{ width: 180, height: 54, objectFit: 'contain' }}
                            unoptimized
                            onError={() => setFailedImages((prev) => new Set(prev).add(badge.image))}
                         />

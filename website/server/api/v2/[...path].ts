@@ -376,6 +376,34 @@ async function getPlayerBadges(sql: any, playerId: string) {
     WHERE pb.player_id=${playerId}
     ORDER BY pb.added_at ASC, b.id ASC
   `;
+
+  const playerRows: any[] = await sql`SELECT role, permissions FROM players WHERE id=${playerId} LIMIT 1`;
+  const playerRole = String(playerRows[0]?.role || '').trim().toLowerCase();
+  const playerPermissions = Number(playerRows[0]?.permissions || 0);
+  const automaticallyGrantedDescriptions: string[] = [];
+
+  // These badges are role badges, so they are always shown for the matching role
+  // even when the player has never been manually assigned the badge.
+  if (playerRole.includes('tester')) automaticallyGrantedDescriptions.push('SnoreSaber Tester');
+  if (playerRole.includes('developer') || (playerPermissions & 256) !== 0 || (playerPermissions & 16384) !== 0) {
+    automaticallyGrantedDescriptions.push('SnoreSaber Developer');
+  }
+
+  if (automaticallyGrantedDescriptions.length > 0) {
+    const autoRows: any[] = await sql`
+      SELECT id, image, description, COALESCE(NULLIF(image_url,''), image) AS image_url
+      FROM badges
+      WHERE description = ANY(${automaticallyGrantedDescriptions})
+      ORDER BY id ASC
+    `;
+    const existingIds = new Set(rows.map((r) => Number(r.id)));
+    for (const row of autoRows) {
+      if (!existingIds.has(Number(row.id))) {
+        rows.push({ ...row, description_override: null });
+      }
+    }
+  }
+
   return rows.map((r) => ({
     id: Number(r.id),
     image: r.image_url || r.image,

@@ -81,9 +81,9 @@ export function PlayerProfileCustomizationBadgesTab({
                                        onCheckedChange={(value) => onToggleBadgeAction(badge, value === true)}
                                     />
                                     <Label htmlFor={`profile-badge-${badge.id}`} className="flex min-w-0 cursor-default items-center gap-2">
-                                       <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                                       <span className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-md">
                                           {badge.image ? (
-                                             <FadeInImage src={badge.image} alt="" width={48} height={24} className="object-contain" unoptimized />
+                                             <FadeInImage src={badge.image} alt="" width={120} height={36} className="object-contain" unoptimized />
                                           ) : (
                                              <ImageIcon className="text-muted-foreground" aria-hidden />
                                           )}
