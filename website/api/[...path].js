@@ -1,7 +1,31 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'node:crypto';
 
-const mem = globalThis.__snoresaber_mem ||= { players: [], maps: [], scores: [], events: [], clans: [] };
+const mem = globalThis.__snoresaber_mem ||= {
+  players: [
+    { id: 1, steamId: null, name: 'YawningSylveon', alias: 'YawningSylveon', country: 'CA', pp: 16284.32, rank: 1, totalScore: 0, playCount: 0 },
+    { id: 2, steamId: null, name: 'Lunaa', alias: 'Lunaa', country: 'US', pp: 16112.07, rank: 2, totalScore: 0, playCount: 0 },
+    { id: 3, steamId: null, name: 'Kyouki', alias: 'Kyouki', country: 'JP', pp: 15998.44, rank: 3, totalScore: 0, playCount: 0 },
+    { id: 4, steamId: null, name: 'Rho', alias: 'Rho', country: 'US', pp: 15781.20, rank: 4, totalScore: 0, playCount: 0 },
+    { id: 5, steamId: null, name: 'Astra', alias: 'Astra', country: 'GB', pp: 15662.11, rank: 5, totalScore: 0, playCount: 0 }
+  ],
+  maps: [
+    { id: 'imprinting', hash: 'DEMO-IMPRINTING', songName: 'Imprinting', mapper: 'Sotarks', difficulty: 'Expert+', characteristic: 'Standard', stars: 10.42, ranked: true, plays: 382144 },
+    { id: 'bbkkbkk', hash: 'DEMO-BBKK', songName: 'B.B.K.K.B.K.K.', mapper: 'nora2r', difficulty: 'Expert+', characteristic: 'Standard', stars: 10.18, ranked: true, plays: 301552 },
+    { id: 'kimi-no-bouken', hash: 'DEMO-KIMI', songName: 'Kimi no Bouken', mapper: 'Sotarks', difficulty: 'Expert+', characteristic: 'Standard', stars: 9.84, ranked: true, plays: 298771 },
+    { id: 'ghost', hash: 'DEMO-GHOST', songName: 'Ghost', mapper: 'Rustic', difficulty: 'Expert+', characteristic: 'Standard', stars: 9.71, ranked: true, plays: 286905 },
+    { id: 'machine-gun', hash: 'DEMO-MACHINE', songName: 'Machine Gun', mapper: 'Sotarks', difficulty: 'Expert+', characteristic: 'Standard', stars: 9.55, ranked: true, plays: 274663 }
+  ],
+  scores: [
+    { id: 1, playerName: 'YawningSylveon', playerAlias: 'YawningSylveon', songName: 'Imprinting', accuracy: 98.42, pp: 512.31, score: 986421, playedAt: new Date(Date.now() - 2*60000).toISOString() },
+    { id: 2, playerName: 'Lunaa', playerAlias: 'Lunaa', songName: 'Kimi no Bouken', accuracy: 97.15, pp: 498.12, score: 971502, playedAt: new Date(Date.now() - 5*60000).toISOString() },
+    { id: 3, playerName: 'Kyouki', playerAlias: 'Kyouki', songName: 'Ghost', accuracy: 96.88, pp: 487.44, score: 968801, playedAt: new Date(Date.now() - 6*60000).toISOString() },
+    { id: 4, playerName: 'Rho', playerAlias: 'Rho', songName: 'B.B.K.K.B.K.K.', accuracy: 97.63, pp: 481.09, score: 976301, playedAt: new Date(Date.now() - 8*60000).toISOString() },
+    { id: 5, playerName: 'Astra', playerAlias: 'Astra', songName: 'Machine Gun', accuracy: 95.21, pp: 463.77, score: 952104, playedAt: new Date(Date.now() - 11*60000).toISOString() }
+  ],
+  events: [],
+  clans: []
+};
 function db() { return process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null; }
 function send(res, code, body) { res.status(code).setHeader('Cache-Control', 'no-store').json(body); }
 function cookie(res, value, maxAge = 2592000) { res.setHeader('Set-Cookie', `snoresaber_session=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`); }
@@ -9,7 +33,9 @@ function sign(value) { const secret = process.env.SESSION_SECRET || 'development
 function verify(token) { if (!token) return null; const [value, sig] = token.split('.'); if (!value || !sig) return null; const secret = process.env.SESSION_SECRET || 'development-only-secret'; const expected = crypto.createHmac('sha256', secret).update(value).digest('base64url'); try { return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? value : null; } catch { return null; } }
 
 export default async function handler(req, res) {
-  const parts = (req.query.path || []).map(decodeURIComponent);
+  const rawPath = req.query?.path;
+  const pathParts = Array.isArray(rawPath) ? rawPath : (rawPath ? [rawPath] : []);
+  const parts = pathParts.map((part) => decodeURIComponent(String(part)));
   const route = parts.join('/');
   const q = req.query || {};
   try {
