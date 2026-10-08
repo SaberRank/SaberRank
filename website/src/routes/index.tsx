@@ -143,6 +143,7 @@ export const Route = createFileRoute('/')({
 function HomeRoute() {
    const data = Route.useLoaderData();
    const search = Route.useSearch();
+   const t = useTranslations('home');
    const previewBswcLive = search.bswcLive === '1';
    const showBswcFirst = BSWC_PROMO_ENABLED && (previewBswcLive || data.prioritizeBswc);
 
