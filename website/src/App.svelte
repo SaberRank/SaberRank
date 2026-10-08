@@ -187,7 +187,7 @@
     <section class="page-title"><div class="eyebrow">SNORE SABER RANKINGS</div><h1>Global Rankings</h1><p>The official SnoreSaber ranking, calculated only from SnoreSaber scores.</p></section>
     <section class="full-panel">
       <div class="toolbar"><span>{players.length} players loaded</span><button on:click={load}>↻ Refresh</button></div>
-      {#if players.length}{#each players as p, i}<button class="large-row" on:click={() => go(`/u/${encodeURIComponent(p.alias || p.name)}`}><span class="rank">#{i+1}</span><span class="avatar">{p.name?.[0]}</span><span class="row-name">{p.name}</span><span>{p.country || "—"}</span><strong>{Number(p.pp||0).toFixed(2)} PP</strong></button>{/each}{:else}<Empty text="The SnoreSaber ranking is empty until scores are submitted."/>{/if}
+      {#if players.length}{#each players as p, i}<button class="large-row" on:click={() => go(`/u/${encodeURIComponent(p.alias || p.name)}`)}><span class="rank">#{i+1}</span><span class="avatar">{p.name?.[0]}</span><span class="row-name">{p.name}</span><span>{p.country || "—"}</span><strong>{Number(p.pp||0).toFixed(2)} PP</strong></button>{/each}{:else}<div class="empty">The SnoreSaber ranking is empty until scores are submitted.</div>{/if}
     </section>
 
   {:else if path === "/maps"}
