@@ -57,18 +57,39 @@
   async function load() {
     loading = true;
     error = '';
-    apiOnline = true;
-    try {
-      const jobs = [api('stats'), api('rankings?limit=50'), api('maps?limit=50'), api('scores?limit=25'), api('events?limit=25'), api('clans?limit=25'), api('auth/me')];
-      const [s, r, m, sc, e, c, account] = await Promise.all(jobs);
-      stats = s.stats || stats;
-      players = r.players || [];
-      maps = m.maps || [];
-      scores = sc.scores || [];
-      events = e.events || [];
-      clans = c.clans || [];
-      me = account.player || null;
+    apiOnline = false;
 
+    // Do not let one optional endpoint take down the whole homepage.
+    // The old Promise.all() made a single 404/500 (for example auth/me)
+    // make the entire interface report that the API was offline.
+    const jobs = [
+      api('stats'),
+      api('rankings?limit=50'),
+      api('maps?limit=50'),
+      api('scores?limit=25'),
+      api('events?limit=25'),
+      api('clans?limit=25'),
+      api('auth/me')
+    ];
+    const [s, r, m, sc, e, c, account] = await Promise.allSettled(jobs);
+
+    if (s.status === 'fulfilled') {
+      apiOnline = true;
+      stats = s.value.stats || stats;
+    } else {
+      error = s.reason?.message || 'The SnoreSaber API could not be reached.';
+    }
+
+    if (r.status === 'fulfilled') players = r.value.players || [];
+    if (m.status === 'fulfilled') maps = m.value.maps || [];
+    if (sc.status === 'fulfilled') scores = sc.value.scores || [];
+    if (e.status === 'fulfilled') events = e.value.events || [];
+    if (c.status === 'fulfilled') clans = c.value.clans || [];
+    if (account.status === 'fulfilled') me = account.value.player || null;
+
+    // Route-specific requests are separate so a missing profile/map cannot
+    // make the homepage look like the entire API is down.
+    try {
       if (path.startsWith('/u/')) {
         const alias = decodeURIComponent(path.slice(3));
         currentPlayer = await api(`players/${encodeURIComponent(alias)}`);
@@ -79,8 +100,7 @@
         currentMap = await api(`maps/${encodeURIComponent(id)}`);
       } else currentMap = null;
     } catch (e) {
-      apiOnline = false;
-      error = e?.message || 'The SnoreSaber API could not be reached.';
+      error = e?.message || 'Unable to load this SnoreSaber page.';
     } finally {
       loading = false;
     }
@@ -219,14 +239,6 @@
           <button class="secondary" on:click={() => go('/maps')}>{@html icon.map} Explore Maps</button>
         </div>
       </div>
-      <div class="hero-tagline"><i></i><span>PLAY.</span><span>IMPROVE.</span><span>CLIMB.</span></div>
-    </section>
-
-    <section class="stats">
-      <div class="stat-card"><span class="stat-icon">{@html icon.activity}</span><div><b>{number(stats.scores)}</b><small>Scores</small></div><span class="spark spark-a"></span></div>
-      <div class="stat-card"><span class="stat-icon">{@html icon.users}</span><div><b>{number(stats.players)}</b><small>Players</small></div><span class="spark spark-b"></span></div>
-      <div class="stat-card"><span class="stat-icon">{@html icon.map}</span><div><b>{number(stats.maps)}</b><small>Maps</small></div><span class="spark spark-c"></span></div>
-      <div class="stat-card"><span class="stat-icon">{@html icon.users}</span><div><b>{number(stats.clans)}</b><small>Clans</small></div><span class="spark spark-d"></span></div>
     </section>
 
     <section class="dashboard-grid">
@@ -295,4 +307,4 @@
   {/if}
 </main>
 
-<footer><strong>SNORE<span>SABER</span></strong><span>Independent Beat Saber leaderboard · Your scores. Your ranking.</span></footer>
+<footer><strong>SNORE<span>SABER</span></strong></footer>
