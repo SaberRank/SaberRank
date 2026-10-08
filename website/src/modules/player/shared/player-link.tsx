@@ -61,7 +61,7 @@ export function PlayerLink({
    ) : (
       <playerRoute.Link
          className="group/link text-foreground flex min-w-0 flex-1 items-center overflow-hidden font-semibold"
-         params={{ playerId: player.id }}
+         params={{ playerId: player.vanity || player.id }}
       >
          <CountryImage country={player.country} className="shrink-0" />
          {showHoverCard ? (

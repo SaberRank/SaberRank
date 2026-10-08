@@ -146,6 +146,14 @@ async function loadMapLeaderboardPageData({
 
       const mapInfo = mapResult.data;
       const activeLeaderboardId = getDefaultMapLeaderboardId(mapInfo, searchParams.tab === 'rank-request' ? 'rank-request' : 'leaderboard');
+      if (activeLeaderboardId == null) {
+         return pageDataOk({
+            mapInfo,
+            leaderboard: null,
+            leaderboardScores: null,
+            leaderboardId: 0
+         });
+      }
       const shouldLoadScores = searchParams.tab !== 'insights' && (searchParams.tab !== 'rank-request' || mapInfo.rankRequest == null);
       const leaderboardScores = shouldLoadScores ? await getLeaderboardScores(scoreApi, activeLeaderboardId, page, searchParams) : null;
       const leaderboard = mapInfo.leaderboards.find((entry) => entry.id === activeLeaderboardId);
@@ -216,6 +224,14 @@ function buildMapLeaderboardDescription(
    if (!loaderData?.result.ok) return undefined;
 
    const { mapInfo, leaderboard, leaderboardId } = loaderData.result.data;
+   if (!leaderboard) {
+      return buildMapEmbedDescription({
+         songAuthorName: mapInfo.songAuthorName,
+         levelAuthorName: mapInfo.levelAuthorName,
+         bpm: mapInfo.bpm,
+         statusLabel: 'Unranked'
+      });
+   }
    const rankRequest = loaderData.searchParams.tab === 'rank-request' ? mapInfo.rankRequest : null;
    const requestStatus = rankRequest ? getRankRequestDisplayStatus(rankRequest, leaderboardId) : null;
    const statusLabel =

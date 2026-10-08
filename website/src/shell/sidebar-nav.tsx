@@ -221,7 +221,7 @@ export function SidebarNav({ onNavigateAction }: { onNavigateAction?: () => void
                <div className="flex w-full items-center gap-1.5">
                   <div className="hover:bg-accent/40 min-w-0 flex-1 rounded-md px-2 py-1.5 transition-colors">
                      <div className="flex min-w-0 items-center gap-2">
-                        <playerRoute.Link params={{ playerId: user.id }} onClick={onNavigateAction} className="shrink-0 translate-y-1 self-center">
+                        <playerRoute.Link params={{ playerId: user.vanity || user.id }} onClick={onNavigateAction} className="shrink-0 translate-y-1 self-center">
                            <PlayerAvatar
                               src={user.avatar}
                               version={user.avatarVersion}
@@ -233,7 +233,7 @@ export function SidebarNav({ onNavigateAction }: { onNavigateAction?: () => void
                         </playerRoute.Link>
                         <div className="min-w-0 flex-1">
                            <playerRoute.Link
-                              params={{ playerId: user.id }}
+                              params={{ playerId: user.vanity || user.id }}
                               onClick={onNavigateAction}
                               className="text-foreground block min-w-0 overflow-hidden"
                            >

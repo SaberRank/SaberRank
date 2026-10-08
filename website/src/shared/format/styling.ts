@@ -151,6 +151,7 @@ export type PlayerRoleSource = {
    avatar: string;
    avatarVersion?: number;
    permissions: number;
+   vanity?: string | null;
 };
 
 function resolvePlayerRole(player: PlayerRoleSource): [RoleKey, string | null] {

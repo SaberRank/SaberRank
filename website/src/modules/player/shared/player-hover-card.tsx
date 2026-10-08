@@ -131,7 +131,7 @@ function HoverCardBody({ player, onClose }: { player: PlayerControllerGetPlayerR
    }, [badges]);
 
    const nameEl = (
-      <playerRoute.Link params={{ playerId: player.id }} className="group/hovername min-w-0 text-sm font-semibold" onClick={onClose}>
+      <playerRoute.Link params={{ playerId: player.vanity || player.id }} className="group/hovername min-w-0 text-sm font-semibold" onClick={onClose}>
          <span className={cn(playerSummary.roleClassName, 'block truncate')}>{player.name}</span>
       </playerRoute.Link>
    );
@@ -247,7 +247,7 @@ function HoverCardBody({ player, onClose }: { player: PlayerControllerGetPlayerR
                      ))}
                      {visibleBadgeCount < badges.length && (
                         <playerRoute.Link
-                           params={{ playerId: player.id }}
+                           params={{ playerId: player.vanity || player.id }}
                            className="text-muted-foreground hover:text-foreground shrink-0 text-xs font-medium transition-colors"
                            onClick={onClose}
                         >

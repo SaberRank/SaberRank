@@ -255,7 +255,7 @@ function OmniSearchBody() {
       if (!item) return;
 
       if (item.type === 'player') {
-         navigateToPlayer(results.players[item.index].id);
+         navigateToPlayer(results.players[item.index].vanity || results.players[item.index].id);
          return;
       }
       navigateToMap(results.maps[item.index].id);

@@ -66,7 +66,7 @@ export function HeroSection() {
                   <a href="/maps">Explore Maps</a>
                </Button>
                {!user && <Button asChild variant="ghost" size="lg"><loginRoute.Link search={{}}>Sign in with Steam</loginRoute.Link></Button>}
-               {user && <Button asChild variant="ghost" size="lg"><playerRoute.Link params={{ playerId: user.id }}>View Profile</playerRoute.Link></Button>}
+               {user && <Button asChild variant="ghost" size="lg"><playerRoute.Link params={{ playerId: user.vanity || user.id }}>View Profile</playerRoute.Link></Button>}
             </div>
          </div>
       </section>

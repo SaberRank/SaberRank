@@ -280,9 +280,9 @@ export function RankingCard({
             isHighlighted && 'border-primary ring-primary/40 ring-1',
             className
          )}
-         onClick={() => router.navigate({ to: '/u/$playerId', params: { playerId: player.id } })}
+         onClick={() => router.navigate({ to: '/u/$playerId', params: { playerId: player.vanity || player.id } })}
       >
-         <NavCardOverlay location={{ to: '/u/$playerId', params: { playerId: player.id } }} />
+         <NavCardOverlay location={{ to: '/u/$playerId', params: { playerId: player.vanity || player.id } }} />
          {variant === 'summary' ? (
             <RankingCardSummary
                player={player}

@@ -26,7 +26,7 @@ export function getDefaultLeaderboardId(
    leaderboards: (GameModeLeaderboard & DifficultyLeaderboard & IdentifiedLeaderboard)[],
    gameMode = DEFAULT_GAME_MODE
 ) {
-   return getDisplayLeaderboards(leaderboards, gameMode, false)[0].id;
+   return getDisplayLeaderboards(leaderboards, gameMode, false)[0]?.id;
 }
 
 export function getAvailableGameModes(leaderboards: GameModeLeaderboard[]) {

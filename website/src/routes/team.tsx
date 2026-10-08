@@ -69,7 +69,7 @@ function TeamRoute() {
                         <h2 className="text-lg font-semibold">{role}</h2>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                            {roleMembers.map((member) => (
-                              <Link key={member.id} to="/u/$playerId" params={{ playerId: member.id }} className="block">
+                              <Link key={member.id} to="/u/$playerId" params={{ playerId: member.vanity || member.id }} className="block">
                                  <Card className="group h-full transition-colors hover:border-primary/60">
                                     <CardContent className="flex items-center gap-4 p-4">
                                        <Avatar className="size-14 shrink-0">

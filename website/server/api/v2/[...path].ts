@@ -1090,6 +1090,7 @@ export default defineHandler(async (event: any) => {
   if (route === '/maps' && method === 'GET') {
     const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
     const search = (query.get('search') || '').toLowerCase(); const verified = query.get('verified');
+    const requestedStatuses = (query.get('status') || '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean);
     const minStars = Number(query.get('minStars') || 0); const maxStars = Number(query.get('maxStars') || 99);
     if (sql) {
       const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM maps`;
@@ -1103,13 +1104,30 @@ export default defineHandler(async (event: any) => {
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
         const v = verified == null || String(Boolean(r.verified)) === verified;
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
-        return q && v && stars >= minStars && stars <= maxStars;
+        const statuses = [...new Set(lbs.map((l) => String(l.status || 'UNRANKED').toUpperCase()))];
+        const statusMatch = requestedStatuses.length === 0 || requestedStatuses.some((status) => statuses.includes(status));
+        return q && v && statusMatch && stars >= minStars && stars <= maxStars;
       });
-      if (query.get('sortBy') === 'highestStars') filtered.sort((a,b) => (Number(b.lbs[0]?.stars||0)-Number(a.lbs[0]?.stars||0)));
+      const sortBy = query.get('sortBy') || 'trending';
+      const sortDirection = query.get('sortDirection') === 'asc' ? 1 : -1;
+      if (sortBy === 'highestStars') filtered.sort((a,b) => (Math.max(0,...b.lbs.map((l:any)=>Number(l.stars||0))) - Math.max(0,...a.lbs.map((l:any)=>Number(l.stars||0)))) * sortDirection);
+      else if (sortBy === 'latestRankedAt') filtered.sort((a,b) => {
+        const ar = Math.max(0,...a.lbs.filter((l:any)=>l.status==='RANKED').map((l:any)=>new Date(l.ranked_at || 0).getTime()));
+        const br = Math.max(0,...b.lbs.filter((l:any)=>l.status==='RANKED').map((l:any)=>new Date(l.ranked_at || 0).getTime()));
+        return (br-ar)*sortDirection;
+      });
+      else if (sortBy === 'latest') filtered.sort((a,b) => (new Date(b.r.created_at).getTime()-new Date(a.r.created_at).getTime())*sortDirection);
       const slice = filtered.slice((page-1)*limit,(page-1)*limit+limit).map(({r,lbs}) => dbMap(r,lbs.map((x) => dbLeaderboard(x,Number(x.total_scores||0)))));
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
-    let filtered = maps.filter((m) => (!search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search)) && (verified == null || String(m.verified) === verified) && (m.leaderboards[0]?.realm.stars || 0) >= minStars && (m.leaderboards[0]?.realm.stars || 0) <= maxStars);
+    let filtered = maps.filter((m) => {
+      const q = !search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search);
+      const v = verified == null || String(m.verified) === verified;
+      const statuses = [...new Set((m.leaderboards || []).map((l:any) => String(l.realm?.leaderboardStatus || 'UNRANKED').toUpperCase()))];
+      const statusMatch = requestedStatuses.length === 0 || requestedStatuses.some((status) => statuses.includes(status));
+      const stars = Math.max(0,...(m.leaderboards || []).map((l:any)=>Number(l.realm?.stars||0)));
+      return q && v && statusMatch && stars >= minStars && stars <= maxStars;
+    });
     return json({ data:filtered.slice((page-1)*limit,(page-1)*limit+limit), metadata:metadata(filtered.length,page,limit) });
   }
   if (route.startsWith('/maps/hash/') && method === 'GET') {
@@ -1119,7 +1137,19 @@ export default defineHandler(async (event: any) => {
   }
   if (route.startsWith('/maps/') && method === 'GET') {
     const id = Number(route.split('/')[2]);
-    if (sql) { const m = await dbMapWithLeaderboards(sql,id); return m ? json(m) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404); }
+    if (!Number.isInteger(id) || id <= 0) return json({statusCode:400,error:'Bad Request',code:'INVALID_PATH_PARAMETER',message:'Map id must be a positive integer'},400);
+    if (sql) {
+      try {
+        const m = await dbMapWithLeaderboards(sql,id);
+        return m ? json(m) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
+      } catch (error) {
+        console.error('[SnoreSaber] Map detail failed', { id, error });
+        const rows:any[] = await sql`SELECT * FROM maps WHERE id=${id} LIMIT 1`;
+        if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
+        const lbs:any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id WHERE l.map_id=${id} GROUP BY l.id ORDER BY l.difficulty ASC,l.id ASC`;
+        return json(dbMap(rows[0], lbs.map((x:any)=>dbLeaderboard(x,Number(x.total_scores||0)))));
+      }
+    }
     const m = maps.find((x) => x.id === id); return m ? json({...m,reuploadVersions:[]}) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Map not found'},404);
   }
 
