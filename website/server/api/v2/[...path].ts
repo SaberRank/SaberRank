@@ -1454,14 +1454,10 @@ export default defineHandler(async (event: any) => {
     if (!key) {
       return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Enter a BeatSaver map link or map key' }, 400);
     }
-    if (!PUBLIC_BEATSAVER_MAP_KEYS.has(key)) {
-      return json({
-        statusCode: 400,
-        error: 'Bad Request',
-        code: 'MAP_NOT_CURATED',
-        message: "That BeatSaver map is not in SnoreSaber's six-map catalog"
-      }, 400);
-    }
+    // The public Maps catalog remains restricted to SnoreSaber's curated six maps,
+    // but administrators must be able to load and rank ANY BeatSaver map.
+    // Do not apply PUBLIC_BEATSAVER_MAP_KEYS here: this endpoint is the admin
+    // map-ingestion/ranking workflow, not the public catalog filter.
 
     const preview = body.preview === true;
     const rankings = Array.isArray(body.rankings) ? body.rankings : [];
