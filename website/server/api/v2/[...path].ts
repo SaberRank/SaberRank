@@ -6,6 +6,9 @@ import { CURATED_BEATSAVER_MAP_KEYS } from "../../beatsaver-curated";
 const SECRET = process.env.SESSION_SECRET || 'snoresaber-development-secret-change-me';
 const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
 const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
+const EMAIL_CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const NOW = () => new Date().toISOString();
 
 // SnoreSaber's initial curated map set. These are BeatSaver map keys, not
@@ -2219,6 +2222,87 @@ export default defineHandler(async (event: any) => {
     return json(await getProfileCustomization(sql,pid));
   }
 
+  function emailCodeHash(challengeId: string, code: string) {
+    return createHash('sha256').update(`${SECRET}:${challengeId}:${code}`).digest('hex');
+  }
+
+  async function ensureEmailChallengeTable(sql: any) {
+    if (!sql) return;
+    await sql`CREATE TABLE IF NOT EXISTS email_login_challenges (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_login_challenges_email ON email_login_challenges (lower(email), created_at DESC)`;
+  }
+
+  async function sendLoginCode(email: string, code: string) {
+    if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) {
+      throw new Error('Email delivery is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel.');
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: RESEND_FROM_EMAIL,
+        to: [email],
+        subject: 'Your SnoreSaber login code',
+        html: `<div style="font-family:Arial,sans-serif;line-height:1.5"><h2>SnoreSaber login</h2><p>Your one-time login code is:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px">${code}</p><p>This code expires in 10 minutes. If you did not request it, you can ignore this email.</p></div>`
+      })
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new Error(`Email provider rejected the message${detail ? `: ${detail.slice(0, 300)}` : ''}`);
+    }
+  }
+
+  async function createEmailLoginChallenge(sql: any, email: string) {
+    await ensureEmailChallengeTable(sql);
+    const challengeId = randomBytes(24).toString('hex');
+    const code = String(randomInt(100000, 1000000));
+    const expiresAt = new Date(Date.now() + EMAIL_CHALLENGE_TTL_MS);
+    await sql`UPDATE email_login_challenges SET used_at=now() WHERE lower(email)=lower(${email}) AND used_at IS NULL`;
+    await sql`INSERT INTO email_login_challenges (id,email,code_hash,expires_at) VALUES (${challengeId},${email},${emailCodeHash(challengeId, code)},${expiresAt.toISOString()})`;
+    try {
+      await sendLoginCode(email, code);
+    } catch (error) {
+      await sql`DELETE FROM email_login_challenges WHERE id=${challengeId}`;
+      throw error;
+    }
+    return {
+      challengeId,
+      expiresAt: expiresAt.toISOString(),
+      resendAvailableAt: new Date(Date.now() + 30_000).toISOString()
+    };
+  }
+
+  async function verifyEmailLoginChallenge(sql: any, challengeId: string, code: string) {
+    await ensureEmailChallengeTable(sql);
+    const rows: any[] = await sql`
+      SELECT id,email,code_hash,expires_at
+      FROM email_login_challenges
+      WHERE id=${challengeId} AND used_at IS NULL
+      LIMIT 1
+    `;
+    const challenge = rows[0];
+    if (!challenge || new Date(challenge.expires_at).getTime() < Date.now()) return null;
+    const expected = String(challenge.code_hash);
+    const actual = emailCodeHash(challengeId, code);
+    if (expected.length !== actual.length || !timingSafeEqual(Buffer.from(expected), Buffer.from(actual))) return null;
+    await sql`UPDATE email_login_challenges SET used_at=now() WHERE id=${challengeId}`;
+    const playersForEmail: any[] = await sql`SELECT id FROM players WHERE lower(login_email)=lower(${String(challenge.email)}) LIMIT 2`;
+    if (playersForEmail.length !== 1) return { status: playersForEmail.length === 0 ? 'pending-game-auth' : 'support-required' };
+    return { status: 'authenticated', playerId: String(playersForEmail[0].id) };
+  }
+
   async function ensurePasswordAuthTables(sql: any) {
     if (!sql) return;
     await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS login_email TEXT`;
@@ -2259,6 +2343,34 @@ export default defineHandler(async (event: any) => {
   }
 
   // ------------------------- AUTH -------------------------
+  if (route === '/auth/email/start' && method === 'POST') {
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const email = normalizeLoginEmail(body.email);
+    if (!email || !email.includes('@')) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'A valid email is required'},400);
+    if (!sql) return json({status:'support-required'});
+    try {
+      const challenge = await createEmailLoginChallenge(sql, email);
+      return json(challenge);
+    } catch (error) {
+      console.error('[SnoreSaber] email login code delivery failed', error);
+      return json({statusCode:503,error:'Service Unavailable',code:'EMAIL_DELIVERY_FAILED',message:error instanceof Error ? error.message : 'Unable to send the login code'},503);
+    }
+  }
+
+  if (route === '/auth/email/verify' && method === 'POST') {
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const challengeId = String(body.challengeId || '');
+    const code = String(body.code || '').trim();
+    if (!challengeId || !/^\d{6}$/.test(code)) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Challenge ID and six-digit code are required'},400);
+    if (!sql) return json({status:'support-required'});
+    const result = await verifyEmailLoginChallenge(sql, challengeId, code);
+    if (!result) return json({statusCode:401,error:'Unauthorized',code:'INVALID_CODE',message:'Invalid or expired login code'},401);
+    if (result.status === 'authenticated') return json({status:'authenticated',token:tokenFor(result.playerId),playerId:result.playerId});
+    return json(result);
+  }
+
   if (route === '/auth/password/login' && method === 'POST') {
     let body: any = {};
     try { body = JSON.parse(await request.text() || '{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }

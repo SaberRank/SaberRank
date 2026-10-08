@@ -44,3 +44,7 @@ Required production variables:
 - `SNORE_INGEST_KEY` (used by the Beat Saber score-submission plugin)
 
 Initialize a real database with `db/schema.sql`. `db/seed.sql` is optional demo data. Steam login is handled by `/api/v2/auth/steam` and creates a SnoreSaber player on first login.
+
+
+### Email / Meta login
+The Meta email login uses a one-time code. Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in Vercel so SnoreSaber can deliver the code. Meta/Quest identity itself is still established by the in-game SnoreSaber account flow; the website does not fabricate a Meta account.
