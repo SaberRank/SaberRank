@@ -90,7 +90,7 @@ function tokenFor(playerId: string) {
   return `${body}.${sig}`;
 }
 
-function playerFromToken(token?: string | null) {
+function playerIdFromToken(token?: string | null) {
   if (!token) return null;
   const [body, sig] = token.split('.');
   if (!body || !sig) return null;
@@ -98,7 +98,7 @@ function playerFromToken(token?: string | null) {
   try {
     if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
-    return players.find((p) => p.id === payload.sub) ?? null;
+    return typeof payload.sub === 'string' ? payload.sub : null;
   } catch {
     return null;
   }
@@ -109,8 +109,14 @@ function tokenFromCookie(raw: string | undefined) {
   return found ? decodeURIComponent(found.slice(6)) : null;
 }
 
-function authPlayerId(request: Request) {
-  return playerFromToken(tokenFromCookie(request.headers.get('cookie') || undefined))?.id ?? null;
+async function authPlayerId(request: Request, sql: any) {
+  const id = playerIdFromToken(tokenFromCookie(request.headers.get('cookie') || undefined));
+  if (!id) return null;
+  if (sql) {
+    const rows: any[] = await sql`SELECT id FROM players WHERE id=${id} LIMIT 1`;
+    return rows[0]?.id ?? null;
+  }
+  return players.some((p) => p.id === id) ? id : null;
 }
 
 function hasIngestAuth(request: Request) {
@@ -244,8 +250,73 @@ export default defineHandler(async (event: any) => {
 
   if (route === '/health') return json({ ok: true, service: 'SnoreSaber API', version: '3.0.0', database: Boolean(sql) });
 
+  // ------------------------- RANKINGS -------------------------
+  // Rankings are backed by the same SnoreSaber-owned players table as /players.
+  // The frontend uses /players, while the public API also exposes /rankings.
+  if ((route === '/rankings' || route === '/players') && method === 'GET') {
+    const page = Math.max(1, Number(query.get('page') || 1));
+    const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
+    const search = (query.get('search') || '').trim().toLowerCase();
+    const countries = (query.get('countries') || '')
+      .split(',')
+      .map((x) => x.trim().toUpperCase())
+      .filter(Boolean);
+    const sort = query.get('sort') || 'rank';
+    const direction = query.get('sortDirection') || 'asc';
+
+    const sortValue = (p: any) => {
+      const stats = p.stats || {};
+      switch (sort) {
+        case 'countryRank': return Number(stats.countryRank ?? p.country_rank ?? 0);
+        case 'totalPP': return Number(stats.totalPP ?? p.pp ?? 0);
+        case 'totalScore': return Number(stats.totalScore ?? p.total_score ?? 0);
+        case 'totalRankedScore': return Number(stats.totalRankedScore ?? p.total_ranked_score ?? 0);
+        case 'totalPlayedLeaderboards': return Number(stats.totalPlayedLeaderboards ?? 0);
+        case 'totalPlayedRankedLeaderboards': return Number(stats.totalPlayedRankedLeaderboards ?? 0);
+        case 'totalSubmittedPlays': return Number(stats.totalSubmittedPlays ?? p.total_plays ?? 0);
+        case 'totalReplayViews': return Number(stats.totalReplayViews ?? 0);
+        case 'averageAccuracy': return Number(stats.averageAccuracy ?? p.average_accuracy ?? 0);
+        case 'weightedAverageAccuracy': return Number(stats.weightedAverageAccuracy ?? p.average_accuracy ?? 0);
+        case 'completionAccuracy': return Number(stats.completionAccuracy ?? p.average_accuracy ?? 0);
+        default: return Number(stats.rank ?? p.rank ?? 0);
+      }
+    };
+
+    if (sql) {
+      const rows: any[] = await sql`SELECT * FROM players`;
+      let filtered = rows.filter((p) => {
+        const matchesSearch = !search || p.name.toLowerCase().includes(search) || String(p.id).includes(search);
+        const matchesCountry = !countries.length || countries.includes(String(p.country || 'XX').toUpperCase());
+        return matchesSearch && matchesCountry;
+      });
+      filtered.sort((a, b) => {
+        const av = sortValue(dbPlayer(a));
+        const bv = sortValue(dbPlayer(b));
+        const primary = direction === 'desc' ? bv - av : av - bv;
+        return primary || String(a.id).localeCompare(String(b.id));
+      });
+      const start = (page - 1) * limit;
+      return json({
+        data: filtered.slice(start, start + limit).map(dbPlayer),
+        metadata: metadata(filtered.length, page, limit)
+      });
+    }
+
+    let filtered = players.filter((p) => {
+      const matchesSearch = !search || p.name.toLowerCase().includes(search) || p.id.includes(search);
+      const matchesCountry = !countries.length || countries.includes(String(p.country || 'XX').toUpperCase());
+      return matchesSearch && matchesCountry;
+    });
+    filtered.sort((a, b) => {
+      const primary = direction === 'desc' ? sortValue(b) - sortValue(a) : sortValue(a) - sortValue(b);
+      return primary || String(a.id).localeCompare(String(b.id));
+    });
+    const start = (page - 1) * limit;
+    return json({ data: filtered.slice(start, start + limit), metadata: metadata(filtered.length, page, limit) });
+  }
+
   // ------------------------- PLAYERS -------------------------
-  if (route === '/players' && method === 'GET') {
+  if (route === '/players-legacy-unused' && method === 'GET') {
     const page = Math.max(1, Number(query.get('page') || 1));
     const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
     const search = (query.get('search') || '').toLowerCase();
@@ -393,9 +464,9 @@ export default defineHandler(async (event: any) => {
   }
 
   if (route === '/scores/submit' && method === 'POST') {
-    if (!hasIngestAuth(request) && !authPlayerId(request)) return json({error:'Authentication required'},401);
+    if (!hasIngestAuth(request) && !(await authPlayerId(request, sql))) return json({error:'Authentication required'},401);
     const bodyText=await request.text(); let body:any; try{body=JSON.parse(bodyText||'{}')}catch{return json({error:'Invalid JSON'},400)}
-    const playerId=String(body.playerId||authPlayerId(request)||'');
+    const playerId=String(body.playerId||await authPlayerId(request, sql)||'');
     const mapHash=String(body.mapHash||'');
     if(!playerId||!mapHash)return json({error:'playerId and mapHash are required'},400);
     const scoreValue=Math.max(0,Math.round(Number(body.score||body.modifiedScore||0))); const accuracy=Number(body.accuracy||0); const pp=Number(body.pp||0);
@@ -418,7 +489,7 @@ export default defineHandler(async (event: any) => {
 
   // ------------------------- AUTH -------------------------
   if (route === '/user/@me' && method === 'GET') {
-    const pid=authPlayerId(request); if(!pid)return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    const pid=await authPlayerId(request, sql); if(!pid)return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if(sql){const rows:any[]=await sql`SELECT * FROM players WHERE id=${pid} LIMIT 1`; return rows[0]?json(dbPlayer(rows[0])):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);}
     const p=players.find((x)=>x.id===pid); return p?json(p):json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
   }
