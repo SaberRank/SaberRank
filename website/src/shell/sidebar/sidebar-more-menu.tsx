@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, Link, useRouter } from '@tanstack/react-router';
 import { ChevronRight, Cookie, Copyright, Loader2, LogOut, Scale, Settings, Shield, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'use-intl';
@@ -31,7 +30,6 @@ type SidebarMoreMenuProps = {
 export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: SidebarMoreMenuProps) {
    const { user } = useAuth();
    const router = useRouter();
-   const queryClient = useQueryClient();
    const [mounted, setMounted] = useState(false);
    const [open, setOpen] = useState(false);
    const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -49,7 +47,6 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
    function handleLogout() {
       startTransition(async () => {
          await logout();
-         queryClient.removeQueries({ queryKey: ['root-shell'] });
          await router.invalidate();
       });
    }

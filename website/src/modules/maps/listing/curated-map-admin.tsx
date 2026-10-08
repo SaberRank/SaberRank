@@ -129,7 +129,7 @@ export function CuratedMapAdmin() {
                <DialogHeader>
                   <DialogTitle>SnoreSaber Map Ranking</DialogTitle>
                   <DialogDescription>
-                     Paste one of the six curated BeatSaver links, load its difficulties, then enter your own SnoreSaber star value for each difficulty.
+                     Paste any BeatSaver map link, load its difficulties, then enter your SnoreSaber star value for each difficulty. You can add as many maps as you want.
                   </DialogDescription>
                </DialogHeader>
 
@@ -140,7 +140,7 @@ export function CuratedMapAdmin() {
                         <Input
                            id="beatsaver-admin-link"
                            className="mt-1.5"
-                           placeholder="https://beatsaver.com/maps/4fdd2"
+                           placeholder="https://beatsaver.com/maps/<key>"
                            value={link}
                            onChange={(event) => setLink(event.target.value)}
                            disabled={loading || saving}

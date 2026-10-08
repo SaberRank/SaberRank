@@ -2,7 +2,6 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 import { defineHandler } from 'nitro';
 import { db } from '../../utils/db';
 
-import { CURATED_BEATSAVER_MAP_KEYS } from "../../beatsaver-curated";
 const SECRET = process.env.SESSION_SECRET || 'snoresaber-development-secret-change-me';
 const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
 const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
@@ -10,11 +9,6 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
 const EMAIL_CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const NOW = () => new Date().toISOString();
-
-// SnoreSaber's initial curated map set. These are BeatSaver map keys, not
-// SnoreSaber's internal numeric map IDs. Keep this list as the source of truth
-// for the public map catalog until more maps are intentionally added.
-const PUBLIC_BEATSAVER_MAP_KEYS = new Set(['25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10']);
 
 // Development/demo data is deliberately kept as a fallback. Once DATABASE_URL is
 // configured, every read/write below uses PostgreSQL instead of these arrays.
@@ -1342,14 +1336,14 @@ export default defineHandler(async (event: any) => {
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));
       let filtered = dataRows.filter(({r,lbs}) => {
-        // Every map explicitly added to SnoreSaber is visible in the public Maps page.
-        // The six-map set is only used by the curated/sync tooling, not as a display filter.
-        const curated = true;
-        const ranked = lbs.some((l) => String(l.status || '').toUpperCase() === 'RANKED');
+        // The public catalog is database-driven: every non-AI map is eligible.
+        // Status is controlled by the requested status filter, so an admin can add
+        // and rank any number of BeatSaver maps without changing source code.
         const ai = Boolean(r.is_ai);
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
-        return curated && !ai && q && stars >= minStars && stars <= maxStars;
+        const statusMatches = requestedStatuses.length === 0 || lbs.some((l) => requestedStatuses.includes(String(l.status || '').toUpperCase()));
+        return !ai && q && statusMatches && stars >= minStars && stars <= maxStars;
       });
       const sortBy = query.get('sortBy') || 'trending';
       const sortDirection = query.get('sortDirection') === 'asc' ? 1 : -1;
@@ -1364,12 +1358,10 @@ export default defineHandler(async (event: any) => {
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
     let filtered = maps.filter((m) => {
-      // Fallback data follows the same rule: any map added to SnoreSaber can be displayed.
-      const curated = true;
-      const ranked = (m.leaderboards || []).some((l:any) => String(l.realm?.leaderboardStatus || '').toUpperCase() === 'RANKED');
       const q = !search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search);
       const stars = Math.max(0,...(m.leaderboards || []).map((l:any)=>Number(l.realm?.stars||0)));
-      return curated && ranked && q && stars >= minStars && stars <= maxStars;
+      const statusMatches = requestedStatuses.length === 0 || (m.leaderboards || []).some((l:any) => requestedStatuses.includes(String(l.realm?.leaderboardStatus || '').toUpperCase()));
+      return q && statusMatches && stars >= minStars && stars <= maxStars;
     });
     return json({ data:filtered.slice((page-1)*limit,(page-1)*limit+limit), metadata:metadata(filtered.length,page,limit) });
   }
@@ -1534,10 +1526,8 @@ export default defineHandler(async (event: any) => {
     if (!key) {
       return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Enter a BeatSaver map link or map key' }, 400);
     }
-    // The public Maps catalog remains restricted to SnoreSaber's curated six maps,
-    // but administrators must be able to load and rank ANY BeatSaver map.
-    // Do not apply PUBLIC_BEATSAVER_MAP_KEYS here: this endpoint is the admin
-    // map-ingestion/ranking workflow, not the public catalog filter.
+    // Administrators can load and rank ANY BeatSaver map. Ranked maps are stored
+    // in Neon and immediately become part of the public SnoreSaber catalog.
 
     const preview = body.preview === true;
     const rankings = Array.isArray(body.rankings) ? body.rankings : [];
