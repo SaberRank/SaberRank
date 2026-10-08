@@ -44,7 +44,7 @@ function player(id: string, name: string, country: string, rank: number, pp: num
       totalPlayedLeaderboards: 5, totalPlayedRankedLeaderboards: 5, totalSubmittedPlays: 1,
       totalReplayViews: 0, averageAccuracy: 97.1, weightedAverageAccuracy: 97.1,
       completionAccuracy: 97.1, device: { hmd: 'Quest 2', controllerLeft: 'Touch', controllerRight: 'Touch' }
-    }, bio: null, vanity: name.toLowerCase(),
+    }, bio: null, vanity: null,
     profileCustomization: { backgroundImage: null, backgroundImageVersion: null, accentColor: '#f06ab7', accentForegroundColor: '#160d16', accentForegroundActiveColor: '#ffffff', supporterNameColorEnabled: false, badgeOrder: null, badgeComments: null, statOrder: null, enabledStatIds: null, chartMetricIds: null, sectionOrder: null },
     createdAt: NOW(), lastSeenAt: NOW(), badges: [], relationships: { following: [], mutuals: [] }
   };
@@ -316,55 +316,14 @@ function beatSaverGameMode(value: unknown) {
   return text.replace(/[^a-zA-Z0-9]+/g, '');
 }
 
-async function syncBeatSaverMaps(sql: any, pageSize = 100) {
-  if (!sql) return { synced: 0, source: 'fallback' };
-  const response = await fetch(`${BEATSAVER_API}/maps/latest?pageSize=${Math.min(100, Math.max(1, pageSize))}`, {
-    headers: { 'accept': 'application/json', 'user-agent': 'SnoreSaber/2.0 BeatSaver sync' },
-    cache: 'no-store'
-  });
-  if (!response.ok) throw new Error(`BeatSaver returned HTTP ${response.status}`);
-  const payload: any = await response.json();
-  const docs = Array.isArray(payload?.docs) ? payload.docs : [];
-  let synced = 0;
+async function syncBeatSaverMaps(sql: any, options: { maxPages?: number; forceBootstrap?: boolean } = {}) {
+  if (!sql) return { synced: 0, source: 'fallback', complete: true };
 
-  for (const map of docs) {
-    const version = Array.isArray(map.versions)
-      ? (map.versions.find((v: any) => String(v.state || '').toLowerCase() === 'published') || map.versions[0])
-      : null;
-    const hash = String(version?.hash || '').trim();
-    const bsid = String(map.id || version?.key || '').trim();
-    if (!hash || !bsid) continue;
-
-    const metadata = map.metadata || {};
-    const coverUrl = String(version?.coverURL || map.coverURL || `https://eu.cdn.beatsaver.com/${hash}.jpg`).trim();
-    const status = map.ranked ? 'RANKED' : map.qualified ? 'QUALIFIED' : 'UNRANKED';
-    const inserted: any[] = await sql`
-      INSERT INTO maps (hash, bsid, song_name, song_sub_name, song_author_name, level_author_name, bpm, cover_url, verified, created_at)
-      VALUES (${hash}, ${bsid}, ${String(metadata.songName || map.name || 'Unknown')}, ${String(metadata.songSubName || '')}, ${String(metadata.songAuthorName || '')}, ${String(metadata.levelAuthorName || map.uploader?.name || '')}, ${Number(metadata.bpm || 0)}, ${coverUrl}, ${Boolean(map.verified || map.uploader?.verifiedMapper)}, COALESCE(${map.uploaded ? new Date(map.uploaded).toISOString() : null}::timestamptz, now()))
-      ON CONFLICT (hash) DO UPDATE SET
-        bsid=EXCLUDED.bsid, song_name=EXCLUDED.song_name, song_sub_name=EXCLUDED.song_sub_name,
-        song_author_name=EXCLUDED.song_author_name, level_author_name=EXCLUDED.level_author_name,
-        bpm=EXCLUDED.bpm, cover_url=EXCLUDED.cover_url, verified=EXCLUDED.verified
-      RETURNING id`;
-    const mapId = Number(inserted[0]?.id);
-    if (!mapId) continue;
-
-    const diffs = Array.isArray(version?.diffs) ? version.diffs : [];
-    for (const diff of diffs) {
-      const difficulty = beatSaverDifficultyValue(diff.difficulty);
-      if (!difficulty) continue;
-      const gameMode = beatSaverGameMode(diff.characteristic);
-      const rawDifficulty = String(diff.difficulty || 'ExpertPlus');
-      const stars = Number(diff.stars ?? diff.starsBeatLeader ?? 0);
-      await sql`
-        INSERT INTO leaderboards (map_id, difficulty, game_mode, raw_difficulty, max_score, stars, status, ranked_at)
-        VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${Number(diff.maxScore || 1000000)}, ${Number.isFinite(stars) ? stars : 0}, ${status}, ${status === 'RANKED' ? new Date().toISOString() : null})
-        ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET
-          raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score, stars=EXCLUDED.stars,
-          status=EXCLUDED.status, ranked_at=EXCLUDED.ranked_at`;
-    }
-    synced++;
-  }
+  // BeatSaver's /maps/latest endpoint is cursor-paginated. We persist the cursor in
+  // Neon so the initial import can walk ALL historical maps over multiple serverless
+  // invocations, while normal syncs only fetch maps uploaded since the last sync.
+  const pageSize = 100;
+  const maxPages = Math.max(1, Math.min(50, Number(options.maxPages || 50)));
 
   await sql`
     CREATE TABLE IF NOT EXISTS beatsaver_sync_state (
@@ -372,11 +331,173 @@ async function syncBeatSaverMaps(sql: any, pageSize = 100) {
       last_sync_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       maps_synced INTEGER NOT NULL DEFAULT 0
     )`;
-  await sql`
-    INSERT INTO beatsaver_sync_state (id, last_sync_at, maps_synced) VALUES (1, now(), ${synced})
-    ON CONFLICT (id) DO UPDATE SET last_sync_at=now(), maps_synced=${synced}`;
+  await sql`ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_before TIMESTAMPTZ`;
+  await sql`ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_complete BOOLEAN NOT NULL DEFAULT false`;
+  await sql`ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS newest_uploaded_at TIMESTAMPTZ`;
 
-  return { synced, source: 'beatsaver' };
+  const stateRows: any[] = await sql`SELECT * FROM beatsaver_sync_state WHERE id=1 LIMIT 1`;
+  let state = stateRows[0] || null;
+  if (!state) {
+    const inserted: any[] = await sql`
+      INSERT INTO beatsaver_sync_state (id, last_sync_at, maps_synced, bootstrap_complete)
+      VALUES (1, now(), 0, false)
+      RETURNING *`;
+    state = inserted[0];
+  }
+
+  // If an admin explicitly asks for a bootstrap, restart/continue the historical walk.
+  if (options.forceBootstrap && state.bootstrap_complete) {
+    await sql`
+      UPDATE beatsaver_sync_state
+      SET bootstrap_before=NULL, bootstrap_complete=false, newest_uploaded_at=NULL
+      WHERE id=1`;
+    state = { ...state, bootstrap_before: null, bootstrap_complete: false, newest_uploaded_at: null };
+  }
+
+  const bootstrapping = !Boolean(state.bootstrap_complete);
+  let before: string | null = state.bootstrap_before ? new Date(state.bootstrap_before).toISOString() : null;
+  const cutoff = state.newest_uploaded_at ? new Date(state.newest_uploaded_at) : null;
+  let synced = 0;
+  let fetched = 0;
+  let pages = 0;
+  let complete = !bootstrapping;
+  let newestSeen: Date | null = cutoff;
+
+  while (pages < maxPages) {
+    const params = new URLSearchParams({ pageSize: String(pageSize) });
+    if (before) params.set('before', before);
+
+    const response = await fetch(`${BEATSAVER_API}/maps/latest?${params.toString()}`, {
+      headers: { 'accept': 'application/json', 'user-agent': 'SnoreSaber/2.0 BeatSaver sync' },
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error(`BeatSaver returned HTTP ${response.status}`);
+    const payload: any = await response.json();
+    const docs = Array.isArray(payload?.docs) ? payload.docs : [];
+    if (docs.length === 0) {
+      complete = true;
+      break;
+    }
+
+    pages++;
+    fetched += docs.length;
+
+    for (const map of docs) {
+      const uploaded = map.uploaded ? new Date(map.uploaded) : null;
+      if (uploaded && !Number.isNaN(uploaded.getTime())) {
+        if (!newestSeen || uploaded > newestSeen) newestSeen = uploaded;
+      }
+
+      // During incremental sync, the latest page can contain a few maps we already
+      // have because of cursor/timestamp boundaries. Re-processing them is harmless,
+      // but once the whole page is at/before our saved cutoff we are done.
+      if (!bootstrapping && cutoff && uploaded && uploaded < cutoff) continue;
+
+      const version = Array.isArray(map.versions)
+        ? (map.versions.find((v: any) => String(v.state || '').toLowerCase() === 'published') || map.versions[0])
+        : null;
+      const hash = String(version?.hash || '').trim();
+      const bsid = String(map.id || version?.key || '').trim();
+      if (!hash || !bsid) continue;
+
+      const metadata = map.metadata || {};
+      const coverUrl = String(version?.coverURL || map.coverURL || `https://eu.cdn.beatsaver.com/${hash}.jpg`).trim();
+      const status = map.ranked ? 'RANKED' : map.qualified ? 'QUALIFIED' : 'UNRANKED';
+      const inserted: any[] = await sql`
+        INSERT INTO maps (hash, bsid, song_name, song_sub_name, song_author_name, level_author_name, bpm, cover_url, verified, created_at)
+        VALUES (${hash}, ${bsid}, ${String(metadata.songName || map.name || 'Unknown')}, ${String(metadata.songSubName || '')}, ${String(metadata.songAuthorName || '')}, ${String(metadata.levelAuthorName || map.uploader?.name || '')}, ${Number(metadata.bpm || 0)}, ${coverUrl}, ${Boolean(map.verified || map.uploader?.verifiedMapper)}, COALESCE(${map.uploaded ? new Date(map.uploaded).toISOString() : null}::timestamptz, now()))
+        ON CONFLICT (hash) DO UPDATE SET
+          bsid=EXCLUDED.bsid, song_name=EXCLUDED.song_name, song_sub_name=EXCLUDED.song_sub_name,
+          song_author_name=EXCLUDED.song_author_name, level_author_name=EXCLUDED.level_author_name,
+          bpm=EXCLUDED.bpm, cover_url=EXCLUDED.cover_url, verified=EXCLUDED.verified
+        RETURNING id`;
+      const mapId = Number(inserted[0]?.id);
+      if (!mapId) continue;
+
+      const diffs = Array.isArray(version?.diffs) ? version.diffs : [];
+      for (const diff of diffs) {
+        const difficulty = beatSaverDifficultyValue(diff.difficulty);
+        if (!difficulty) continue;
+        const gameMode = beatSaverGameMode(diff.characteristic);
+        const rawDifficulty = String(diff.difficulty || 'ExpertPlus');
+        const stars = Number(diff.stars ?? diff.starsBeatLeader ?? 0);
+        await sql`
+          INSERT INTO leaderboards (map_id, difficulty, game_mode, raw_difficulty, max_score, stars, status, ranked_at)
+          VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${Number(diff.maxScore || 1000000)}, ${Number.isFinite(stars) ? stars : 0}, ${status}, ${status === 'RANKED' ? new Date().toISOString() : null})
+          ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET
+            raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score, stars=EXCLUDED.stars,
+            status=EXCLUDED.status, ranked_at=EXCLUDED.ranked_at`;
+      }
+      synced++;
+    }
+
+    const oldestUploaded = docs[docs.length - 1]?.uploaded;
+    if (!oldestUploaded) {
+      complete = true;
+      break;
+    }
+    const nextBefore = new Date(oldestUploaded);
+    if (Number.isNaN(nextBefore.getTime())) {
+      complete = true;
+      break;
+    }
+    const nextBeforeValue = nextBefore.toISOString();
+    if (nextBeforeValue === before) {
+      complete = true;
+      break;
+    }
+
+    if (!bootstrapping && cutoff) {
+      // We have reached the previous newest upload boundary. Keep the boundary
+      // inclusive for one page so maps sharing the same timestamp are not missed.
+      const allAtOrBeforeCutoff = docs.every((doc: any) => {
+        const d = doc.uploaded ? new Date(doc.uploaded) : null;
+        return !d || Number.isNaN(d.getTime()) || d <= cutoff;
+      });
+      if (allAtOrBeforeCutoff) {
+        complete = true;
+        break;
+      }
+    }
+
+    before = nextBeforeValue;
+    if (docs.length < pageSize) {
+      complete = true;
+      break;
+    }
+  }
+
+  if (bootstrapping) {
+    if (complete) {
+      await sql`
+        UPDATE beatsaver_sync_state
+        SET last_sync_at=now(), maps_synced=${synced}, bootstrap_before=NULL,
+            bootstrap_complete=true, newest_uploaded_at=${newestSeen ? newestSeen.toISOString() : null}
+        WHERE id=1`;
+    } else {
+      await sql`
+        UPDATE beatsaver_sync_state
+        SET last_sync_at=now(), maps_synced=${synced}, bootstrap_before=${before}
+        WHERE id=1`;
+    }
+  } else {
+    await sql`
+      UPDATE beatsaver_sync_state
+      SET last_sync_at=now(), maps_synced=${synced}, newest_uploaded_at=${newestSeen ? newestSeen.toISOString() : (state.newest_uploaded_at || null)}
+      WHERE id=1`;
+  }
+
+  return {
+    synced,
+    fetched,
+    pages,
+    source: 'beatsaver',
+    bootstrapping,
+    complete: bootstrapping ? complete : true,
+    message: bootstrapping
+      ? (complete ? 'Initial BeatSaver import is complete; future syncs only fetch new maps.' : 'Initial BeatSaver import is continuing from the saved cursor.')
+      : 'Incremental BeatSaver sync complete; only new maps were checked.'
+  };
 }
 
 async function ensureModerationTables(sql: any) {
@@ -624,7 +745,9 @@ function dbPlayer(r: any) {
     playerId: publicId,
     steamId: r.steam_id || null, name: r.name, playerNameInGame: r.name, role: r.role ?? null, avatar: r.avatar || '', avatarVersion: 1,
     bio: r.bio ?? null, country: r.country || 'XX', permissions: Number(r.permissions || 0), banned: Boolean(r.banned), silenced: Boolean(r.silenced), inactive: false,
-    vanity: r.vanity || r.name?.toLowerCase(), publicLivePresenceOptOut: false,
+    // Vanity is optional. Never synthesize one from the display name: doing so makes every
+    // player appear to have a vanity URL even when they have not enabled one in settings.
+    vanity: r.vanity || null, publicLivePresenceOptOut: false,
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank: Number(r.rank || 0), countryRank: Number(r.country_rank || 0), rankChange: 0,
       totalPP: Number(r.pp || 0), plusOnePP: Number(r.pp || 0), totalScore: String(r.total_score || 0), totalRankedScore: String(r.total_ranked_score || 0),
@@ -651,7 +774,10 @@ function dbMap(r: any, lbs: any[] = []) {
     id: Number(r.id), hash: r.hash, bsid: r.bsid ?? null, songName: r.song_name, songSubName: r.song_sub_name || '',
     songAuthorName: r.song_author_name || '', levelAuthorName: r.level_author_name || '', bpm: Number(r.bpm || 0),
     coverUrl: r.cover_url || '/assets/snoresaber-icon.png', verified: Boolean(r.verified), totalScores: Number(r.total_scores || 0),
-    dailyScores: Number(r.daily_scores || 0), createdAt: new Date(r.created_at).toISOString(), leaderboards: lbs
+    dailyScores: Number(r.daily_scores || 0), createdAt: new Date(r.created_at).toISOString(), leaderboards: lbs,
+    // Re-upload data is not currently mirrored in the local schema. The frontend expects
+    // this collection to always exist because it builds the version selector with flatMap().
+    reuploadVersions: []
   };
 }
 
@@ -1080,7 +1206,7 @@ export default defineHandler(async (event: any) => {
     const adminAuthorized = viewerId ? await isAdmin(sql, viewerId) : false;
     if (!cronAuthorized && !adminAuthorized) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Map sync requires admin access'},401);
     try {
-      const result = await syncBeatSaverMaps(sql, Number(query.get('limit') || 100));
+      const result = await syncBeatSaverMaps(sql, { maxPages: Number(query.get('pages') || 50), forceBootstrap: query.get('bootstrap') === '1' });
       return json(result);
     } catch (error) {
       console.error('[SnoreSaber] BeatSaver sync failed', error);
@@ -1090,13 +1216,12 @@ export default defineHandler(async (event: any) => {
   if (route === '/maps' && method === 'GET') {
     const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
     const search = (query.get('search') || '').toLowerCase(); const verified = query.get('verified');
-    const requestedStatuses = (query.get('status') || '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean);
+    const requestedStatuses = [...new Set(query.getAll('status').flatMap((value) => value.split(',')).map((x) => x.trim().toUpperCase()).filter(Boolean))];
     const minStars = Number(query.get('minStars') || 0); const maxStars = Number(query.get('maxStars') || 99);
     if (sql) {
-      const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM maps`;
-      if (Number(countRows[0]?.count || 0) < 25 || query.get('sync') === '1') {
-        try { await syncBeatSaverMaps(sql, 100); } catch (error) { console.error('[SnoreSaber] BeatSaver sync failed', error); }
-      }
+      // Maps are served entirely from Neon. BeatSaver ingestion happens through
+      // /maps/sync (Vercel cron/admin), so browsing maps never waits on BeatSaver
+      // and never re-imports the entire catalog.
       const rows: any[] = await sql`SELECT * FROM maps ORDER BY created_at DESC`;
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));

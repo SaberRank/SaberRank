@@ -186,3 +186,6 @@ CREATE TABLE IF NOT EXISTS beatsaver_sync_state (
   last_sync_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   maps_synced INTEGER NOT NULL DEFAULT 0
 );
+ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_before TIMESTAMPTZ;
+ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_complete BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS newest_uploaded_at TIMESTAMPTZ;
