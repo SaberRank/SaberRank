@@ -78,7 +78,6 @@
     "grapesjs-ui-suggest-classes": "^1.0.19",
     "sirv-cli": "^2.0.2",
     "suneditor": "^2.47.0",
-    "svelte-chartjs": "4.0.1",
     "svelte-confetti": "^2.1.2",
     "svelte-select": "^4.4.7",
     "svrollbar": "^0.12.0",

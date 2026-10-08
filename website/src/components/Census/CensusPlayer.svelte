@@ -3,7 +3,7 @@
 	import {Chart as ChartJS, Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale} from 'chart.js';
 
 	ChartJS.register(Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale);
-	import {Bar} from 'svelte-chartjs';
+	import Chart from '../Charts/Chart.svelte';
 	import DashedLine from './DashedLine.svelte';
 
 	export let censusData;
@@ -527,7 +527,7 @@
 		</div>
 		<span><b>Model player: </b><b style="color: var(--ppColour)">{modelPp.toFixed(2)}PP</b></span>
 		<div class="chart-container">
-			<Bar
+			<Chart type="bar"
 				options={{
 					responsive: true,
 					maintainAspectRatio: false,

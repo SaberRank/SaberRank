@@ -2,7 +2,7 @@
 	import {Chart as ChartJS, Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale} from 'chart.js';
 
 	ChartJS.register(Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale);
-	import {Pie, Bar} from 'svelte-chartjs';
+	import Chart from '../Charts/Chart.svelte';
 	import Select from '../Settings/Select.svelte';
 
 	export let group;
@@ -58,7 +58,7 @@
 		<div class="chart-and-select-container">
 			<div class="chart-container">
 				{#if chartType == 'Pie'}
-					<Pie
+					<Chart type="pie"
 						options={{
 							responsive: true,
 							maintainAspectRatio: false,
@@ -85,7 +85,7 @@
 						}}
 						data={getCategoryData(category)} />
 				{:else}
-					<Bar
+					<Chart type="bar"
 						options={{
 							responsive: true,
 							maintainAspectRatio: false,
@@ -126,7 +126,7 @@
 			<div class="effects-container">
 				<span>How it correlates with performance?</span>
 				<div class="chart-container">
-					<Bar
+					<Chart type="bar"
 						options={{
 							responsive: true,
 							maintainAspectRatio: false,
