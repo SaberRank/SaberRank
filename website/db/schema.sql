@@ -2,6 +2,8 @@
 CREATE TABLE IF NOT EXISTS players (
   id TEXT PRIMARY KEY,
   steam_id TEXT UNIQUE,
+  login_email TEXT,
+  password_hash TEXT,
   name TEXT NOT NULL,
   country TEXT NOT NULL DEFAULT 'XX',
   avatar TEXT NOT NULL DEFAULT '',
@@ -190,3 +192,5 @@ CREATE TABLE IF NOT EXISTS beatsaver_sync_state (
 ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_before TIMESTAMPTZ;
 ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_complete BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS newest_uploaded_at TIMESTAMPTZ;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_players_login_email ON players (lower(login_email)) WHERE login_email IS NOT NULL;

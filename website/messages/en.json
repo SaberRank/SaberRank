@@ -364,6 +364,8 @@
       "returningPlayerDescription": "<strong>Already have SnoreSaber Scores?</strong> The cleanest way to add email / password sign-in to your account is by signing in <signInLink>here</signInLink> with your existing account and configuring it in Settings",
       "newPlayerLead": "New to SnoreSaber?",
       "newPlayerDescription": "You can create an account here",
+      "directDescription": "Create a SnoreSaber account with your email, display name, and password.",
+      "signInExisting": "Already have an account? Sign in",
       "sentToast": "Check your email",
       "sentDescription": "We've sent you a code to finish creating your account",
       "displayNameLabel": "Display name",

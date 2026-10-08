@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { defineHandler } from 'nitro';
 import { db } from '../../utils/db';
 
@@ -2219,7 +2219,88 @@ export default defineHandler(async (event: any) => {
     return json(await getProfileCustomization(sql,pid));
   }
 
+  async function ensurePasswordAuthTables(sql: any) {
+    if (!sql) return;
+    await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS login_email TEXT`;
+    await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_login_email ON players (lower(login_email)) WHERE login_email IS NOT NULL`;
+  }
+
+  function normalizeLoginEmail(value: unknown) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function passwordHash(password: string) {
+    const salt = randomBytes(16).toString('hex');
+    const hash = scryptSync(password, salt, 64).toString('hex');
+    return `scrypt:${salt}:${hash}`;
+  }
+
+  function passwordMatches(password: string, encoded: string | null | undefined) {
+    if (!encoded?.startsWith('scrypt:')) return false;
+    const [, salt, expectedHex] = encoded.split(':');
+    if (!salt || !expectedHex) return false;
+    try {
+      const actual = scryptSync(password, salt, 64);
+      const expected = Buffer.from(expectedHex, 'hex');
+      return expected.length === actual.length && timingSafeEqual(actual, expected);
+    } catch {
+      return false;
+    }
+  }
+
+  async function passwordPlayer(sql: any, email: string, password: string) {
+    await ensurePasswordAuthTables(sql);
+    const rows: any[] = await sql`SELECT * FROM players WHERE lower(login_email)=lower(${email}) LIMIT 1`;
+    const p = rows[0];
+    if (!p || !passwordMatches(password, p.password_hash)) return null;
+    await sql`UPDATE players SET last_seen_at=now() WHERE id=${p.id}`;
+    return String(p.id);
+  }
+
   // ------------------------- AUTH -------------------------
+  if (route === '/auth/password/login' && method === 'POST') {
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const email = normalizeLoginEmail(body.email);
+    const password = String(body.password || '');
+    if (!email || !email.includes('@') || password.length < 1) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Email and password are required'},400);
+    if (!sql) return json({status:'support-required'});
+    const playerId = await passwordPlayer(sql, email, password);
+    if (!playerId) return json({statusCode:401,error:'Unauthorized',code:'INVALID_CREDENTIALS',message:'Incorrect email or password'},401);
+    return json({status:'authenticated',token:tokenFor(playerId),playerId});
+  }
+
+  if (route === '/auth/password/signup' && method === 'POST') {
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const email = normalizeLoginEmail(body.email);
+    const password = String(body.password || '');
+    const displayName = String(body.displayName || '').trim().slice(0,64);
+    if (!email || !email.includes('@')) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'A valid email is required'},400);
+    if (password.length < 10 || password.length > 128) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Password must be 10-128 characters'},400);
+    if (displayName.length < 2) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Display name must be at least 2 characters'},400);
+    if (!sql) return json({status:'support-required'});
+    await ensurePasswordAuthTables(sql);
+    const existing: any[] = await sql`SELECT id FROM players WHERE lower(login_email)=lower(${email}) LIMIT 1`;
+    if (existing[0]) return json({statusCode:409,error:'Conflict',code:'EMAIL_IN_USE',message:'An account already exists for this email'},409);
+    const duplicateName: any[] = await sql`SELECT id FROM players WHERE lower(name)=lower(${displayName}) LIMIT 1`;
+    if (duplicateName[0]) return json({statusCode:409,error:'Conflict',code:'NAME_IN_USE',message:'That display name is already in use'},409);
+    const id = randomBytes(16).toString('hex');
+    const hash = passwordHash(password);
+    const created: any[] = await sql`
+      INSERT INTO players (id,name,country,avatar,login_email,password_hash)
+      VALUES (${id},${displayName},'XX','',${email},${hash})
+      RETURNING id`;
+    const playerId = String(created[0].id);
+    await ensureAccountConnectionsTable(sql);
+    await sql`
+      INSERT INTO account_connections (player_id,provider,provider_account_id,source,is_primary)
+      VALUES (${playerId},'SNORESABER_EMAIL',${email},'SNORESABER_PASSWORD',true)
+      ON CONFLICT (player_id,provider) DO UPDATE SET provider_account_id=EXCLUDED.provider_account_id`;
+    return json({status:'authenticated',token:tokenFor(playerId),playerId});
+  }
+
   if (route === '/user/@me' && method === 'GET') {
     const pid=await authPlayerId(request, sql); if(!pid)return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
     if(sql){const rows:any[]=await sql`SELECT * FROM players WHERE id=${pid} LIMIT 1`; if(!rows[0]) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401); const p=dbPlayer(rows[0]); const profileCustomization=await getProfileCustomization(sql,pid); const pinnedScores=await getPinnedScores(sql,pid); const badges=await getPlayerBadges(sql,pid); const relationships=await userRelationships(sql,pid); return json({...p,profileCustomization,pinnedScores,badges,relationships});}

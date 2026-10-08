@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { setAuthCookie } from '@/modules/auth/actions/session.server';
 import { getClientRequestHeaders } from '@/shared/api/client-request.server';
 import type { RequestParams } from '@/shared/api/generated/Api';
+import { env } from '@/env';
 import type { PasswordAuthControllerGetPasswordCredentialResponse } from '@/shared/api/generated/ApiParams';
 import { api } from '@/shared/api/server-api';
 import { actionApiData, actionSuccess, type ActionResult } from '@/shared/result/action';
@@ -14,6 +15,22 @@ type CredentialAuthResponse = Awaited<ReturnType<typeof api.auth.passwordAuthCon
 
 function requestOptions(): RequestParams {
    return { cache: 'no-store', headers: getClientRequestHeaders() };
+}
+
+async function localPasswordAuth(path: string, data: Record<string, string>): Promise<ActionResult<CredentialAuthResponse>> {
+   try {
+      const response = await fetch(`${env.API_URL.replace(/\/$/, '')}/api/v2${path}`, {
+         method: 'POST',
+         headers: { 'content-type': 'application/json', ...getClientRequestHeaders() },
+         body: JSON.stringify(data),
+         cache: 'no-store'
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return { ok: false, error: String(payload?.message || 'Authentication failed') };
+      return { ok: true, value: payload as CredentialAuthResponse };
+   } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'Authentication failed' };
+   }
 }
 
 function finishAuth(result: ActionResult<CredentialAuthResponse>): ActionResult<CredentialAuthActionValue> {
@@ -29,7 +46,7 @@ function finishAuth(result: ActionResult<CredentialAuthResponse>): ActionResult<
 
 const startSignupFn = createServerFn({ method: 'POST' })
    .validator((email: string) => email)
-   .handler(({ data: email }) => actionApiData(api.auth.passwordAuthControllerStartSignup({ email }, requestOptions())));
+   .handler(({ data: email }) => actionSuccess({ challengeId: 'direct', expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), resendAvailableAt: new Date().toISOString(), email }));
 
 export async function startSignup(email: string) {
    return startSignupFn({ data: email });
@@ -37,7 +54,7 @@ export async function startSignup(email: string) {
 
 const completeSignupFn = createServerFn({ method: 'POST' })
    .validator((data: { email: string; challengeId: string; code: string; password: string; displayName: string }) => data)
-   .handler(async ({ data }) => finishAuth(await actionApiData(api.auth.passwordAuthControllerCompleteSignup(data, requestOptions()))));
+   .handler(async ({ data }) => finishAuth(await localPasswordAuth('/auth/password/signup', { email: data.email, password: data.password, displayName: data.displayName })));
 
 export async function completeSignup(data: { email: string; challengeId: string; code: string; password: string; displayName: string }) {
    return completeSignupFn({ data });
@@ -45,7 +62,7 @@ export async function completeSignup(data: { email: string; challengeId: string;
 
 const loginWithPasswordFn = createServerFn({ method: 'POST' })
    .validator((data: { email: string; password: string }) => data)
-   .handler(async ({ data }) => finishAuth(await actionApiData(api.auth.passwordAuthControllerLoginWithPassword(data, requestOptions()))));
+   .handler(async ({ data }) => finishAuth(await localPasswordAuth('/auth/password/login', data)));
 
 export async function loginWithPassword(data: { email: string; password: string }) {
    return loginWithPasswordFn({ data });
