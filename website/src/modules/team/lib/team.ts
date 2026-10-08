@@ -1,7 +1,6 @@
+import { createServerFn } from '@tanstack/react-start';
 
-import '@tanstack/react-start/server-only';
-
-import { db } from '@/server/utils/db';
+import { db } from '../../../../server/utils/db';
 
 export type TeamMember = {
    id: string;
@@ -29,14 +28,21 @@ function fallbackRole(permissions: number) {
       [8192, 'RTR'],
       [1, 'Replay Team']
    ];
+
    return roles.find(([bit]) => (permissions & bit) !== 0)?.[1] ?? 'SnoreSaber Staff';
 }
 
-export async function fetchTeam(): Promise<{ ok: true; value: TeamData }> {
+const getTeamData = createServerFn({ method: 'GET' }).handler(async (): Promise<TeamData> => {
    const sql = db();
-   if (!sql) return { ok: true, value: { members: [] } };
+   if (!sql) return { members: [] };
 
-   const rows: any[] = await sql`
+   const rows: Array<{
+      id: string | number;
+      name: string | null;
+      avatar: string | null;
+      role: string | null;
+      permissions: number | null;
+   }> = await sql`
       SELECT id, name, avatar, role, permissions
       FROM players
       WHERE (COALESCE(permissions, 0) & ${STAFF_MASK}) <> 0
@@ -45,14 +51,15 @@ export async function fetchTeam(): Promise<{ ok: true; value: TeamData }> {
    `;
 
    return {
-      ok: true,
-      value: {
-         members: rows.map((row) => ({
-            id: String(row.id),
-            name: String(row.name || row.id),
-            role: String(row.role || fallbackRole(Number(row.permissions || 0))),
-            avatar: String(row.avatar || '/assets/snoresaber-icon.png')
-         }))
-      }
+      members: rows.map((row) => ({
+         id: String(row.id),
+         name: String(row.name || row.id),
+         role: String(row.role || fallbackRole(Number(row.permissions || 0))),
+         avatar: String(row.avatar || '/assets/snoresaber-icon.png')
+      }))
    };
+});
+
+export async function fetchTeam(): Promise<{ ok: true; value: TeamData }> {
+   return { ok: true, value: await getTeamData() };
 }
