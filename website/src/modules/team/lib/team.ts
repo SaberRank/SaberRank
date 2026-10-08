@@ -1,12 +1,6 @@
 import '@tanstack/react-start/server-only';
 
-import { TaggedError } from 'better-result';
 import * as z from 'zod';
-
-import { createGithubJsonFetcher } from '@/shared/result/github';
-
-const GITHUB_REPO = 'SnoreSaber/snoresaber-team';
-const TEAM_FILE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/team.json`;
 
 const nullableString = z.string().nullable().optional();
 
@@ -37,28 +31,45 @@ const teamSchema = z.object({
    TeamMembers: teamMembersSchema
 });
 
-class TeamFetchError extends TaggedError('TeamFetchError')<{
-   message: string;
-   status: number | null;
-   cause: unknown;
-}>() {}
-
-const fetchTeamJson = createGithubJsonFetcher(
-   TEAM_FILE_URL,
-   teamSchema,
-   ({ message, status, cause }) => new TeamFetchError({ message, status, cause }),
-   'github team fetch'
-);
+type TeamData = z.infer<typeof teamSchema>;
 
 const LOCAL_TEAM: TeamData = {
    TeamMembers: {
-      Backend: [{ Name: 'YawningSylveon', ProfilePicture: '/assets/snoresaber-icon.png', Discord: null, GitHub: 'SaberRank/SaberRank', Twitch: null, Twitter: null, YouTube: null }],
-      Frontend: [{ Name: 'SnoreSaber Contributors', ProfilePicture: '/assets/snoresaber-icon.png', Discord: null, GitHub: 'SaberRank/SaberRank', Twitch: null, Twitter: null, YouTube: null }],
-      Mod: [], PPv3: [], Admin: [], NAT: [], RT: [], QAT: [], CAT: [], CCT: []
+      Backend: [
+         {
+            Name: 'YawningSylveon',
+            ProfilePicture: '/assets/snoresaber-icon.png',
+            Discord: null,
+            GitHub: 'SaberRank/SaberRank',
+            Twitch: null,
+            Twitter: null,
+            YouTube: null
+         }
+      ],
+      Frontend: [
+         {
+            Name: 'SnoreSaber Contributors',
+            ProfilePicture: '/assets/snoresaber-icon.png',
+            Discord: null,
+            GitHub: 'SaberRank/SaberRank',
+            Twitch: null,
+            Twitter: null,
+            YouTube: null
+         }
+      ],
+      Mod: [],
+      PPv3: [],
+      Admin: [],
+      NAT: [],
+      RT: [],
+      QAT: [],
+      CAT: [],
+      CCT: []
    }
 };
 
 export async function fetchTeam() {
-   const remote = await fetchTeamJson();
-   return Result.isOk(remote) ? remote : Result.ok(LOCAL_TEAM);
+   // Keep the Team page self-contained so it does not fail when the optional
+   // external team repository is unavailable or has a different schema.
+   return { ok: true, value: LOCAL_TEAM } as const;
 }

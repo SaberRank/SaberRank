@@ -253,6 +253,104 @@ async function isAdmin(sql: any, playerId: string | null) {
   return Boolean(Number(rows[0]?.permissions || 0) & 16);
 }
 
+const PERMISSION_VALUES: Record<string, number> = {
+  RT: 1,
+  QAT: 2,
+  QATHead: 4,
+  NAT: 8,
+  ADMIN: 16,
+  PANDA: 32,
+  SUPPORTER: 64,
+  PPFARMER: 128,
+  DEV: 256,
+  PPV3: 512,
+  CCT: 1024,
+  CCTHead: 2048,
+  CAT: 4096,
+  RTR: 8192,
+  EXTERNAL_DEV: 16384,
+  TOURNAMENT_ORGANIZER: 32768
+};
+
+async function resolvePlayerId(sql: any, requestedId: string) {
+  if (!sql) return requestedId;
+  const rows: any[] = await sql`SELECT id FROM players WHERE id=${requestedId} OR steam_id=${requestedId} LIMIT 1`;
+  return rows[0]?.id ?? null;
+}
+
+async function ensureModerationTables(sql: any) {
+  if (!sql) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS badges (
+      id BIGSERIAL PRIMARY KEY,
+      image TEXT NOT NULL,
+      description TEXT NOT NULL,
+      image_url TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS player_badges (
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      badge_id BIGINT NOT NULL REFERENCES badges(id) ON DELETE CASCADE,
+      description_override TEXT,
+      added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (player_id, badge_id)
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS profile_reports (
+      id BIGSERIAL PRIMARY KEY,
+      reporter_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      target_player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      reason TEXT NOT NULL,
+      details TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'OPEN',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS account_merges (
+      id BIGSERIAL PRIMARY KEY,
+      target_player_id TEXT NOT NULL,
+      source_player_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      merged_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+  const countRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM badges`;
+  if (Number(countRows[0]?.count || 0) === 0) {
+    await sql`
+      INSERT INTO badges (image, description, image_url)
+      VALUES
+        ('snoresaber-icon.png', 'SnoreSaber Staff', '/assets/snoresaber-icon.png'),
+        ('snoresaber-icon.png', 'Early Supporter', '/assets/snoresaber-icon.png'),
+        ('snoresaber-icon.png', 'Verified Player', '/assets/snoresaber-icon.png'),
+        ('snoresaber-icon.png', 'Map Contributor', '/assets/snoresaber-icon.png'),
+        ('snoresaber-icon.png', 'Tournament Staff', '/assets/snoresaber-icon.png')
+    `;
+  }
+}
+
+async function getPlayerBadges(sql: any, playerId: string) {
+  if (!sql) return [];
+  await ensureModerationTables(sql);
+  const rows: any[] = await sql`
+    SELECT b.id, b.image, b.description, COALESCE(NULLIF(b.image_url,''), b.image) AS image_url,
+           pb.description_override
+    FROM player_badges pb
+    JOIN badges b ON b.id=pb.badge_id
+    WHERE pb.player_id=${playerId}
+    ORDER BY pb.added_at ASC, b.id ASC
+  `;
+  return rows.map((r) => ({
+    id: Number(r.id),
+    image: r.image_url || r.image,
+    description: r.description_override || r.description
+  }));
+}
+
 function dbPlayer(r: any) {
   const publicId = String(r.id);
   return {
@@ -509,6 +607,7 @@ export default defineHandler(async (event: any) => {
       const p = dbPlayer(pr[0]);
       const viewerId = await authPlayerId(request, sql);
       const rel = await relationshipSummary(sql, pr[0].id, viewerId);
+      const badges = await getPlayerBadges(sql, pr[0].id);
       // Do not assume optional play-count columns exist. Older SnoreSaber databases
       // may have the original players schema, so derive play counts from scores.
       const playRows: any[] = await sql`
@@ -528,7 +627,7 @@ export default defineHandler(async (event: any) => {
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
       }];
-      return json({ player: { ...p, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
+      return json({ player: { ...p, badges, followers: rel.followers, following: rel.following, platformFriends: rel.platformFriends, recentFollowers: rel.recentFollowers, recentFollowing: rel.recentFollowing }, history, aliases: [] });
     }
     const p = players.find((x) => x.id === requestedId || x.steamId === requestedId || x.name.toLowerCase() === requestedId.toLowerCase());
     if (!p) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
@@ -726,6 +825,205 @@ export default defineHandler(async (event: any) => {
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     await sql`UPDATE players SET banned=false, ban_reason=null, ban_notes=null, ban_created_at=null, ban_auto_unban=false, ban_auto_unbans_at=null, ban_earliest_appeal_date=null WHERE id=${targetRows[0].id}`;
     return json({success:true});
+  }
+
+
+  // ------------------------- ADMIN SOCIAL / PROFILE ACTIONS -------------------------
+  if (route === '/admin/permissions' && method === 'GET') {
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    return json(Object.entries(PERMISSION_VALUES).map(([name,value]) => ({name,value})));
+  }
+
+  if (route === '/admin/badges' && method === 'GET') {
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    await ensureModerationTables(sql);
+    const rows: any[] = await sql`
+      SELECT b.id,b.image,b.description,b.image_url,COUNT(pb.player_id)::int AS assignment_count
+      FROM badges b LEFT JOIN player_badges pb ON pb.badge_id=b.id
+      GROUP BY b.id ORDER BY b.id ASC
+    `;
+    return json(rows.map((r) => ({
+      id:Number(r.id), image:r.image, description:r.description,
+      imageUrl:r.image_url || r.image, assignmentCount:Number(r.assignment_count || 0)
+    })));
+  }
+
+  if (route.startsWith('/admin/badges/player/') && method === 'GET') {
+    const playerId = decodeURIComponent(route.split('/')[4] || '');
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target = await resolvePlayerId(sql, playerId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    await ensureModerationTables(sql);
+    const rows: any[] = await sql`
+      SELECT badge_id,description_override,added_at FROM player_badges
+      WHERE player_id=${target} ORDER BY added_at ASC,badge_id ASC
+    `;
+    return json(rows.map((r) => ({badgeId:Number(r.badge_id),descriptionOverride:r.description_override ?? null,addedAt:new Date(r.added_at).toISOString()})));
+  }
+
+  if (route.startsWith('/admin/badges/player/') && method === 'POST') {
+    const playerId = decodeURIComponent(route.split('/')[4] || '');
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target = await resolvePlayerId(sql, playerId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    let body:any={}; try { body=JSON.parse(await request.text() || '{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    if (!Array.isArray(body.badges) || body.badges.length > 1000) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'badges must be an array'},400);
+    await ensureModerationTables(sql);
+    const badgeIds = body.badges.map((x:any)=>Number(x.badgeId)).filter((x:number)=>Number.isInteger(x)&&x>0);
+    if (badgeIds.length) {
+      const available:any[] = await sql`SELECT id FROM badges WHERE id = ANY(${badgeIds})`;
+      if (available.length !== badgeIds.length) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Unknown badge id'},400);
+    }
+    await sql`DELETE FROM player_badges WHERE player_id=${target}`;
+    for (const badge of body.badges) {
+      const badgeId=Number(badge.badgeId);
+      const override=badge.descriptionOverride == null ? null : String(badge.descriptionOverride).trim().slice(0,256);
+      await sql`INSERT INTO player_badges (player_id,badge_id,description_override) VALUES (${target},${badgeId},${override}) ON CONFLICT (player_id,badge_id) DO UPDATE SET description_override=EXCLUDED.description_override`;
+    }
+    return json(await getPlayerBadges(sql,target));
+  }
+
+  if (route.startsWith('/admin/user/') && route.endsWith('/role-text') && method === 'POST') {
+    const targetId=decodeURIComponent(route.split('/')[3] || '');
+    const viewerId=await authPlayerId(request,sql);
+    if (!(await isAdmin(sql,viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target=await resolvePlayerId(sql,targetId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    let body:any={}; try { body=JSON.parse(await request.text()||'{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const roleText=String(body.roleText ?? '').trim().slice(0,128);
+    await sql`UPDATE players SET role=${roleText || null} WHERE id=${target}`;
+    return json({success:true});
+  }
+
+  if (route.startsWith('/admin/user/') && route.endsWith('/reset-country') && method === 'POST') {
+    const targetId=decodeURIComponent(route.split('/')[3] || '');
+    const viewerId=await authPlayerId(request,sql);
+    if (!(await isAdmin(sql,viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target=await resolvePlayerId(sql,targetId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    let body:any={}; try { body=JSON.parse(await request.text()||'{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const country=String(body.country||'XX').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(country)) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Country must be a two-letter code'},400);
+    await sql`UPDATE players SET country=${country} WHERE id=${target}`;
+    return json({success:true});
+  }
+
+  if (route.startsWith('/admin/user/') && route.endsWith('/permissions') && method === 'POST') {
+    const targetId=decodeURIComponent(route.split('/')[3] || '');
+    const viewerId=await authPlayerId(request,sql);
+    if (!(await isAdmin(sql,viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target=await resolvePlayerId(sql,targetId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    let body:any={}; try { body=JSON.parse(await request.text()||'{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const add=Array.isArray(body.add)?body.add:[], remove=Array.isArray(body.remove)?body.remove:[];
+    const rows:any[]=await sql`SELECT permissions FROM players WHERE id=${target} LIMIT 1`;
+    let permissions=Number(rows[0]?.permissions||0);
+    for (const name of add) if (PERMISSION_VALUES[String(name)] != null) permissions |= PERMISSION_VALUES[String(name)];
+    for (const name of remove) if (PERMISSION_VALUES[String(name)] != null) permissions &= ~PERMISSION_VALUES[String(name)];
+    await sql`UPDATE players SET permissions=${permissions} WHERE id=${target}`;
+    return json({success:true,permissions});
+  }
+
+  if (route.startsWith('/admin/user/') && route.endsWith('/merge') && method === 'POST') {
+    const targetId=decodeURIComponent(route.split('/')[3] || '');
+    const viewerId=await authPlayerId(request,sql);
+    if (!(await isAdmin(sql,viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target=await resolvePlayerId(sql,targetId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Target player not found'},404);
+    let body:any={}; try { body=JSON.parse(await request.text()||'{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const source=await resolvePlayerId(sql,String(body.sourcePlayerId||''));
+    const reason=String(body.reason||'').trim().slice(0,512);
+    if (!source || !reason) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'sourcePlayerId and reason are required'},400);
+    if (source===target) return json({statusCode:400,error:'Bad Request',code:'INVALID_OPERATION',message:'Source and target must differ'},400);
+
+    // Keep the higher score for duplicate leaderboard/player pairs, then move the
+    // remaining scores and social links onto the target account.
+    const sourceScores:any[]=await sql`SELECT * FROM scores WHERE player_id=${source} ORDER BY id ASC`;
+    for (const scoreRow of sourceScores) {
+      const existing:any[]=await sql`SELECT id,score,pp FROM scores WHERE player_id=${target} AND leaderboard_id=${scoreRow.leaderboard_id} ORDER BY score DESC LIMIT 1`;
+      if (!existing[0]) {
+        await sql`UPDATE scores SET player_id=${target} WHERE id=${scoreRow.id}`;
+      } else if (Number(scoreRow.score)>Number(existing[0].score)) {
+        await sql`DELETE FROM scores WHERE id=${existing[0].id}`;
+        await sql`UPDATE scores SET player_id=${target} WHERE id=${scoreRow.id}`;
+      } else {
+        await sql`DELETE FROM scores WHERE id=${scoreRow.id}`;
+      }
+    }
+    try {
+      await sql`CREATE TABLE IF NOT EXISTS player_follows (
+        follower_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+        following_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (follower_id, following_id),
+        CHECK (follower_id <> following_id)
+      )`;
+      await sql`
+        INSERT INTO player_follows (follower_id,following_id,created_at)
+        SELECT ${target},following_id,created_at FROM player_follows
+        WHERE follower_id=${source} AND following_id<>${target}
+        ON CONFLICT (follower_id,following_id) DO NOTHING
+      `;
+      await sql`
+        INSERT INTO player_follows (follower_id,following_id,created_at)
+        SELECT follower_id,${target},created_at FROM player_follows
+        WHERE following_id=${source} AND follower_id<>${target}
+        ON CONFLICT (follower_id,following_id) DO NOTHING
+      `;
+      await sql`DELETE FROM player_follows WHERE follower_id=${source} OR following_id=${source}`;
+    } catch {}
+    await ensureModerationTables(sql);
+    await sql`
+      INSERT INTO player_badges (player_id,badge_id,description_override,added_at)
+      SELECT ${target},badge_id,description_override,added_at FROM player_badges
+      WHERE player_id=${source}
+      ON CONFLICT (player_id,badge_id) DO NOTHING
+    `;
+    await sql`DELETE FROM player_badges WHERE player_id=${source}`;
+    await sql`INSERT INTO account_merges (target_player_id,source_player_id,reason,merged_by) VALUES (${target},${source},${reason},${viewerId})`;
+    await sql`DELETE FROM players WHERE id=${source}`;
+    await recalculatePlayerStats(sql,target);
+    return json({success:true,targetPlayerId:target,publicPlayerId:target,mergedPublicPlayerIds:[source]});
+  }
+
+  // ------------------------- REPORTS -------------------------
+  if (route.startsWith('/player/') && route.endsWith('/report') && method === 'POST') {
+    const targetRequested=decodeURIComponent(route.split('/')[2] || '');
+    const reporter=await authPlayerId(request,sql);
+    if (!reporter) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
+    const target=await resolvePlayerId(sql,targetRequested);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    if (target===reporter) return json({statusCode:400,error:'Bad Request',code:'INVALID_OPERATION',message:'You cannot report yourself'},400);
+    let body:any={}; try { body=JSON.parse(await request.text()||'{}'); } catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+    const allowed=['INAPPROPRIATE_PROFILE','IMPERSONATION','HARASSMENT','CHEATING','OTHER'];
+    const reason=String(body.reason||'');
+    const details=String(body.details||'').slice(0,1000);
+    if (!allowed.includes(reason)) return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid report reason'},400);
+    await ensureModerationTables(sql);
+    await sql`INSERT INTO profile_reports (reporter_id,target_player_id,reason,details) VALUES (${reporter},${target},${reason},${details})`;
+    return json({success:true});
+  }
+
+  if (route === '/admin/reports' && method === 'GET') {
+    const viewerId=await authPlayerId(request,sql);
+    if (!(await isAdmin(sql,viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    await ensureModerationTables(sql);
+    const rows:any[]=await sql`
+      SELECT r.*, reporter.name AS reporter_name, target.name AS target_name
+      FROM profile_reports r
+      JOIN players reporter ON reporter.id=r.reporter_id
+      JOIN players target ON target.id=r.target_player_id
+      ORDER BY r.created_at DESC LIMIT 200
+    `;
+    return json(rows.map((r)=>({
+      id:Number(r.id), reporterId:String(r.reporter_id), reporterName:r.reporter_name,
+      targetPlayerId:String(r.target_player_id), targetName:r.target_name,
+      reason:r.reason, details:r.details, status:r.status, createdAt:new Date(r.created_at).toISOString()
+    })));
   }
 
   // ------------------------- SCORE DETAIL / SUBMISSION -------------------------
