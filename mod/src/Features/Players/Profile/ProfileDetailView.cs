@@ -5,6 +5,7 @@ using SnoreSaber.Core.Presentation;
 using SnoreSaber.Core;
 using SnoreSaber.Features.Leaderboards.UI;
 using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Players.Domain;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

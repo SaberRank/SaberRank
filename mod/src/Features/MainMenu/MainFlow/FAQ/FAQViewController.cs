@@ -39,12 +39,12 @@ namespace SnoreSaber.Features.MainMenu.MainFlow.FAQ {
             _materials = materials;
         }
 
-        private string _scoreSaberImage = "SnoreSaber.Resources.logo-large.png";
-        [UIValue("scoresaber-image")]
-        public string scoreSaberImage {
-            get => _scoreSaberImage;
+        private string _snoreSaberImage = "SnoreSaber.Resources.logo-large.png";
+        [UIValue("snoresaber-image")]
+        public string snoreSaberImage {
+            get => _snoreSaberImage;
             set {
-                _scoreSaberImage = value;
+                _snoreSaberImage = value;
                 NotifyPropertyChanged();
             }
         }
@@ -59,17 +59,17 @@ namespace SnoreSaber.Features.MainMenu.MainFlow.FAQ {
             }
         }
 
-        private int _scoreSaberCounter;
-        [UIAction("scoresaber-image-clicked")]
+        private int _snoreSaberCounter;
+        [UIAction("snoresaber-image-clicked")]
         public void SnoreSaberImageClicked() {
 
-            _scoreSaberCounter++;
-            if (_scoreSaberCounter == 5) {
-                scoreSaberImage = "SnoreSaber.Resources.logo-flushed.png";
+            _snoreSaberCounter++;
+            if (_snoreSaberCounter == 5) {
+                snoreSaberImage = "SnoreSaber.Resources.logo-flushed.png";
             }
-            if (_scoreSaberCounter == 10) {
-                scoreSaberImage = "SnoreSaber.Resources.logo-large.png";
-                _scoreSaberCounter = 0;
+            if (_snoreSaberCounter == 10) {
+                snoreSaberImage = "SnoreSaber.Resources.logo-large.png";
+                _snoreSaberCounter = 0;
             }
         }
 

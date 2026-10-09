@@ -6,7 +6,7 @@ using SnoreSaber.Features.MainMenu.Settings;
 namespace SnoreSaber.Features.MainMenu {
     internal class SnoreSaberMenuNavigator {
         private readonly MainFlowCoordinator _mainFlowCoordinator;
-        private readonly SnoreSaberFlowCoordinator _scoreSaberFlowCoordinator;
+        private readonly SnoreSaberFlowCoordinator _snoreSaberFlowCoordinator;
         private readonly SnoreSaberSettingsFlowCoordinator _settingsFlowCoordinator;
         private readonly CompeteFlowCoordinator _competeFlowCoordinator;
         private FlowCoordinator _activeTournamentFlowCoordinator;
@@ -14,19 +14,19 @@ namespace SnoreSaber.Features.MainMenu {
 
         public SnoreSaberMenuNavigator(
             MainFlowCoordinator mainFlowCoordinator,
-            SnoreSaberFlowCoordinator scoreSaberFlowCoordinator,
+            SnoreSaberFlowCoordinator snoreSaberFlowCoordinator,
             SnoreSaberSettingsFlowCoordinator settingsFlowCoordinator,
             CompeteFlowCoordinator competeFlowCoordinator) {
 
             _mainFlowCoordinator = mainFlowCoordinator;
-            _scoreSaberFlowCoordinator = scoreSaberFlowCoordinator;
+            _snoreSaberFlowCoordinator = snoreSaberFlowCoordinator;
             _settingsFlowCoordinator = settingsFlowCoordinator;
             _competeFlowCoordinator = competeFlowCoordinator;
             _competeFlowCoordinator.DidFinishEvent += TournamentFlowDidFinish;
         }
 
         internal void ShowMain() {
-            Present(_scoreSaberFlowCoordinator);
+            Present(_snoreSaberFlowCoordinator);
         }
 
         internal void ShowSettings() {

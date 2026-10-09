@@ -2600,6 +2600,9 @@ export default defineHandler(async (event: any) => {
       return json({ statusCode: 403, error: 'Forbidden', code: 'PLAYER_MISMATCH', message: 'Score player does not match the authenticated SnoreSaber session' }, 403);
     }
 
+    // infoHash is the Beat Saber song hash. uploadVersionHash is the client/build hash
+    // and must never be used to identify the map. Keep leaderboardId as a fallback for
+    // older clients that only populated that field.
     const mapHash = String(body.infoHash || body.leaderboardId || '').trim().toUpperCase();
     const gameMode = normalizeGameMode(body.gameMode);
     const difficulty = Number(body.difficulty);

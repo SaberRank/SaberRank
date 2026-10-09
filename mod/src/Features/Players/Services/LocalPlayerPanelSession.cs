@@ -102,9 +102,9 @@ namespace SnoreSaber.Features.Players.Services {
                 return LocalPlayerPanelState.PromptError(CurrentState, "Failed to update local player ranking", 1.5f);
             }
 
-            return ex.scoreSaberError.ErrorMessage == "Player not found"
+            return ex.snoreSaberError.ErrorMessage == "Player not found"
                 ? LocalPlayerPanelState.Message("Welcome to SnoreSaber! Set a score to create a profile")
-                : LocalPlayerPanelState.Message($"Failed to load player ranking: {ex.scoreSaberError.ErrorMessage}");
+                : LocalPlayerPanelState.Message($"Failed to load player ranking: {ex.snoreSaberError.ErrorMessage}");
         }
 
         private async Task<LocalPlayerPanelData> GetLocalPlayerPanelData() {

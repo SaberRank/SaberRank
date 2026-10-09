@@ -51,7 +51,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
 
         internal bool IsReady { get; private set; }
 
-        private Color _scoreSaberBlue;
+        private Color _snoreSaberPurple;
         private Gradient _theWilliamGradient;
         internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
         internal static readonly FieldAccessor<ImageView, bool>.Accessor ImageGradient = FieldAccessor<ImageView, bool>.GetAccessor("_gradient");
@@ -130,9 +130,9 @@ namespace SnoreSaber.Features.Leaderboards.UI {
         protected void Construct(SettingsService settings, LeaderboardTweeningService leaderboardTweeningService) {
             _settings = settings;
             _leaderboardTweeningService = leaderboardTweeningService;
-            _scoreSaberBlue = new Color(0f, 0.4705882f, 0.7254902f);
+            _snoreSaberPurple = new Color(0.3333333f, 0.3686275f, 0.7372549f);
             _theWilliamGradient = new Gradient { mode = GradientMode.Blend, colorKeys = new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(new Color(1f, 0.5f, 0f), 0.17f), new GradientColorKey(Color.yellow, 0.34f), new GradientColorKey(Color.green, 0.51f), new GradientColorKey(Color.blue, 0.68f), new GradientColorKey(new Color(0.5f, 0f, 0.5f), 0.85f), new GradientColorKey(Color.red, 1.15f) } };
-            backgroundColor = _scoreSaberBlue;
+            backgroundColor = _snoreSaberPurple;
             topText = LoadingRankingText;
             bottomText = FormatRankedStatus(LoadingRankedStatusText);
             Plugin.Log.Debug("PanelView Setup!");
@@ -252,7 +252,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
         internal void SetWilliumsMode(bool value) {
             _specialBackgroundMode = value;
             if (!value && _background != null) {
-                backgroundColor = _scoreSaberBlue;
+                backgroundColor = _snoreSaberPurple;
             }
         }
 
@@ -262,7 +262,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
             }
 
             if (!value) {
-                backgroundColor = _scoreSaberBlue;
+                backgroundColor = _snoreSaberPurple;
                 _background.overrideSprite = null;
                 return;
             }

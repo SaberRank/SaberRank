@@ -62,7 +62,7 @@ namespace SnoreSaber.Features.ScoreSubmission.Domain {
             return new SnoreSaberUploadData {
                 GameMode = $"Solo{beatmapKey.CharacteristicSerializedName()}",
                 Difficulty = BeatmapDifficultyMethods.DefaultRating(beatmapKey.difficulty),
-                InfoHash = infoHash,
+                InfoHash = SnoreSaberBeatmapKey.GetSongHash(beatmapKey),
                 LeaderboardId = SnoreSaberBeatmapKey.GetSongHash(beatmapKey),
                 SongName = beatmapLevel.songName,
                 SongSubName = beatmapLevel.songSubName,

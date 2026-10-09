@@ -11,7 +11,7 @@
         <button active="true" text="Twitter" on-click="twitter-clicked" pref-width="20" />
         <button active="true" text="Patreon 💕" on-click="patreon-clicked" pref-width="23" />
         <vertical vertical-fit="PreferredSize" horizontal-fit="PreferredSize" pad="2">
-          <clickable-image pref-width="20" pref-height="20" preserve-aspect="true" src="~scoresaber-image" on-click="scoresaber-image-clicked" highlight-color="white" />
+          <clickable-image pref-width="20" pref-height="20" preserve-aspect="true" src="~snoresaber-image" on-click="snoresaber-image-clicked" highlight-color="white" />
         </vertical>
       </vertical>
       <vertical pref-width="40" pref-height="60" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" bg="round-rect-panel" bg-color="purple" pad="4">
