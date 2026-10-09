@@ -4,8 +4,6 @@ using SnoreSaber.Core.Gameplay;
 using SnoreSaber.Features.Players.Domain;
 using SnoreSaber.Features.ScoreSubmission.Domain;
 using System;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace SnoreSaber.Features.ScoreSubmission.Services {
 
@@ -20,41 +18,15 @@ namespace SnoreSaber.Features.ScoreSubmission.Services {
         internal ScoreUploadPayload Build(BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LevelCompletionResults results, LocalPlayerInfo playerInfo, float playOutcomeTime, SnoreSaberPlayOutcome? playOutcomeOverride) {
             SnoreSaberUploadData scoreData = SnoreSaberUploadData.Create(beatmapLevel, beatmapKey, results, playerInfo, _runtimeInfo.UploadVersionHash, playOutcomeTime, playOutcomeOverride);
             string serializedScore = JsonConvert.SerializeObject(scoreData);
-            string key = BuildUploadKey(playerInfo);
-
             return new ScoreUploadPayload {
                 ScoreData = scoreData,
-                EncryptedScoreData = BitConverter.ToString(panda(Encoding.UTF8.GetBytes(serializedScore), Encoding.UTF8.GetBytes(key))).Replace("-", string.Empty)
+                // SnoreSaber owns this upload endpoint. Keep the payload as JSON so the
+                // SnoreSaber server can validate it directly; do not use the legacy
+                // ScoreSaber encrypted upload format.
+                EncryptedScoreData = serializedScore
             };
         }
 
-        private static string BuildUploadKey(LocalPlayerInfo playerInfo) {
-            byte[] encodedPassword = Encoding.UTF8.GetBytes($"{UploadSecret}-{playerInfo.playerKey}-{playerInfo.playerId}-{UploadSecret}");
-            using (var md5 = MD5.Create()) {
-                return BitConverter.ToString(md5.ComputeHash(encodedPassword)).Replace("-", string.Empty).ToLowerInvariant();
-            }
-        }
-
-        private static byte[] panda(byte[] scoreData, byte[] key) {
-            int n1 = 11;
-            int n2 = 13;
-            int ns = 257;
-
-            for (int i = 0; i <= key.Length - 1; i++) {
-                ns += ns % (key[i] + 1);
-            }
-
-            byte[] encrypted = new byte[scoreData.Length];
-            for (int i = 0; i <= scoreData.Length - 1; i++) {
-                ns = key[i % key.Length] + ns;
-                n1 = (ns + 5) * (n1 & 255) + (n1 >> 8);
-                n2 = (ns + 7) * (n2 & 255) + (n2 >> 8);
-                ns = ((n1 << 8) + n2) & 255;
-                encrypted[i] = (byte)(scoreData[i] ^ (byte)ns);
-            }
-
-            return encrypted;
-        }
     }
 
     internal class ScoreUploadPayload {

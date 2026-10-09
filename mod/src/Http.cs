@@ -128,15 +128,15 @@ namespace SnoreSaber {
         internal bool isSnoreSaberError { get; set; }
         internal int statusCode { get; set; }
         internal string errorBody { get; set; }
-        internal SnoreSaberError scoreSaberError { get; set; }
-        internal HttpErrorException(bool _isNetworkError, bool _isHttpError, int _statusCode, string _scoreSaberErrorMessage = "") {
+        internal SnoreSaberError snoreSaberError { get; set; }
+        internal HttpErrorException(bool _isNetworkError, bool _isHttpError, int _statusCode, string _snoreSaberErrorMessage = "") {
             isNetworkError = _isNetworkError;
             isHttpError = _isHttpError;
             statusCode = _statusCode;
-            errorBody = _scoreSaberErrorMessage;
-            if (_scoreSaberErrorMessage != string.Empty) {
+            errorBody = _snoreSaberErrorMessage;
+            if (_snoreSaberErrorMessage != string.Empty) {
                 try {
-                    scoreSaberError = JsonConvert.DeserializeObject<SnoreSaberError>(_scoreSaberErrorMessage);
+                    snoreSaberError = JsonConvert.DeserializeObject<SnoreSaberError>(_snoreSaberErrorMessage);
                     isSnoreSaberError = true;
                 } catch (Exception) { }
             }

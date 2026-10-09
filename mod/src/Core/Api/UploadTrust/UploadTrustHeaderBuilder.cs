@@ -15,66 +15,11 @@ namespace SnoreSaber.Core.Api.UploadTrust {
             UploadTrustSession trust,
             long timestamp) {
 
-            return BuildUploadHeaders(
-                sessionId,
-                sessionKey,
-                playerId,
-                uploadVersionHash,
-                encryptedData,
-                replay,
-                trust,
-                timestamp,
-                CreateNonce());
-        }
-
-        internal static Dictionary<string, string> BuildUploadHeaders(
-            string sessionId,
-            string sessionKey,
-            string playerId,
-            string uploadVersionHash,
-            string encryptedData,
-            byte[] replay,
-            UploadTrustSession trust,
-            long timestamp,
-            string nonce) {
-
-            var headers = new Dictionary<string, string> {
+            return new Dictionary<string, string> {
                 { "x-session-key", sessionKey },
-                { "x-session-id", sessionId }
+                { "x-session-id", sessionId },
+                { "x-snoresaber-upload", "v1" }
             };
-
-            if (trust == null || !trust.IsUploadProtocolV2) {
-                return headers;
-            }
-
-            if (!string.Equals(uploadVersionHash, trust.UploadVersionHash, StringComparison.OrdinalIgnoreCase)) {
-                throw new InvalidOperationException("Upload version hash did not match the authenticated upload trust session");
-            }
-
-            string dataSha256 = Sha256Hex(encryptedData);
-            string replaySha256 = Sha256Hex(replay);
-            string timestampText = timestamp.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            string canonicalString = BuildCanonicalString(
-                trust.BuildId,
-                sessionId,
-                playerId,
-                uploadVersionHash,
-                dataSha256,
-                replaySha256,
-                timestampText,
-                nonce);
-
-            headers.Add("x-upload-protocol", UploadTrustSession.ProtocolHeaderValue);
-            if (!string.IsNullOrEmpty(trust.BuildId)) {
-                headers.Add("x-client-build-id", trust.BuildId);
-            }
-            headers.Add("x-upload-timestamp", timestampText);
-            headers.Add("x-upload-nonce", nonce);
-            headers.Add("x-replay-sha256", replaySha256);
-            headers.Add("x-upload-version-hash", uploadVersionHash);
-            headers.Add("x-upload-signature", HmacSha256Hex(trust.BuildCredential, canonicalString));
-
-            return headers;
         }
 
         internal static string BuildCanonicalString(

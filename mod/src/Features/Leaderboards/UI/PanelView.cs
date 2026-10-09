@@ -15,7 +15,7 @@ using Zenject;
 namespace SnoreSaber.Features.Leaderboards.UI {
     internal class PanelView : BasicDoubleTextPanelViewController {
         private const string PanelViewResource = "SnoreSaber.Features.Leaderboards.UI.PanelView.bsml";
-        private const string LoadingRankingText = "<b><color=#F06AB7>Global Ranking: </color></b> Loading...";
+        private const string LoadingRankingText = "<b><color=#FFDE1A>Global Ranking: </color></b> Loading...";
         private const string LoadingRankedStatusText = "Loading...";
         private const float PromptDismissNever = -1f;
         private const float PromptHiddenY = 4.3f;
@@ -51,7 +51,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
 
         internal bool IsReady { get; private set; }
 
-        private Color _snoreSaberPink;
+        private Color _scoreSaberBlue;
         private Gradient _theWilliamGradient;
         internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
         internal static readonly FieldAccessor<ImageView, bool>.Accessor ImageGradient = FieldAccessor<ImageView, bool>.GetAccessor("_gradient");
@@ -130,9 +130,9 @@ namespace SnoreSaber.Features.Leaderboards.UI {
         protected void Construct(SettingsService settings, LeaderboardTweeningService leaderboardTweeningService) {
             _settings = settings;
             _leaderboardTweeningService = leaderboardTweeningService;
-            _snoreSaberPink = new Color(0.9411765f, 0.4156863f, 0.7176471f);
+            _scoreSaberBlue = new Color(0f, 0.4705882f, 0.7254902f);
             _theWilliamGradient = new Gradient { mode = GradientMode.Blend, colorKeys = new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(new Color(1f, 0.5f, 0f), 0.17f), new GradientColorKey(Color.yellow, 0.34f), new GradientColorKey(Color.green, 0.51f), new GradientColorKey(Color.blue, 0.68f), new GradientColorKey(new Color(0.5f, 0f, 0.5f), 0.85f), new GradientColorKey(Color.red, 1.15f) } };
-            backgroundColor = _snoreSaberPink;
+            backgroundColor = _scoreSaberBlue;
             topText = LoadingRankingText;
             bottomText = FormatRankedStatus(LoadingRankedStatusText);
             Plugin.Log.Debug("PanelView Setup!");
@@ -252,7 +252,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
         internal void SetWilliumsMode(bool value) {
             _specialBackgroundMode = value;
             if (!value && _background != null) {
-                backgroundColor = _snoreSaberPink;
+                backgroundColor = _scoreSaberBlue;
             }
         }
 
@@ -262,7 +262,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
             }
 
             if (!value) {
-                backgroundColor = _snoreSaberPink;
+                backgroundColor = _scoreSaberBlue;
                 _background.overrideSprite = null;
                 return;
             }
@@ -387,6 +387,6 @@ namespace SnoreSaber.Features.Leaderboards.UI {
             }
         }
 
-        private static string FormatRankedStatus(string rankedStatus) => $"<b><color=#F06AB7>Ranked Status:</color></b> {rankedStatus}";
+        private static string FormatRankedStatus(string rankedStatus) => $"<b><color=#FFDE1A>Ranked Status:</color></b> {rankedStatus}";
     }
 }

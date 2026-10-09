@@ -143,7 +143,7 @@ namespace SnoreSaber.Features.Players.Profile {
                 }
 
                 Plugin.Log.Debug($"Loading SnoreSaber profile for player {playerId}.");
-                var player = await _playerProfileService.GetPlayerInfo(playerId, full: true);
+                PlayerProfile player = await _playerProfileService.GetPlayerInfo(playerId, full: true);
                 if (player == null) {
                     throw new InvalidOperationException($"SnoreSaber returned no profile for player {playerId}.");
                 }

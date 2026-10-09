@@ -142,14 +142,7 @@ namespace SnoreSaber.Features.Players.Services {
 
             switch (userInfo.platform) {
                 case UserInfo.Platform.Steam:
-                    // Legato can return an empty ticket on some modded/older Steam
-                    // setups. SnoreSaber's API has a controlled legacy fallback
-                    // when STEAM_API_KEY is not configured, so use the Steam ID as
-                    // the nonce instead of sending an empty authentication request.
-                    nonce = string.IsNullOrWhiteSpace(authToken) ? userInfo.platformUserId : authToken;
-                    if (string.IsNullOrWhiteSpace(authToken)) {
-                        Plugin.Log.Warn($"Steam auth ticket was empty; using Steam ID fallback for {userInfo.platformUserId}.");
-                    }
+                    nonce = authToken;
                     platform = "0";
                     break;
                 case UserInfo.Platform.Oculus:

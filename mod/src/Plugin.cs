@@ -75,7 +75,6 @@ namespace SnoreSaber {
                 // LeaderboardCore must initialize after SnoreSaber. Patch its broken
                 // 1.7.0 TargetMethod before LeaderboardCore runs PatchAll().
                 Features.Leaderboards.Adapters.LeaderboardCore.LeaderboardCorePanelViewCompatibilityPatch.Install(harmony);
-        Features.Leaderboards.Adapters.LeaderboardCore.LeaderboardCoreSnoreSaberPriorityPatch.Install(harmony);
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
                 PlayerPrefs.SetInt("lbPatched", 1);
             }

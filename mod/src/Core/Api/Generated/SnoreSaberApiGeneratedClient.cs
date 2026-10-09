@@ -248,7 +248,7 @@ namespace SnoreSaber.Core.Api.Generated
         /// <param name="x_upload_nonce">Client nonce used in the upload signature.</param>
         /// <param name="x_upload_timestamp">Epoch seconds used in the upload signature.</param>
         /// <param name="x_client_build_id">Official client build ID.</param>
-        /// <param name="x_upload_protocol">Upload protocol marker. Use scoresaber-upload-v2 for signed uploads.</param>
+        /// <param name="x_upload_protocol">SnoreSaber upload protocol marker.</param>
         /// <param name="data">Encrypted score payload string.</param>
         /// <param name="zr">Replay binary file data.</param>
         /// <returns>Score upload result</returns>

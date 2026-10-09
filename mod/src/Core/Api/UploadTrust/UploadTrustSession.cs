@@ -1,7 +1,7 @@
 namespace SnoreSaber.Core.Api.UploadTrust {
     internal sealed class UploadTrustSession {
-        internal const string ProtocolHeaderValue = "scoresaber-upload-v2";
-        internal const int ProtocolVersion = 2;
+        internal const string ProtocolHeaderValue = "snoresaber-upload-v1";
+        internal const int ProtocolVersion = 1;
 
         internal UploadTrustSession(
             string buildId,

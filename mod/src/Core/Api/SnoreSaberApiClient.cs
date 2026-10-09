@@ -88,10 +88,6 @@ namespace SnoreSaber.Core.Api {
                 return ErrorUploadResult("SnoreSaber game session is invalid", "x-session-id was not a GUID");
             }
 
-            if (session.UploadTrust == null || !session.UploadTrust.IsUploadProtocolV2) {
-                return ErrorUploadResult("SnoreSaber upload trust is unavailable", "Current game session does not include v2 upload trust");
-            }
-
             try {
                 var form = new WWWForm();
                 form.AddField("data", uploadData);
@@ -162,12 +158,12 @@ namespace SnoreSaber.Core.Api {
         }
 
         private static string GetHttpErrorMessage(HttpErrorException exception) {
-            if (exception.scoreSaberError != null && !string.IsNullOrEmpty(exception.scoreSaberError.ErrorMessage)) {
-                return exception.scoreSaberError.ErrorMessage;
+            if (exception.snoreSaberError != null && !string.IsNullOrEmpty(exception.snoreSaberError.ErrorMessage)) {
+                return exception.snoreSaberError.ErrorMessage;
             }
 
-            if (exception.scoreSaberError != null && !string.IsNullOrEmpty(exception.scoreSaberError.Message)) {
-                return exception.scoreSaberError.Message;
+            if (exception.snoreSaberError != null && !string.IsNullOrEmpty(exception.snoreSaberError.Message)) {
+                return exception.snoreSaberError.Message;
             }
 
             return "SnoreSaber upload failed";
