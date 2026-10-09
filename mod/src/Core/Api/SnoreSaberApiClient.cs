@@ -67,6 +67,7 @@ namespace SnoreSaber.Core.Api {
 
                 return GameAuthenticationResult.Success(session);
             } catch (GeneratedApiException ex) {
+                Plugin.Log.Error($"SnoreSaber game auth HTTP {ex.StatusCode}: {ex.Response ?? ex.Message}");
                 return GameAuthenticationResult.Failure(ex.Message, MapError(ex));
             } catch (Exception ex) {
                 return GameAuthenticationResult.Failure(ex.Message, SnoreSaberApiError.FromMessage(ex.Message));

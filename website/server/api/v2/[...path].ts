@@ -2459,9 +2459,9 @@ export default defineHandler(async (event: any) => {
           return { playerId: null, error: 'Steam authentication service is unavailable' };
         }
       } else {
-        // Keep local development usable when no Steam API key is configured.
-        // Production deployments should set STEAM_API_KEY.
-        console.warn('[SnoreSaber] STEAM_API_KEY is not configured; accepting the supplied Steam player ID for game auth.');
+        // Development/legacy fallback. Production should set STEAM_API_KEY so
+        // Steam tickets are cryptographically verified by Steam.
+        console.warn('[SnoreSaber] STEAM_API_KEY is not configured; using legacy Steam-ID game auth fallback.');
       }
     } else if (authType === 1) {
       // Oculus nonce is authToken,crossPlatformToken in the PC mod.
