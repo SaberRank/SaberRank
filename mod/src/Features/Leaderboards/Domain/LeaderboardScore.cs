@@ -1,9 +1,9 @@
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Players.Domain;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Players.Domain;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Leaderboards.Domain {
+namespace SnoreSaber.Features.Leaderboards.Domain {
     internal class LeaderboardScore {
         internal int Id { get; set; }
         internal int Rank { get; set; }
@@ -19,7 +19,7 @@ namespace SaberRank.Features.Leaderboards.Domain {
         internal bool FullCombo { get; set; }
         internal bool HasReplay { get; set; }
         internal bool PersonalBest { get; set; }
-        internal SaberRankPlayOutcome PlayOutcome { get; set; }
+        internal SnoreSaberPlayOutcome PlayOutcome { get; set; }
         internal double? PlayOutcomeTime { get; set; }
         internal int LegacyHMDId { get; set; }
         internal string Version { get; set; } = string.Empty;

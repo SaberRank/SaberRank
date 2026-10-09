@@ -1,14 +1,14 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
-using SaberRank.Core.Presentation;
-using SaberRank.Core;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Core;
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
+namespace SnoreSaber.Features.MainMenu.MainFlow.Teams.UI {
     internal class TeamUserInfo : INotifyPropertyChanged {
 
         private string _usernameText = null;
@@ -52,7 +52,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
         }
 
         private readonly string _profilePictureTemp;
-        private readonly SaberRankUIMaterials _materials;
+        private readonly SnoreSaberUIMaterials _materials;
         private bool _loaded;
 
         [UIValue("discord")]
@@ -72,7 +72,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
         [UIComponent("profile-image")]
         protected readonly ImageView _profilePictureComponent = null;
 
-        public TeamUserInfo(SaberRankUIMaterials materials, string _profilePicture, string _username, string _discord = null, string _github = null, string _twitch = null, string _twitter = null, string _youtube = null) {
+        public TeamUserInfo(SnoreSaberUIMaterials materials, string _profilePicture, string _username, string _discord = null, string _github = null, string _twitch = null, string _twitter = null, string _youtube = null) {
 
             if (_username == "williums") {
                 _username = "<color=#FF0000>w</color><color=#FF7F00>i</color><color=#FFFF00>l</color><color=#00FF00>l</color><color=#0000FF>i</color><color=#4B0082>u</color><color=#8B00FF>m</color><color=#FF0000>s</color>";
@@ -103,7 +103,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
         private void SetImage(string image) {
 
             if (_profilePictureComponent != null) {
-                _profilePictureComponent.SetImageAsync($"https://raw.githubusercontent.com/Umbranoxio/SaberRank-Team/main/images/{image}").RunTask();
+                _profilePictureComponent.SetImageAsync($"https://raw.githubusercontent.com/Umbranoxio/SnoreSaber-Team/main/images/{image}").RunTask();
             } else {
                 Plugin.Log.Info("ProfilePictureComponent is null");
             }

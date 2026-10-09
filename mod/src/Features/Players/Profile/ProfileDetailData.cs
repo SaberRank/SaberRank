@@ -1,9 +1,9 @@
-using SaberRank.Core.Presentation;
-using SaberRank.Features.Players.Domain;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.Players.Domain;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Players.Profile {
+namespace SnoreSaber.Features.Players.Profile {
     internal class ProfileDetailData {
         internal PlayerProfile Player { get; set; }
         internal string DisplayName { get; set; }

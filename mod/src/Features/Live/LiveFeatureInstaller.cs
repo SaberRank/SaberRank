@@ -1,17 +1,17 @@
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Live.Compete.UI.FlowCoordinators;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.CodeEntry;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Entry;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Center;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Left;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Rooms;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Shared;
-using SaberRank.Features.Live.Ludus.UI;
-using SaberRank.Features.Live.UI.ViewControllers;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Live.Compete.UI.FlowCoordinators;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.CodeEntry;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Entry;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Room.Center;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Room.Left;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Rooms;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Shared;
+using SnoreSaber.Features.Live.Ludus.UI;
+using SnoreSaber.Features.Live.UI.ViewControllers;
 using Zenject;
 
-namespace SaberRank.Features.Live {
+namespace SnoreSaber.Features.Live {
     internal class LiveFeatureInstaller : Installer {
         public override void InstallBindings() {
             Container.Bind<CompeteModeSelectionViewController>().FromNewComponentAsViewController().AsSingle();

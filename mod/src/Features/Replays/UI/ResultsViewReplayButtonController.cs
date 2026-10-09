@@ -1,15 +1,15 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using IPA.Utilities.Async;
-using SaberRank.Features.Players.Services;
-using SaberRank.Core;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Core;
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class ResultsViewReplayButtonController : IInitializable, IDisposable {
         [UIComponent("watch-replay-button")]
         protected readonly Button watchReplayButton = null;
@@ -45,7 +45,7 @@ namespace SaberRank.Features.Replays.UI {
 
             if (firstActivation) {
                 BsmlParser.Instance.Parse(
-                    "<button-with-icon id=\"watch-replay-button\" icon=\"SaberRank.Resources.replay.png\" hover-hint=\"Watch Replay\" pref-width=\"15\" pref-height=\"13\" interactable=\"false\" on-click=\"replay-click\" />",
+                    "<button-with-icon id=\"watch-replay-button\" icon=\"SnoreSaber.Resources.replay.png\" hover-hint=\"Watch Replay\" pref-width=\"15\" pref-height=\"13\" interactable=\"false\" on-click=\"replay-click\" />",
                     _resultsViewController.gameObject,
                     this
                 );
@@ -78,7 +78,7 @@ namespace SaberRank.Features.Replays.UI {
 
         private async Task WaitForReplay(int version) {
 
-            await SaberRank.Core.TaskExtensions.WaitUntil(() => _serializedReplay != null || version != _waitForReplayVersion);
+            await SnoreSaber.Core.TaskExtensions.WaitUntil(() => _serializedReplay != null || version != _waitForReplayVersion);
             if (version == _waitForReplayVersion && _serializedReplay != null) {
                 watchReplayButton.interactable = true;
             }

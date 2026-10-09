@@ -1,23 +1,23 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Tags;
-using SaberRank.Core.Presentation;
+using SnoreSaber.Core.Presentation;
 using System.Reflection;
 using UnityEngine;
 
-namespace SaberRank.Features.Players.Profile {
+namespace SnoreSaber.Features.Players.Profile {
     internal class ProfileDetailViewTag : BSMLTag {
-        private const string ProfileResource = "SaberRank.Features.Players.Profile.ProfileDetailView.bsml";
+        private const string ProfileResource = "SnoreSaber.Features.Players.Profile.ProfileDetailView.bsml";
         private const string ProfileLayout = "ProfileDetailView.bsml";
         private readonly Assembly _assembly;
 
-        public override string[] Aliases => new[] { "ss-profile" };
+        public override string[] Aliases => new[] { "snoresaber-profile" };
 
         public ProfileDetailViewTag(Assembly asm) {
             _assembly = asm;
         }
 
         public override GameObject CreateObject(Transform parent) {
-            GameObject gameObj = new GameObject("SaberRankProfileModal");
+            GameObject gameObj = new GameObject("SnoreSaberProfileModal");
             gameObj.transform.SetParent(parent, false);
 
             ProfileDetailView host = gameObj.AddComponent<ProfileDetailView>();

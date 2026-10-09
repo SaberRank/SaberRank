@@ -1,8 +1,8 @@
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Protocol;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Protocol;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Ludus.Packets {
+namespace SnoreSaber.Features.Live.Ludus.Packets {
     internal interface ILudusPacketSession {
         ulong LastReceivedSequence { get; set; }
     }
@@ -14,9 +14,9 @@ namespace SaberRank.Features.Live.Ludus.Packets {
 
     internal sealed class LudusPacketDispatcher<TSession> where TSession : ILudusPacketSession {
         private readonly Dictionary<LudusEnvelopeType, ILudusEnvelopeHandler<TSession>> _handlers;
-        private readonly SaberRankClock _clock;
+        private readonly SnoreSaberClock _clock;
 
-        internal LudusPacketDispatcher(IEnumerable<ILudusEnvelopeHandler<TSession>> handlers, SaberRankClock clock) {
+        internal LudusPacketDispatcher(IEnumerable<ILudusEnvelopeHandler<TSession>> handlers, SnoreSaberClock clock) {
             _handlers = new Dictionary<LudusEnvelopeType, ILudusEnvelopeHandler<TSession>>();
             _clock = clock;
             foreach (ILudusEnvelopeHandler<TSession> handler in handlers) {

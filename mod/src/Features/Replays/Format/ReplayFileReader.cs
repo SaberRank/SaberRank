@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SaberRank.Features.Replays.Format {
+namespace SnoreSaber.Features.Replays.Format {
     internal class Pointers {
         internal int metadata;
         internal int poseKeyframes;
@@ -24,7 +24,7 @@ namespace SaberRank.Features.Replays.Format {
     }
 
     internal class ReplayFileReader {
-        private static readonly byte[] FileHeader = Encoding.UTF8.GetBytes("SaberRank Replay 👌🤠\r\n");
+        private static readonly byte[] FileHeader = Encoding.UTF8.GetBytes("SnoreSaber Replay 👌🤠\r\n");
         private static readonly Version ReplayVersion2 = new Version("2.0.0");
         private static readonly Version ReplayVersion3Max = new Version("3.1.0");
         private const int ExtensionMagic = 0x31585353; // SSX1

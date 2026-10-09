@@ -1,6 +1,6 @@
 using IPA.Utilities;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Replays.Format;
 using SiraUtil.Tools.FPFC;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Linq;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class PosePlayer : TimeSynchronizer, IInitializable, ITickable, IScroller, IDisposable {
         private int _nextIndex = 0;
         private readonly MainCamera _mainCamera;

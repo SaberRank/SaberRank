@@ -1,17 +1,17 @@
-using SaberRank.Core;
-using SaberRank.Core.Configuration;
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Packets;
-using SaberRank.Features.Live.Compete.Packets.Handlers;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Live.Ludus.Domain;
-using SaberRank.Features.Live.Ludus.Packets;
-using SaberRank.Features.Live.Protocol;
-using SaberRank.Features.Live.Replay;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Features.Players.Services;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Packets;
+using SnoreSaber.Features.Live.Compete.Packets.Handlers;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Live.Ludus.Domain;
+using SnoreSaber.Features.Live.Ludus.Packets;
+using SnoreSaber.Features.Live.Protocol;
+using SnoreSaber.Features.Live.Replay;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal class LudusSessionService : IInitializable, ITickable, IDisposable {
         private const float ReconnectMinDelaySeconds = 0.5f;
         private const float ReconnectMaxDelaySeconds = 10f;
@@ -45,7 +45,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
 
         private readonly SettingsService _settings;
         private readonly GameSessionService _gameSessionService;
-        private readonly SaberRankRuntimeInfo _runtimeInfo;
+        private readonly SnoreSaberRuntimeInfo _runtimeInfo;
         private readonly CompeteGameplayState _competeGameplayState;
         private readonly LiveReplayStreamingService _replayStreamingService;
         private readonly LudusMainThreadQueue _mainThread;
@@ -83,8 +83,8 @@ namespace SaberRank.Features.Live.Ludus.Services {
         internal LudusSessionService(
             SettingsService settings,
             GameSessionService gameSessionService,
-            SaberRankRuntimeInfo runtimeInfo,
-            SaberRankClock clock,
+            SnoreSaberRuntimeInfo runtimeInfo,
+            SnoreSaberClock clock,
             CompeteSongService songService,
             CompeteDirectoryService directoryService,
             CompeteGameplayLauncher gameplayLauncher,
@@ -163,7 +163,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
         internal bool IsInPublicPresence => IsConnectedToLudus && _roomContext == LudusRoomContextType.LudusRoomContextTypePublicPresence;
         internal string CurrentLudusMatchId => _currentMatchId ?? string.Empty;
         internal string LocalPlayerId => GetLocalPlayerId();
-        internal string SaberRankPlayerId => _gameSessionService.GameSession?.PlayerId ?? string.Empty;
+        internal string SnoreSaberPlayerId => _gameSessionService.GameSession?.PlayerId ?? string.Empty;
         internal string GameSessionId => _gameSessionService.GameSession?.SessionId ?? string.Empty;
         internal string LocalAuthType => _gameSessionService.LocalPlayerInfo?.authType ?? string.Empty;
         internal IReadOnlyList<LiveRoomViewerState> CurrentViewers => _currentViewers;
@@ -500,14 +500,14 @@ namespace SaberRank.Features.Live.Ludus.Services {
                 Plugin.Log.Warn("Ludus: Game session refresh failed; retrying cached session.");
             }
             if (!authenticated || !_gameSessionService.HasAuthenticatedSession) {
-                throw new InvalidOperationException("SaberRank game session is not available");
+                throw new InvalidOperationException("SnoreSaber game session is not available");
             }
             MarkAuthenticationAvailable(forceAuthenticationRefresh && !usedCachedSessionAfterRefreshFailure);
 
             PrepareConnectionAttempt();
 
             try {
-                string url = NormalizeLudusUrl(_nextLudusUrl ?? SaberRankEndpoints.LudusUrl);
+                string url = NormalizeLudusUrl(_nextLudusUrl ?? SnoreSaberEndpoints.LudusUrl);
                 Plugin.Log.Info($"Ludus: Connecting to {url}");
                 await ConnectSessionTransport(new Uri(url), cancellationToken);
                 _reconnectAttempt = 0;

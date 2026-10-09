@@ -1,7 +1,7 @@
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
 
-namespace SaberRank.Features.Live.Compete.UI.ViewControllers.Shared {
+namespace SnoreSaber.Features.Live.Compete.UI.ViewControllers.Shared {
     [HotReload]
     internal class CompeteLoadingViewController : BSMLAutomaticViewController {
         private string _message = "Loading...";

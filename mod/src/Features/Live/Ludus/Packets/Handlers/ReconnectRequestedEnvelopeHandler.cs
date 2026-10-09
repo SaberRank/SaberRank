@@ -1,8 +1,8 @@
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Protocol;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Protocol;
 using System;
 
-namespace SaberRank.Features.Live.Ludus.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Ludus.Packets.Handlers {
     internal sealed class ReconnectRequestedEnvelopeHandler<TSession> : ILudusEnvelopeHandler<TSession>
         where TSession : ILudusSessionPacketContext {
         public LudusEnvelopeType Type => LudusEnvelopeType.ReconnectRequested;

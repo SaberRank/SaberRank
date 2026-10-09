@@ -1,11 +1,11 @@
 using IPA.Utilities;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class ComboPlayer : TimeSynchronizer, IScroller {
         private ComboController _comboController;
         private ComboUIController _comboUIController;

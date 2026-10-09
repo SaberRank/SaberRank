@@ -1,6 +1,6 @@
-using SaberRank.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Domain;
 
-namespace SaberRank.Features.Live.Compete.UI.Cells {
+namespace SnoreSaber.Features.Live.Compete.UI.Cells {
     internal class CompeteRoomCell : CompeteListRowCell {
         internal CompeteRoom Room { get; }
 

@@ -1,7 +1,7 @@
-using SaberRank.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Domain;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Leaderboards.Services {
+namespace SnoreSaber.Features.Leaderboards.Services {
     internal class LeaderboardPlayerScoreCache {
         private readonly Dictionary<string, LeaderboardScore> _scores = new Dictionary<string, LeaderboardScore>();
 
@@ -21,7 +21,7 @@ namespace SaberRank.Features.Leaderboards.Services {
 
         internal bool TryGet(BeatmapKey beatmapKey, string playerId, out LeaderboardScore score) {
             string songHash;
-            if (string.IsNullOrEmpty(playerId) || !SaberRankBeatmapKey.TryGetSongHash(beatmapKey, out songHash)) {
+            if (string.IsNullOrEmpty(playerId) || !SnoreSaberBeatmapKey.TryGetSongHash(beatmapKey, out songHash)) {
                 score = null;
                 return false;
             }

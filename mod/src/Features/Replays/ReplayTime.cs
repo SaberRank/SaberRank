@@ -1,16 +1,16 @@
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using Zenject;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal abstract class TimeSynchronizer {
         [Inject]
         protected readonly AudioTimeSyncController audioTimeSyncController = null;
     }
 }
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal interface IScroller {
         void TimeUpdate(float newTime);
     }

@@ -1,12 +1,12 @@
-using SaberRank.Core;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Live.V1;
 using System;
 
-namespace SaberRank.Features.Live.Replay {
+namespace SnoreSaber.Features.Live.Replay {
     internal partial class LiveReplayStreamingService {
-        internal void Complete(LevelCompletionResults results, float playOutcomeTime, SaberRankPlayOutcome? playOutcomeOverride = null) {
+        internal void Complete(LevelCompletionResults results, float playOutcomeTime, SnoreSaberPlayOutcome? playOutcomeOverride = null) {
             if (!_recording) {
                 return;
             }

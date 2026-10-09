@@ -1,20 +1,20 @@
 using BeatSaberMarkupLanguage.Parser;
 using HMUI;
-using SaberRank.Features.Replays.Services;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.Replays;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Core;
-using SaberRank.Features.Leaderboards.UI.ScoreDetails;
-using SaberRank.Features.Players.Profile;
+using SnoreSaber.Features.Replays.Services;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Leaderboards.UI.ScoreDetails;
+using SnoreSaber.Features.Players.Profile;
 using System;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using UnityEngine;
 
-namespace SaberRank.Features.Leaderboards.UI {
+namespace SnoreSaber.Features.Leaderboards.UI {
     internal class LeaderboardModalFlow : IDisposable {
         private static readonly FieldAccessor<ModalView, bool>.Accessor AnimateParentCanvas =
             FieldAccessor<ModalView, bool>.GetAccessor("_animateParentCanvas");
@@ -80,7 +80,7 @@ namespace SaberRank.Features.Leaderboards.UI {
             }
 
             CloseModals();
-            Application.OpenURL(SaberRankEndpoints.Leaderboard(leaderboard.LeaderboardInfo.Leaderboard.Id));
+            Application.OpenURL(SnoreSaberEndpoints.Leaderboard(leaderboard.LeaderboardInfo.Leaderboard.Id));
         }
 
         internal void ShowLocalPlayerProfile() {

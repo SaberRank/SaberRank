@@ -1,12 +1,12 @@
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Live.Replay;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Features.Replays.Recorders;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Live.Replay;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Recorders;
 using System;
 using System.Linq;
 using Zenject;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal class Recorder : IInitializable, IDisposable {
         private readonly string _id;
         private readonly PoseRecorder _poseRecorder;

@@ -1,6 +1,6 @@
-using SaberRank.Core.Api.UploadTrust;
+using SnoreSaber.Core.Api.UploadTrust;
 
-namespace SaberRank.Features.Players.Domain {
+namespace SnoreSaber.Features.Players.Domain {
     internal class GameSession {
         internal string PlayerId { get; set; } = string.Empty;
         internal string PlayerName { get; set; } = string.Empty;

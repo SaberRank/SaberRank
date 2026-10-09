@@ -1,11 +1,11 @@
 using IPA.Utilities;
 using Newtonsoft.Json.Linq;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.IO;
 using System.Linq;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class HsvConfigRecorder {
         private const int MaxSelectorBytes = 8 * 1024;
         private const string PluginConfigFileName = "HitScoreVisualizer.json";

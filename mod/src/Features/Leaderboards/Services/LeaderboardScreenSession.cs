@@ -1,10 +1,10 @@
-using SaberRank.Core;
-using SaberRank.Features.Leaderboards.Domain;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Leaderboards.Domain;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Leaderboards.Services {
+namespace SnoreSaber.Features.Leaderboards.Services {
     internal class LeaderboardScreenSession : IDisposable {
         internal event Action<LeaderboardScreenState> StateChanged;
 
@@ -23,7 +23,7 @@ namespace SaberRank.Features.Leaderboards.Services {
         }
 
         internal void SetBeatmap(BeatmapKey beatmapKey) {
-            if (!SaberRankBeatmapKey.IsSupported(beatmapKey)) {
+            if (!SnoreSaberBeatmapKey.IsSupported(beatmapKey)) {
                 ClearBeatmap();
                 return;
             }
@@ -99,7 +99,7 @@ namespace SaberRank.Features.Leaderboards.Services {
                 Publish(state);
             } catch (OperationCanceledException) {
             } catch (Exception ex) {
-                Plugin.Log.Error($"Failed to load LeaderboardCore SaberRank leaderboard: {ex}");
+                Plugin.Log.Error($"Failed to load LeaderboardCore SnoreSaber leaderboard: {ex}");
                 Publish(LeaderboardScreenState.Failed(LeaderboardScreenStatus.Error, "Failed to load leaderboard, score won't upload", true, null, string.Empty, false, _page));
             }
         }

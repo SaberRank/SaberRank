@@ -1,18 +1,18 @@
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Core.Presentation;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Core.Presentation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using SaberRank.Features.Leaderboards.Services;
+using SnoreSaber.Features.Leaderboards.Services;
 
-namespace SaberRank.Features.Leaderboards.UI.Avatars {
+namespace SnoreSaber.Features.Leaderboards.UI.Avatars {
     internal class LeaderboardAvatarHost {
         private const int MaximumAvatars = 10;
 
         internal List<LeaderboardAvatarView> Avatars { get; }
 
-        public LeaderboardAvatarHost(RemoteImageService remoteImageService, SaberRankUIMaterials materials, LeaderboardTweeningService leaderboardTweeningService) {
+        public LeaderboardAvatarHost(RemoteImageService remoteImageService, SnoreSaberUIMaterials materials, LeaderboardTweeningService leaderboardTweeningService) {
             Avatars = Enumerable.Range(0, MaximumAvatars).Select(index => new LeaderboardAvatarView(index, remoteImageService, materials, leaderboardTweeningService)).ToList();
         }
 

@@ -1,16 +1,16 @@
-using SaberRank.Core;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.MainMenu;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.MainMenu;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Leaderboards.UI {
+namespace SnoreSaber.Features.Leaderboards.UI {
     internal class LeaderboardPanelFlow : IInitializable, ITickable, System.IDisposable {
         private const float LogoBlinkSeconds = 1f;
 
@@ -18,7 +18,7 @@ namespace SaberRank.Features.Leaderboards.UI {
         private readonly GameSessionService _gameSessionService;
         private readonly CompeteDirectoryService _competeDirectoryService;
         private readonly LocalPlayerPanelSession _localPlayerPanelSession;
-        private readonly SaberRankMenuNavigator _menuNavigator;
+        private readonly SnoreSaberMenuNavigator _menuNavigator;
         private readonly LeaderboardModalFlow _modalFlow;
         private readonly SettingsService _settings;
 
@@ -32,7 +32,7 @@ namespace SaberRank.Features.Leaderboards.UI {
             GameSessionService gameSessionService,
             CompeteDirectoryService competeDirectoryService,
             LocalPlayerPanelSession localPlayerPanelSession,
-            SaberRankMenuNavigator menuNavigator,
+            SnoreSaberMenuNavigator menuNavigator,
             LeaderboardModalFlow modalFlow,
             SettingsService settings) {
 
@@ -70,8 +70,8 @@ namespace SaberRank.Features.Leaderboards.UI {
         }
 
         private void PanelViewLogoSelected() {
-            if (!_settings.Current.hasClickedSaberRankLogo) {
-                _settings.Current.hasClickedSaberRankLogo = true;
+            if (!_settings.Current.hasClickedSnoreSaberLogo) {
+                _settings.Current.hasClickedSnoreSaberLogo = true;
                 _panelView.SetLogoColor(Color.white);
                 _settings.Save();
             }
@@ -175,7 +175,7 @@ namespace SaberRank.Features.Leaderboards.UI {
         }
 
         private void TickLogoBlink(float deltaTime) {
-            if (!_panelView.IsReady || _settings.Current.hasClickedSaberRankLogo) {
+            if (!_panelView.IsReady || _settings.Current.hasClickedSnoreSaberLogo) {
                 return;
             }
 

@@ -1,16 +1,16 @@
-using SaberRank.Core.Api.Generated;
+using SnoreSaber.Core.Api.Generated;
 using System;
 
-namespace SaberRank.Core.Api.UploadTrust {
+namespace SnoreSaber.Core.Api.UploadTrust {
     internal sealed class UploadTrustClient {
-        private readonly SaberRankRuntimeInfo _runtimeInfo;
+        private readonly SnoreSaberRuntimeInfo _runtimeInfo;
         private readonly UploadTrustBuildMetadata _buildMetadata;
 
-        internal UploadTrustClient(SaberRankRuntimeInfo runtimeInfo)
+        internal UploadTrustClient(SnoreSaberRuntimeInfo runtimeInfo)
             : this(runtimeInfo, UploadTrustBuildMetadata.FromAssembly(typeof(Plugin).Assembly)) {
         }
 
-        internal UploadTrustClient(SaberRankRuntimeInfo runtimeInfo, UploadTrustBuildMetadata buildMetadata) {
+        internal UploadTrustClient(SnoreSaberRuntimeInfo runtimeInfo, UploadTrustBuildMetadata buildMetadata) {
             _runtimeInfo = runtimeInfo;
             _buildMetadata = buildMetadata;
         }

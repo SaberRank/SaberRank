@@ -1,8 +1,8 @@
-using SaberRank.Core.Api;
-using SaberRank.Core.Api.Generated;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Features.Players.Services;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Api.Generated;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Features.Players.Services;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,12 +10,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompeteDirectoryService {
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly GameSessionService _gameSessionService;
 
-        internal CompeteDirectoryService(ISaberRankApiClient apiClient, GameSessionService gameSessionService) {
+        internal CompeteDirectoryService(ISnoreSaberApiClient apiClient, GameSessionService gameSessionService) {
             _apiClient = apiClient;
             _gameSessionService = gameSessionService;
         }
@@ -54,7 +54,7 @@ namespace SaberRank.Features.Live.Compete.Services {
         private async Task<GameSession> GetSession(CancellationToken cancellationToken) {
             bool authenticated = await _gameSessionService.EnsureAuthenticated(false, cancellationToken);
             if (!authenticated || !_gameSessionService.HasAuthenticatedSession) {
-                throw new InvalidOperationException("SaberRank game session is not available");
+                throw new InvalidOperationException("SnoreSaber game session is not available");
             }
 
             return _gameSessionService.GameSession;
@@ -155,7 +155,7 @@ namespace SaberRank.Features.Live.Compete.Services {
             } catch (OperationCanceledException) {
                 throw;
             } catch (Exception ex) {
-                Plugin.Log.Warn($"Unable to fetch SaberRank live room song stars: {ex.Message}");
+                Plugin.Log.Warn($"Unable to fetch SnoreSaber live room song stars: {ex.Message}");
                 return "--";
             }
         }

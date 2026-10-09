@@ -1,11 +1,11 @@
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace SaberRank.Features.Live.Compete.Packets {
+namespace SnoreSaber.Features.Live.Compete.Packets {
     internal sealed class CompeteLudusCommandSession : ILudusServerCommandSession {
         private readonly Func<string> _localPlayerId;
         private readonly Func<CompeteRoom> _getTournamentRoom;

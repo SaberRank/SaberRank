@@ -1,8 +1,8 @@
-using SaberRank.Features.Replays.UI;
+using SnoreSaber.Features.Replays.UI;
 using SiraUtil.Tools.FPFC;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Installers {
+namespace SnoreSaber.Features.Replays.Installers {
     internal class ImberInstaller : Installer {
         private readonly ReplayState _replayState;
         private readonly IFPFCSettings _fpfcSettings;

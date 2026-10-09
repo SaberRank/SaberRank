@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/tools/openapi/SaberRank.OpenApiTools/bin/Debug/net8.0/SaberRank.OpenApiTools.dll",
+            "program": "${workspaceFolder}/tools/openapi/SnoreSaber.OpenApiTools/bin/Debug/net8.0/SnoreSaber.OpenApiTools.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/tools/openapi/SaberRank.OpenApiTools",
+            "cwd": "${workspaceFolder}/tools/openapi/SnoreSaber.OpenApiTools",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

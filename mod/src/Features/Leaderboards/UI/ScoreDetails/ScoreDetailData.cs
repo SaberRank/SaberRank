@@ -1,9 +1,9 @@
-using SaberRank.Core.Platform;
-using SaberRank.Core.Presentation;
-using SaberRank.Features.Leaderboards.Domain;
+using SnoreSaber.Core.Platform;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.Leaderboards.Domain;
 using System;
 
-namespace SaberRank.Features.Leaderboards.UI.ScoreDetails {
+namespace SnoreSaber.Features.Leaderboards.UI.ScoreDetails {
     internal class ScoreDetailData {
         internal ScoreMap Score { get; set; }
         internal string PlayerId { get; set; }

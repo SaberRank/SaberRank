@@ -1,21 +1,21 @@
-using SaberRank.Core.Api;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.Replays;
-using SaberRank.Features.Leaderboards.Domain;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.Leaderboards.Domain;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Leaderboards.Services {
+namespace SnoreSaber.Features.Leaderboards.Services {
     internal class LeaderboardQueryService {
 
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly GameSessionService _gameSessionService;
         private readonly ReplayStorageService _replayStorageService;
         private readonly LeaderboardPlayerScoreCache _playerScoreCache;
         private readonly SettingsService _settings;
 
-        public LeaderboardQueryService(ISaberRankApiClient apiClient, GameSessionService gameSessionService, ReplayStorageService replayStorageService, LeaderboardPlayerScoreCache playerScoreCache, SettingsService settings) {
+        public LeaderboardQueryService(ISnoreSaberApiClient apiClient, GameSessionService gameSessionService, ReplayStorageService replayStorageService, LeaderboardPlayerScoreCache playerScoreCache, SettingsService settings) {
             _apiClient = apiClient;
             _gameSessionService = gameSessionService;
             _replayStorageService = replayStorageService;
@@ -36,7 +36,7 @@ namespace SaberRank.Features.Leaderboards.Services {
 
         private LeaderboardQuery GetLeaderboardQuery(BeatmapKey beatmapKey, LeaderboardScreenScope scope, int page, bool filterAroundCountry) {
             var query = new LeaderboardQuery {
-                SongHash = SaberRankBeatmapKey.GetSongHash(beatmapKey),
+                SongHash = SnoreSaberBeatmapKey.GetSongHash(beatmapKey),
                 GameMode = $"Solo{beatmapKey.CharacteristicSerializedName()}",
                 Difficulty = BeatmapDifficultyMethods.DefaultRating(beatmapKey.difficulty),
                 Page = page,

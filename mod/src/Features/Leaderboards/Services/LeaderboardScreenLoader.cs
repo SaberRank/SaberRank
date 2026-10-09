@@ -1,13 +1,13 @@
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Players.Services;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Players.Services;
 using System;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GeneratedApiException = SaberRank.Core.Api.Generated.ApiException;
+using GeneratedApiException = SnoreSaber.Core.Api.Generated.ApiException;
 
-namespace SaberRank.Features.Leaderboards.Services {
+namespace SnoreSaber.Features.Leaderboards.Services {
     internal class LeaderboardScreenLoader {
         private readonly BeatmapLevelsModel _beatmapLevelsModel;
         private readonly LeaderboardQueryService _leaderboardQueryService;
@@ -29,11 +29,11 @@ namespace SaberRank.Features.Leaderboards.Services {
         }
 
         internal async Task<LeaderboardScreenState> Load(BeatmapKey beatmapKey, LeaderboardScreenScope scope, int page, CancellationToken cancellationToken) {
-            if (SaberRankBeatmapKey.IsWip(beatmapKey)) {
-                return LeaderboardScreenState.Failed(LeaderboardScreenStatus.Error, "SaberRank doesn't support WIP levels", false, null, string.Empty, false, page);
+            if (SnoreSaberBeatmapKey.IsWip(beatmapKey)) {
+                return LeaderboardScreenState.Failed(LeaderboardScreenStatus.Error, "SnoreSaber doesn't support WIP levels", false, null, string.Empty, false, page);
             }
 
-            if (!SaberRankBeatmapKey.IsSupported(beatmapKey)) {
+            if (!SnoreSaberBeatmapKey.IsSupported(beatmapKey)) {
                 return LeaderboardScreenState.Failed(LeaderboardScreenStatus.Error, string.Empty, false, null, string.Empty, false, page);
             }
 
@@ -59,7 +59,7 @@ namespace SaberRank.Features.Leaderboards.Services {
             } catch (GeneratedApiException ex) when (IsLeaderboardNotFoundResponse(ex)) {
                 return LeaderboardScreenState.Failed(
                     LeaderboardScreenStatus.NoLeaderboard,
-                    "Play this level to create a SaberRank leaderboard",
+                    "Play this level to create a SnoreSaber leaderboard",
                     true,
                     null,
                     "Unranked",

@@ -1,8 +1,8 @@
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System.IO;
 using UnityEngine;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal static class ReplayExtensions {
         internal static VRPosition Convert(this Vector3 vec) {
             return new VRPosition { X = vec.x, Y = vec.y, Z = vec.z };

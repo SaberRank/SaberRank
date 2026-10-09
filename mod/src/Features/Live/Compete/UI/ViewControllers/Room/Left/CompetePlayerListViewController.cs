@@ -3,11 +3,11 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
-using SaberRank.Core;
-using SaberRank.Core.Presentation;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.UI.Cells;
-using SaberRank.Features.Players.Profile;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.UI.Cells;
+using SnoreSaber.Features.Players.Profile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Left {
+namespace SnoreSaber.Features.Live.Compete.UI.ViewControllers.Room.Left {
     [HotReload]
     internal class CompetePlayerListViewController : BSMLAutomaticViewController {
         private const float ScrollbarWidth = 8f;
@@ -47,14 +47,14 @@ namespace SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Left {
         private readonly List<object> _teamTwoPlayers = new List<object>();
 
         private DiContainer _container;
-        private SaberRankUIMaterials _materials;
+        private SnoreSaberUIMaterials _materials;
         private CompeteTeam _teamOne = FallbackTeamOne;
         private CompeteTeam _teamTwo = FallbackTeamTwo;
         private bool _hasPlayers;
         private bool _teamMode;
 
         [Inject]
-        private void Construct(DiContainer container, SaberRankUIMaterials materials) {
+        private void Construct(DiContainer container, SnoreSaberUIMaterials materials) {
             _container = container;
             _materials = materials;
         }

@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Players.Domain {
+namespace SnoreSaber.Features.Players.Domain {
     internal class GameAuthenticationRequest {
         internal int AuthType { get; set; }
         internal string PlayerId { get; set; } = string.Empty;

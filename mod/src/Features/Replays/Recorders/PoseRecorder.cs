@@ -1,10 +1,10 @@
-using SaberRank.Features.Live.Replay;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Live.Replay;
+using SnoreSaber.Features.Replays.Format;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class PoseRecorder : TimeSynchronizer, IInitializable, ITickable {
         private const int ExpectedPoseFramesPerSecond = 144;
 

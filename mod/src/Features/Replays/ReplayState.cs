@@ -1,7 +1,7 @@
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal class ReplayState {
         // State management
         internal BeatmapLevel CurrentBeatmapLevel;

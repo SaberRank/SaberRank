@@ -1,6 +1,6 @@
-using SaberRank.Core.Api;
+using SnoreSaber.Core.Api;
 
-namespace SaberRank.Features.Players.Domain {
+namespace SnoreSaber.Features.Players.Domain {
     internal enum GameSessionStatus {
         None,
         InProgress,
@@ -12,7 +12,7 @@ namespace SaberRank.Features.Players.Domain {
         internal GameSessionStatus Status { get; set; }
         internal GameSession Session { get; set; }
         internal string Message { get; set; } = string.Empty;
-        internal SaberRankApiError Error { get; set; }
+        internal SnoreSaberApiError Error { get; set; }
 
         internal static GameAuthenticationResult Success(GameSession session) {
             return new GameAuthenticationResult {
@@ -22,7 +22,7 @@ namespace SaberRank.Features.Players.Domain {
             };
         }
 
-        internal static GameAuthenticationResult Failure(string message, SaberRankApiError error) {
+        internal static GameAuthenticationResult Failure(string message, SnoreSaberApiError error) {
             return new GameAuthenticationResult {
                 Status = GameSessionStatus.Error,
                 Message = message,

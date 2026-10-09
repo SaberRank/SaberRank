@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Zenject;
 
-namespace SaberRank.Core.Presentation {
+namespace SnoreSaber.Core.Presentation {
 
     internal class RemoteImageService : IDisposable {
         private const int MaxSpriteCacheSize = 150;

@@ -1,8 +1,8 @@
-using SaberRank.Features.Live.Compete.Packets.Handlers;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Compete.Packets.Handlers;
+using SnoreSaber.Live.V1;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Compete.Packets {
+namespace SnoreSaber.Features.Live.Compete.Packets {
     internal interface ILudusServerCommandHandler {
         LudusCommandType Type { get; }
         void Handle(ILudusServerCommandSession session, ServerCommand command);

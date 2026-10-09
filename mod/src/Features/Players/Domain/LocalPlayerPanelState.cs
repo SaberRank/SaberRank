@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Players.Domain {
+namespace SnoreSaber.Features.Players.Domain {
     internal class LocalPlayerPanelState {
         internal string GlobalRankingText { get; private set; }
         internal bool IsLoaded { get; private set; }

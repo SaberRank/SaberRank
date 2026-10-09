@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Players.Domain {
+namespace SnoreSaber.Features.Players.Domain {
     internal class LocalPlayerInfo {
 
         internal string playerId { get; set; }

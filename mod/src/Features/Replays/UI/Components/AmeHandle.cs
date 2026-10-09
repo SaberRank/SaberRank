@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace SaberRank.Features.Replays.UI.Components {
+namespace SnoreSaber.Features.Replays.UI.Components {
     public class AmeHandle : MonoBehaviour, IBeginDragHandler, IDragHandler, IEventSystemHandler, IInitializePotentialDragHandler, IEndDragHandler {
         public bool dragged { get; private set; }
         private Action<AmeHandle, Vector2, Camera> _handleMoveCallback;

@@ -1,7 +1,7 @@
-using SaberRank.Core.Api.Paging;
-using SaberRank.Features.Replays;
+using SnoreSaber.Core.Api.Paging;
+using SnoreSaber.Features.Replays;
 
-namespace SaberRank.Features.Leaderboards.Domain {
+namespace SnoreSaber.Features.Leaderboards.Domain {
     internal class LeaderboardMap {
         internal LeaderboardInfoMap LeaderboardInfo { get; set; }
         internal ScoreMap[] Scores { get; set; }
@@ -33,7 +33,7 @@ namespace SaberRank.Features.Leaderboards.Domain {
             BeatmapLevel = beatmapLevel;
             BeatmapKey = beatmapKey;
             Leaderboard = leaderboard;
-            SongHash = SaberRankBeatmapKey.GetSongHash(beatmapKey);
+            SongHash = SnoreSaberBeatmapKey.GetSongHash(beatmapKey);
         }
     }
 }

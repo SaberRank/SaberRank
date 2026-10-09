@@ -1,7 +1,7 @@
-using SaberRank.Features.Replays;
+using SnoreSaber.Features.Replays;
 using System;
 
-namespace SaberRank.Features.ScoreSubmission.Services {
+namespace SnoreSaber.Features.ScoreSubmission.Services {
     internal class ScoreSubmissionService {
         private readonly ReplayState _replayState;
         private readonly StandardLevelScenesTransitionSetupData _standardTransition;

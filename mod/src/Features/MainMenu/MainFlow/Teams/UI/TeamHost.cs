@@ -1,15 +1,15 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
-using SaberRank.Core.Presentation;
+using SnoreSaber.Core.Presentation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
+namespace SnoreSaber.Features.MainMenu.MainFlow.Teams.UI {
     internal class TeamHost {
-        private const string TeamHostResource = "SaberRank.Features.MainMenu.MainFlow.Teams.UI.TeamHost.bsml";
+        private const string TeamHostResource = "SnoreSaber.Features.MainMenu.MainFlow.Teams.UI.TeamHost.bsml";
 
         [UIComponent("tab-root")]
         protected readonly RectTransform _tabRoot = null;

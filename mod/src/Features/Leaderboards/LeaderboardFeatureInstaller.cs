@@ -1,12 +1,13 @@
-using SaberRank.Features.Leaderboards.Adapters.LeaderboardCore;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Leaderboards.UI;
-using SaberRank.Features.Leaderboards.UI.Avatars;
+using SnoreSaber.Features.Leaderboards.Adapters.LeaderboardCore;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Leaderboards.UI;
+using SnoreSaber.Features.Leaderboards.UI.Avatars;
 using Zenject;
 
-namespace SaberRank.Features.Leaderboards {
+namespace SnoreSaber.Features.Leaderboards {
     internal class LeaderboardFeatureInstaller : Installer {
         public override void InstallBindings() {
+            Plugin.Log.Info("Installing SnoreSaber leaderboard feature bindings.");
             Container.Bind<BeatmapMaxScoreCache>().AsSingle();
             Container.Bind<LeaderboardPlayerScoreCache>().AsSingle();
             Container.Bind<LeaderboardScreenLoader>().AsSingle();
@@ -22,10 +23,10 @@ namespace SaberRank.Features.Leaderboards {
             Container.BindInterfacesAndSelfTo<LeaderboardModalFlow>().AsSingle();
 
             Container.Bind<PanelView>().FromNewComponentAsViewController().AsSingle();
-            Container.Bind<SaberRankLeaderboardCoreViewController>().FromNewComponentAsViewController().AsSingle();
-            Container.Bind<SaberRankLeaderboardOverlayController>().AsSingle().NonLazy();
+            Container.Bind<SnoreSaberLeaderboardCoreViewController>().FromNewComponentAsViewController().AsSingle();
+            Container.Bind<SnoreSaberLeaderboardOverlayController>().AsSingle().NonLazy();
 
-            Container.BindInterfacesAndSelfTo<SaberRankCustomLeaderboard>().AsSingle();
+            Container.BindInterfacesAndSelfTo<SnoreSaberCustomLeaderboard>().AsSingle();
         }
     }
 }

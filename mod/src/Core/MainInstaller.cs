@@ -1,21 +1,21 @@
-using SaberRank.Core.Api;
-using SaberRank.Core.BeatSaver;
-using SaberRank.Core.Presentation;
-using SaberRank.Features.Leaderboards;
-using SaberRank.Features.Live;
-using SaberRank.Features.MainMenu;
-using SaberRank.Features.Players;
-using SaberRank.Features.Replays;
-using SaberRank.Features.ScoreSubmission;
-using SaberRank.Features.Multiplayer;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.BeatSaver;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.Leaderboards;
+using SnoreSaber.Features.Live;
+using SnoreSaber.Features.MainMenu;
+using SnoreSaber.Features.Players;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.ScoreSubmission;
+using SnoreSaber.Features.Multiplayer;
 using Zenject;
 
-namespace SaberRank.Core {
+namespace SnoreSaber.Core {
     internal partial class MainInstaller : Installer {
 
         public override void InstallBindings() {
-            Container.BindInstance(new object()).WithId("SaberRankUIBindings").AsCached();
-            Container.Bind<ISaberRankApiClient>().To<SaberRankApiClient>().AsSingle();
+            Container.BindInstance(new object()).WithId("SnoreSaberUIBindings").AsCached();
+            Container.Bind<ISnoreSaberApiClient>().To<SnoreSaberApiClient>().AsSingle();
             Container.Bind<BeatSaverService>().AsSingle();
             Container.BindInterfacesAndSelfTo<RemoteImageService>().AsSingle();
             InstallGameBindings();

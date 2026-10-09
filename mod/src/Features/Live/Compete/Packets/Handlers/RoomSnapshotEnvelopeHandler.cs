@@ -1,14 +1,14 @@
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Packets;
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Ludus.Packets;
-using SaberRank.Features.Live.Protocol;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Packets;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Ludus.Packets;
+using SnoreSaber.Features.Live.Protocol;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Compete.Packets.Handlers {
     internal sealed class RoomSnapshotEnvelopeHandler : ILudusEnvelopeHandler<ILudusSessionPacketContext> {
         private readonly ILudusServerCommandSession _commandSession;
 

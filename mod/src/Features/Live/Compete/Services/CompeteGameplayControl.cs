@@ -2,7 +2,7 @@ using SiraUtil.Tools.SongControl;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompeteGameplayControl {
         private readonly CompeteGameplayState _gameplayState;
         private ISongControl _songControl;

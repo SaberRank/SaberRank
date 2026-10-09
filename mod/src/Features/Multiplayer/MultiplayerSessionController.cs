@@ -1,9 +1,9 @@
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.Leaderboards.UI;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Leaderboards.UI;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Multiplayer {
+namespace SnoreSaber.Features.Multiplayer {
     internal class MultiplayerSessionController : IInitializable, IDisposable {
 
         private readonly GameSessionService _gameSessionService;

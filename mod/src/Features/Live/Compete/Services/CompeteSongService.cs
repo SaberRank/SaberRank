@@ -1,9 +1,9 @@
 using IPA.Utilities.Async;
-using SaberRank.Core.Api;
-using SaberRank.Core.Api.Generated;
-using SaberRank.Core.BeatSaver;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Live.V1;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Api.Generated;
+using SnoreSaber.Core.BeatSaver;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Live.V1;
 using SongCore;
 using System;
 using System.Collections.Generic;
@@ -13,26 +13,26 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompeteSongService {
         private const int SongRefreshTimeoutMs = 30000;
 
         private readonly BeatSaverService _beatSaver;
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly BeatmapLevelsModel _beatmapLevelsModel;
         private static readonly object _songsLoadedLock = new object();
         private static readonly List<TaskCompletionSource<bool>> _songsLoadedCompletions = new List<TaskCompletionSource<bool>>();
         private static readonly object _mapDownloadsLock = new object();
         private static readonly Dictionary<string, Task> _mapDownloadsByHash = new Dictionary<string, Task>(StringComparer.OrdinalIgnoreCase);
 
-        internal CompeteSongService(BeatSaverService beatSaver, ISaberRankApiClient apiClient, BeatmapLevelsModel beatmapLevelsModel) {
+        internal CompeteSongService(BeatSaverService beatSaver, ISnoreSaberApiClient apiClient, BeatmapLevelsModel beatmapLevelsModel) {
             _beatSaver = beatSaver;
             _apiClient = apiClient;
             _beatmapLevelsModel = beatmapLevelsModel;
         }
 
         internal async Task<CompeteSongSelection> ResolveOrDownload(LiveSongCommand song, CancellationToken cancellationToken) {
-            LiveSongDetails scoreSaberDetails = await TryFetchSaberRankSongDetails(song, cancellationToken);
+            LiveSongDetails scoreSaberDetails = await TryFetchSnoreSaberSongDetails(song, cancellationToken);
             CompeteSongSelection installed = await ResolveInstalled(song, scoreSaberDetails, cancellationToken);
             if (installed != null) {
                 return installed;
@@ -58,12 +58,12 @@ namespace SaberRank.Features.Live.Compete.Services {
         }
 
         internal async Task<CompeteSongSelection> ResolveInstalled(LiveSongCommand song, CancellationToken cancellationToken) {
-            LiveSongDetails scoreSaberDetails = await TryFetchSaberRankSongDetails(song, cancellationToken);
+            LiveSongDetails scoreSaberDetails = await TryFetchSnoreSaberSongDetails(song, cancellationToken);
             return await ResolveInstalled(song, scoreSaberDetails, cancellationToken);
         }
 
         internal async Task<CompeteSongSelection> ResolveInstalledAfterRefresh(LiveSongCommand song, CancellationToken cancellationToken) {
-            LiveSongDetails scoreSaberDetails = await TryFetchSaberRankSongDetails(song, cancellationToken);
+            LiveSongDetails scoreSaberDetails = await TryFetchSnoreSaberSongDetails(song, cancellationToken);
             return await ResolveInstalledAfterRefresh(song, scoreSaberDetails, cancellationToken);
         }
 
@@ -96,13 +96,13 @@ namespace SaberRank.Features.Live.Compete.Services {
                 return null;
             }
 
-            LiveSongDetails scoreSaberDetails = await TryFetchSaberRankSongDetails(song, cancellationToken);
+            LiveSongDetails scoreSaberDetails = await TryFetchSnoreSaberSongDetails(song, cancellationToken);
             BeatSaverMap map = await TryFetchBeatSaverMap(song, cancellationToken);
             BeatSaverVersion version = _beatSaver.SelectVersion(map, SongHash(song));
             return CreatePreview(song, MergeSongDetails(scoreSaberDetails, BuildBeatSaverSongDetails(song, map, version)));
         }
 
-        private async Task<LiveSongDetails> TryFetchSaberRankSongDetails(LiveSongCommand song, CancellationToken cancellationToken) {
+        private async Task<LiveSongDetails> TryFetchSnoreSaberSongDetails(LiveSongCommand song, CancellationToken cancellationToken) {
             string hash = SongHash(song);
             if (string.IsNullOrEmpty(hash)) {
                 return null;
@@ -110,11 +110,11 @@ namespace SaberRank.Features.Live.Compete.Services {
 
             try {
                 MapDetailsResponse map = await _apiClient.GetMapByHash(hash, cancellationToken);
-                return BuildSaberRankSongDetails(song, map);
+                return BuildSnoreSaberSongDetails(song, map);
             } catch (OperationCanceledException) {
                 throw;
             } catch (Exception ex) {
-                Plugin.Log.Warn($"Unable to fetch SaberRank live song details: {ex.Message}");
+                Plugin.Log.Warn($"Unable to fetch SnoreSaber live song details: {ex.Message}");
                 return null;
             }
         }
@@ -160,7 +160,7 @@ namespace SaberRank.Features.Live.Compete.Services {
             };
         }
 
-        private static LiveSongDetails BuildSaberRankSongDetails(LiveSongCommand song, MapDetailsResponse map) {
+        private static LiveSongDetails BuildSnoreSaberSongDetails(LiveSongCommand song, MapDetailsResponse map) {
             if (map == null) {
                 return null;
             }

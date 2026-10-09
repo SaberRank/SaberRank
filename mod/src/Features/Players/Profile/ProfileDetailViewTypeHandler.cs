@@ -1,11 +1,11 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.TypeHandlers;
-using SaberRank.Core;
+using SnoreSaber.Core;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Players.Profile {
+namespace SnoreSaber.Features.Players.Profile {
     [ComponentHandler(typeof(ProfileDetailView))]
     internal class ProfileDetailViewTypeHandler : TypeHandler<ProfileDetailView> {
         public override Dictionary<string, string[]> Props => new Dictionary<string, string[]>()

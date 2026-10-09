@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Leaderboards.Domain {
+namespace SnoreSaber.Features.Leaderboards.Domain {
     internal enum LeaderboardQueryScope {
         Global,
         AroundPlayer,

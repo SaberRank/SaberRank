@@ -5,10 +5,10 @@ using Zenject;
 using SiraUtil.Tools.FPFC;
 using UnityEngine;
 using IPA.Utilities;
-using SaberRank.Core.Configuration;
-using SaberRank.Core.Gameplay;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Core.Gameplay;
 
-namespace SaberRank.Features.Replays.Legacy {
+namespace SnoreSaber.Features.Replays.Legacy {
 
     internal class LegacyReplayPlayer : IInitializable, ITickable, IDisposable {
 
@@ -184,7 +184,7 @@ namespace SaberRank.Features.Replays.Legacy {
 
             if (_playbackPreviousScore != keyframe.score) {
 
-                int maxPossibleRawScore = SaberRankScoreModel.OldMaxRawScoreForNumberOfNotes(cutOrMissedNotes);
+                int maxPossibleRawScore = SnoreSaberScoreModel.OldMaxRawScoreForNumberOfNotes(cutOrMissedNotes);
 
                 _relativeScoreAndImmediateRankCounter.UpdateRelativeScoreAndImmediateRank(keyframe.score, keyframe.score, maxPossibleRawScore, maxPossibleRawScore);
                 _scoreUIController.UpdateScore(keyframe.score, keyframe.score);

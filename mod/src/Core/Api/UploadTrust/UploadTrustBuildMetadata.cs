@@ -1,15 +1,15 @@
 using System.Linq;
 using System.Reflection;
 
-namespace SaberRank.Core.Api.UploadTrust {
+namespace SnoreSaber.Core.Api.UploadTrust {
     internal sealed class UploadTrustBuildMetadata {
-        private const string BuildIdKey = "SaberRankOfficialBuildId";
-        private const string CredentialKey = "SaberRankOfficialBuildCredential";
-        private const string ArtifactSha256Key = "SaberRankOfficialArtifactSha256";
-        private const string DevelopmentUploadTokenKey = "SaberRankDevelopmentUploadToken";
-        private const string DevelopmentAuthNonceKey = "SaberRankDevelopmentAuthNonce";
-        private const string DevelopmentPlayerIdKey = "SaberRankDevelopmentPlayerId";
-        private const string DevelopmentPlayerNameKey = "SaberRankDevelopmentPlayerName";
+        private const string BuildIdKey = "SnoreSaberOfficialBuildId";
+        private const string CredentialKey = "SnoreSaberOfficialBuildCredential";
+        private const string ArtifactSha256Key = "SnoreSaberOfficialArtifactSha256";
+        private const string DevelopmentUploadTokenKey = "SnoreSaberDevelopmentUploadToken";
+        private const string DevelopmentAuthNonceKey = "SnoreSaberDevelopmentAuthNonce";
+        private const string DevelopmentPlayerIdKey = "SnoreSaberDevelopmentPlayerId";
+        private const string DevelopmentPlayerNameKey = "SnoreSaberDevelopmentPlayerName";
 
         internal UploadTrustBuildMetadata(
             string buildId,

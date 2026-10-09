@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class ReplayTimeSyncController : TimeSynchronizer, ITickable {
         private static readonly FieldAccessor<BeatmapCallbacksController.InitData, float>.Accessor InitialStartFilterTime =
             FieldAccessor<BeatmapCallbacksController.InitData, float>.GetAccessor("startFilterTime");

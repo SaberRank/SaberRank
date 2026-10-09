@@ -1,12 +1,12 @@
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Live.Ludus.Services;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Live.Ludus.Services;
 using System.Collections.Generic;
 using System.Linq;
 using Zenject;
 
-namespace SaberRank.Features.MainMenu.Settings.ViewControllers {
+namespace SnoreSaber.Features.MainMenu.Settings.ViewControllers {
     [HotReload(RelativePathToLayout = @"./MainSettingsViewController.bsml")]
     internal partial class MainSettingsViewController : BSMLAutomaticViewController {
         private SettingsService _settings;

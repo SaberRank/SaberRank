@@ -1,10 +1,10 @@
-using SaberRank.Features.Live.Replay;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Live.Replay;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class HeightEventRecorder : TimeSynchronizer, IInitializable, IDisposable {
         private const int InitialHeightEventCapacity = 8;
 

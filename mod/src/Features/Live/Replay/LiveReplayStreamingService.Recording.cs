@@ -1,17 +1,17 @@
-using SaberRank.Core;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Live.V1;
 using System.Collections.Generic;
-using ReplayComboEventSource = SaberRank.Features.Replays.Format.ComboEvent;
-using ReplayEnergyEventSource = SaberRank.Features.Replays.Format.EnergyEvent;
-using ReplayHeightEventSource = SaberRank.Features.Replays.Format.HeightEvent;
-using ReplayMetadataSource = SaberRank.Features.Replays.Format.Metadata;
-using ReplayMultiplierEventSource = SaberRank.Features.Replays.Format.MultiplierEvent;
-using ReplayNoteEventSource = SaberRank.Features.Replays.Format.NoteEvent;
-using ReplayPoseGroupSource = SaberRank.Features.Replays.Format.VRPoseGroup;
-using ReplayScoreEventSource = SaberRank.Features.Replays.Format.ScoreEvent;
+using ReplayComboEventSource = SnoreSaber.Features.Replays.Format.ComboEvent;
+using ReplayEnergyEventSource = SnoreSaber.Features.Replays.Format.EnergyEvent;
+using ReplayHeightEventSource = SnoreSaber.Features.Replays.Format.HeightEvent;
+using ReplayMetadataSource = SnoreSaber.Features.Replays.Format.Metadata;
+using ReplayMultiplierEventSource = SnoreSaber.Features.Replays.Format.MultiplierEvent;
+using ReplayNoteEventSource = SnoreSaber.Features.Replays.Format.NoteEvent;
+using ReplayPoseGroupSource = SnoreSaber.Features.Replays.Format.VRPoseGroup;
+using ReplayScoreEventSource = SnoreSaber.Features.Replays.Format.ScoreEvent;
 
-namespace SaberRank.Features.Live.Replay {
+namespace SnoreSaber.Features.Live.Replay {
     internal partial class LiveReplayStreamingService {
         internal void Begin(ReplayMetadataSource metadata, byte[] hsvConfig) {
             _metadata = metadata;

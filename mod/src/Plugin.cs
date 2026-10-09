@@ -3,14 +3,14 @@ using HarmonyLib;
 using IPA;
 using IPA.Loader;
 using BeatSaberMarkupLanguage.Util;
-using SaberRank.Core;
-using SaberRank.Core.Configuration;
-using SaberRank.Core.Platform;
-using SaberRank.Features.Live;
-using SaberRank.Features.Replays;
-using SaberRank.Features.Replays.Installers;
-using SaberRank.Features.ScoreSubmission.Services;
-using SaberRank.Features.Players.Profile;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Core.Platform;
+using SnoreSaber.Features.Live;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.Replays.Installers;
+using SnoreSaber.Features.ScoreSubmission.Services;
+using SnoreSaber.Features.Players.Profile;
 using SiraUtil.Web;
 using SiraUtil.Zenject;
 using System.Diagnostics;
@@ -18,7 +18,7 @@ using System.Reflection;
 using UnityEngine;
 using IPALogger = IPA.Logging.Logger;
 
-namespace SaberRank {
+namespace SnoreSaber {
     [Plugin(RuntimeOptions.DynamicInit)]
     public class Plugin {
 
@@ -59,7 +59,7 @@ namespace SaberRank {
             zenjector.UseAutoBinder();
 
             LibVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            HttpInstance = new Http(new HttpOptions() { baseURL = SaberRankEndpoints.ApiBaseUrl, applicationName = "SaberRank-PC", version = LibVersion });
+            HttpInstance = new Http(new HttpOptions() { baseURL = SnoreSaberEndpoints.ApiBaseUrl, applicationName = "SnoreSaber-PC", version = LibVersion });
             OpenXRManager.Initialize();
             SteamSettings.Initialize();
         }
@@ -69,8 +69,13 @@ namespace SaberRank {
             MainMenuAwaiter.MainMenuInitializing += MainMenuInit;
             SettingsService.Load();
             ReplayState.Reset();
-            if (!SettingsService.Current.disableSaberRank) {
-                harmony = new Harmony("com.umbranox.BeatSaber.SaberRank");
+            if (!SettingsService.Current.disableSnoreSaber) {
+                harmony = new Harmony("com.umbranox.BeatSaber.SnoreSaber");
+                Log.Info("SnoreSaber enabled; preparing LeaderboardCore compatibility before LeaderboardCore initializes.");
+                // LeaderboardCore must initialize after SnoreSaber. Patch its broken
+                // 1.7.0 TargetMethod before LeaderboardCore runs PatchAll().
+                Features.Leaderboards.Adapters.LeaderboardCore.LeaderboardCorePanelViewCompatibilityPatch.Install(harmony);
+        Features.Leaderboards.Adapters.LeaderboardCore.LeaderboardCoreSnoreSaberPriorityPatch.Install(harmony);
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
                 PlayerPrefs.SetInt("lbPatched", 1);
             }

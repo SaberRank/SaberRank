@@ -10,19 +10,19 @@ $specFile = (New-TemporaryFile).FullName
 
 try {
     $generatedDir = Join-Path $repoRoot "src/Core/Api/Generated"
-    $generatedFile = Join-Path $generatedDir "ScoreSaberApiGeneratedClient.cs"
+    $generatedFile = Join-Path $generatedDir "SnoreSaberApiGeneratedClient.cs"
 
     New-Item -ItemType Directory -Path $generatedDir -Force | Out-Null
 
-    dotnet run --project (Join-Path $repoRoot "tools/openapi/ScoreSaber.OpenApiTools/ScoreSaber.OpenApiTools.csproj") -- `
+    dotnet run --project (Join-Path $repoRoot "tools/openapi/SnoreSaber.OpenApiTools/SnoreSaber.OpenApiTools.csproj") -- `
         --input $Input `
         --output $specFile
 
     dotnet nswag openapi2csclient `
         "/input:$specFile" `
         "/output:$generatedFile" `
-        "/namespace:ScoreSaber.Core.Api.Generated" `
-        "/classname:ScoreSaberApiGeneratedClient" `
+        "/namespace:SnoreSaber.Core.Api.Generated" `
+        "/classname:SnoreSaberApiGeneratedClient" `
         "/GenerateClientClasses:true" `
         "/GenerateDtoTypes:true" `
         "/GenerateJsonMethods:false" `

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace SaberRank.Features.Replays.UI.Components {
+namespace SnoreSaber.Features.Replays.UI.Components {
     internal class AmeClicker : MonoBehaviour, IPointerClickHandler {
         private Action<float> _clickCallback;
         private RectTransform _rect;

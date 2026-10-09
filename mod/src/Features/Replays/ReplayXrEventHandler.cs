@@ -3,7 +3,7 @@ using Legato.XR.InputFocus;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal sealed class ReplayXrEventHandler : IInitializable, IDisposable {
         private readonly ReplayState _replayState;
 

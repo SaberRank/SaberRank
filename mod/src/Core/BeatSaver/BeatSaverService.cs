@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace SaberRank.Core.BeatSaver {
+namespace SnoreSaber.Core.BeatSaver {
     internal class BeatSaverService {
         private const int DownloadAttemptCount = 3;
         private const int DownloadRetryDelayMs = 750;

@@ -1,7 +1,7 @@
 using HarmonyLib;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Replays.HarmonyPatches {
+namespace SnoreSaber.Features.Replays.HarmonyPatches {
     [HarmonyPatch(typeof(BeatmapObjectManager), nameof(BeatmapObjectManager.HandleNoteControllerNoteWasMissed))]
     internal static class ReplayNoteMissEventGuard {
         private static readonly HashSet<NoteController> _allowedReplayMisses = new HashSet<NoteController>();

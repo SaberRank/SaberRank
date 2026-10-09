@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal static class ReplayStateRegistry {
         internal static ReplayState Current { get; private set; } = new ReplayState();
         internal static bool IsPlaybackEnabled => Current.IsPlaybackEnabled;

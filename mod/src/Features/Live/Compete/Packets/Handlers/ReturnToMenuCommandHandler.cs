@@ -1,7 +1,7 @@
-using SaberRank.Features.Live.Compete.Packets;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Compete.Packets;
+using SnoreSaber.Live.V1;
 
-namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Compete.Packets.Handlers {
     internal sealed class ReturnToMenuCommandHandler : ILudusServerCommandHandler {
         public LudusCommandType Type => LudusCommandType.LudusCommandTypeReturnToMenu;
 

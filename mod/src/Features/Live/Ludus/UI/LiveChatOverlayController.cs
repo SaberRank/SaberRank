@@ -1,11 +1,11 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.FloatingScreen;
 using HMUI;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Live.Ludus.Domain;
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Live.V1;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Live.Ludus.Domain;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Zenject;
 
-namespace SaberRank.Features.Live.Ludus.UI {
+namespace SnoreSaber.Features.Live.Ludus.UI {
     internal sealed class LiveChatOverlayController : IInitializable, ITickable, IDisposable {
         private readonly SettingsService _settings;
         private readonly LudusSessionService _ludusSession;
@@ -51,7 +51,7 @@ namespace SaberRank.Features.Live.Ludus.UI {
                 true,
                 new Vector3(0f, 3.75f, 2.5f),
                 Quaternion.Euler(325f, 0f, 0f));
-            _screen.name = "SaberRank Live Chat Overlay";
+            _screen.name = "SnoreSaber Live Chat Overlay";
             UnityEngine.Object.DontDestroyOnLoad(_screen.gameObject);
             _screen.GetComponent<Canvas>().sortingOrder = 33;
             _baseScale = _screen.transform.localScale;

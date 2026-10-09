@@ -1,4 +1,4 @@
-namespace SaberRank.Core.Api.Generated {
+namespace SnoreSaber.Core.Api.Generated {
     public partial class GameAuthenticateRequest {
         private bool _serializeUploadTrustMetadata;
 

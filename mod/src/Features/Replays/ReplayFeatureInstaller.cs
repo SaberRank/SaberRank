@@ -1,8 +1,8 @@
-using SaberRank.Features.Replays.Services;
-using SaberRank.Features.Replays.UI;
+using SnoreSaber.Features.Replays.Services;
+using SnoreSaber.Features.Replays.UI;
 using Zenject;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal class ReplayFeatureInstaller : Installer {
         public override void InstallBindings() {
             Container.Bind<ReplayLoader>().AsSingle().NonLazy();

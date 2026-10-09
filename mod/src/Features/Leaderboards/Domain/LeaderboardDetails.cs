@@ -1,6 +1,6 @@
 using System;
 
-namespace SaberRank.Features.Leaderboards.Domain {
+namespace SnoreSaber.Features.Leaderboards.Domain {
     internal enum LeaderboardStatus {
         Unranked,
         Ranked,

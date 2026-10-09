@@ -1,7 +1,7 @@
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompetePauseGuard : IInitializable, IDisposable {
         private readonly PauseController _pauseController;
         private readonly CompeteGameplayState _gameplayState;

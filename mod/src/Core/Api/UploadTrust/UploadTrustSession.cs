@@ -1,4 +1,4 @@
-namespace SaberRank.Core.Api.UploadTrust {
+namespace SnoreSaber.Core.Api.UploadTrust {
     internal sealed class UploadTrustSession {
         internal const string ProtocolHeaderValue = "scoresaber-upload-v2";
         internal const int ProtocolVersion = 2;

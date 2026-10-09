@@ -1,7 +1,7 @@
 using HarmonyLib;
 using System;
 
-namespace SaberRank.Features.Replays.HarmonyPatches {
+namespace SnoreSaber.Features.Replays.HarmonyPatches {
     [HarmonyPatch(typeof(RelativeScoreAndImmediateRankCounter), nameof(RelativeScoreAndImmediateRankCounter.UpdateRelativeScoreAndImmediateRank))]
     internal class ImmediateRankReinitializer {
         internal static bool Prefix(RelativeScoreAndImmediateRankCounter __instance, int score, int maxPossibleScore, ref Action ___relativeScoreOrImmediateRankDidChangeEvent) {

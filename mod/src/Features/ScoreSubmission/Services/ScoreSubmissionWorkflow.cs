@@ -1,13 +1,13 @@
-using SaberRank.Core.Api;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.Replays;
-using SaberRank.Features.ScoreSubmission.Domain;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.ScoreSubmission.Domain;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.ScoreSubmission.Services {
+namespace SnoreSaber.Features.ScoreSubmission.Services {
 
     internal class ScoreSubmissionWorkflow {
         private const int MaxUploadAttempts = 3;
@@ -16,14 +16,14 @@ namespace SaberRank.Features.ScoreSubmission.Services {
         private readonly ReplayService _replayService;
         private readonly ReplayStorageService _replayStorageService;
         private readonly ScoreUploadPayloadBuilder _payloadBuilder;
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
 
         public ScoreSubmissionWorkflow(
             GameSessionService gameSessionService,
             ReplayService replayService,
             ReplayStorageService replayStorageService,
             ScoreUploadPayloadBuilder payloadBuilder,
-            ISaberRankApiClient apiClient) {
+            ISnoreSaberApiClient apiClient) {
             _gameSessionService = gameSessionService;
             _replayService = replayService;
             _replayStorageService = replayStorageService;
@@ -31,7 +31,7 @@ namespace SaberRank.Features.ScoreSubmission.Services {
             _apiClient = apiClient;
         }
 
-        internal async Task<ScoreUploadResult> SubmitScore(BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LevelCompletionResults results, float playOutcomeTime, SaberRankPlayOutcome? playOutcomeOverride, bool saveLocalReplay, Action<ScoreSubmissionStatus> statusChanged, bool forceAuthenticationRefresh, bool notifyAuthenticationStatus, CancellationToken cancellationToken) {
+        internal async Task<ScoreUploadResult> SubmitScore(BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LevelCompletionResults results, float playOutcomeTime, SnoreSaberPlayOutcome? playOutcomeOverride, bool saveLocalReplay, Action<ScoreSubmissionStatus> statusChanged, bool forceAuthenticationRefresh, bool notifyAuthenticationStatus, CancellationToken cancellationToken) {
             Report(statusChanged, ScoreUploadStatus.Packaging, "Packaging score...");
             ReplaySerializationResult replay = await WriteSerializedReplay(statusChanged);
             if (replay == null || replay.Replay == null) {
@@ -39,7 +39,7 @@ namespace SaberRank.Features.ScoreSubmission.Services {
             }
 
             if (!await EnsureScoreUploadSession(forceAuthenticationRefresh, notifyAuthenticationStatus, cancellationToken)) {
-                return Error("SaberRank is not authenticated");
+                return Error("SnoreSaber is not authenticated");
             }
 
             float outcomeTime = GetPlayOutcomeTime(results, playOutcomeTime, replay.FailTime);
@@ -150,7 +150,7 @@ namespace SaberRank.Features.ScoreSubmission.Services {
                 Status = ScoreUploadStatus.Error,
                 Success = false,
                 Message = message,
-                Error = SaberRankApiError.FromMessage(message)
+                Error = SnoreSaberApiError.FromMessage(message)
             };
         }
     }

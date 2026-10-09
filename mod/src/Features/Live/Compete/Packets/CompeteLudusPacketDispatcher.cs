@@ -1,12 +1,12 @@
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Compete.Packets.Handlers;
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Ludus.Packets;
-using SaberRank.Features.Live.Ludus.Packets.Handlers;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Compete.Packets.Handlers;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Ludus.Packets;
+using SnoreSaber.Features.Live.Ludus.Packets.Handlers;
 
-namespace SaberRank.Features.Live.Compete.Packets {
+namespace SnoreSaber.Features.Live.Compete.Packets {
     internal static class CompeteLudusPacketDispatcher {
-        internal static LudusPacketDispatcher<ILudusSessionPacketContext> CreateDefault(ILudusServerCommandSession commandSession, LudusChatMessageBuffer chatMessages, SaberRankClock clock) {
+        internal static LudusPacketDispatcher<ILudusSessionPacketContext> CreateDefault(ILudusServerCommandSession commandSession, LudusChatMessageBuffer chatMessages, SnoreSaberClock clock) {
             LudusServerCommandDispatcher commandDispatcher = LudusServerCommandDispatcher.CreateDefault();
             return new LudusPacketDispatcher<ILudusSessionPacketContext>(new ILudusEnvelopeHandler<ILudusSessionPacketContext>[] {
                 new ConnectAcceptedEnvelopeHandler<ILudusSessionPacketContext>(),

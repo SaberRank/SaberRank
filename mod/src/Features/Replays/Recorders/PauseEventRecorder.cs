@@ -1,10 +1,10 @@
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class PauseEventRecorder : TimeSynchronizer, IInitializable, IDisposable {
         private const int InitialPauseEventCapacity = 4;
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace SaberRank.Features.Replays.Format {
+namespace SnoreSaber.Features.Replays.Format {
     internal enum ScoringType_pre1_40 {
         Ignore = -1,
         NoScore,

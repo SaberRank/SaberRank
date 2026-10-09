@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.Live.Compete.UI.Cells {
+namespace SnoreSaber.Features.Live.Compete.UI.Cells {
     internal class CompeteListRowCell : INotifyPropertyChanged {
         private string _title;
         private string _detail;

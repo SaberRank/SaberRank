@@ -1,7 +1,7 @@
-using SaberRank.Features.ScoreSubmission.Services;
+using SnoreSaber.Features.ScoreSubmission.Services;
 using Zenject;
 
-namespace SaberRank.Features.ScoreSubmission {
+namespace SnoreSaber.Features.ScoreSubmission {
     internal class ScoreSubmissionFeatureInstaller : Installer {
         public override void InstallBindings() {
             Container.Bind<ScoreUploadPayloadBuilder>().AsSingle();

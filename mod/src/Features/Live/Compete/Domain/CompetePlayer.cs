@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Live.Compete.Domain {
+namespace SnoreSaber.Features.Live.Compete.Domain {
     internal class CompetePlayer {
         internal string Name { get; }
         internal string Status { get; }

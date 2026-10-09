@@ -1,9 +1,9 @@
-using SaberRank.Features.Replays.Format;
-using SaberRank.Features.Replays.Playback;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Playback;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class ImberSpecsReporter : IInitializable, IDisposable {
         private readonly PosePlayer _posePlayer;
         private readonly SaberManager _saberManager;

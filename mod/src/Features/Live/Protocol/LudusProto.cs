@@ -1,11 +1,11 @@
 using ProtoBuf;
-using SaberRank.Live.V1;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using ProtoLudusEnvelope = SaberRank.Live.V1.LudusEnvelope;
+using ProtoLudusEnvelope = SnoreSaber.Live.V1.LudusEnvelope;
 
-namespace SaberRank.Features.Live.Protocol {
+namespace SnoreSaber.Features.Live.Protocol {
     internal enum LudusEnvelopeType {
         Unknown,
         ConnectAccepted,

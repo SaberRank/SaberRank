@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace SaberRank {
+namespace SnoreSaber {
     internal struct HttpOptions {
         public string applicationName { get; set; }
         public Version version { get; set; }
@@ -125,10 +125,10 @@ namespace SaberRank {
     internal class HttpErrorException : Exception {
         internal bool isNetworkError { get; set; }
         internal bool isHttpError { get; set; }
-        internal bool isSaberRankError { get; set; }
+        internal bool isSnoreSaberError { get; set; }
         internal int statusCode { get; set; }
         internal string errorBody { get; set; }
-        internal SaberRankError scoreSaberError { get; set; }
+        internal SnoreSaberError scoreSaberError { get; set; }
         internal HttpErrorException(bool _isNetworkError, bool _isHttpError, int _statusCode, string _scoreSaberErrorMessage = "") {
             isNetworkError = _isNetworkError;
             isHttpError = _isHttpError;
@@ -136,14 +136,14 @@ namespace SaberRank {
             errorBody = _scoreSaberErrorMessage;
             if (_scoreSaberErrorMessage != string.Empty) {
                 try {
-                    scoreSaberError = JsonConvert.DeserializeObject<SaberRankError>(_scoreSaberErrorMessage);
-                    isSaberRankError = true;
+                    scoreSaberError = JsonConvert.DeserializeObject<SnoreSaberError>(_scoreSaberErrorMessage);
+                    isSnoreSaberError = true;
                 } catch (Exception) { }
             }
         }
     }
 
-    internal class SaberRankError {
+    internal class SnoreSaberError {
         [JsonProperty("errorMessage")]
         internal string ErrorMessage { get; set; }
         [JsonProperty("message")]

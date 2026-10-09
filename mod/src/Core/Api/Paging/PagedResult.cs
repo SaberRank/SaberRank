@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SaberRank.Core.Api.Paging {
+namespace SnoreSaber.Core.Api.Paging {
     internal class PageMetadata {
         internal int Page { get; set; }
         internal int ItemsPerPage { get; set; }

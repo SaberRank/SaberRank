@@ -20,7 +20,7 @@
         </macro.as-host>
       </vertical>
       <vertical pref-width=".75" pref-height="40">
-        <img id="profile-line-border" src="ScoreSaber.Resources.pixel.png" size-delta-x=".75" size-delta-y="45" />
+        <img id="profile-line-border" src="SnoreSaber.Resources.pixel.png" size-delta-x=".75" size-delta-y="45" />
       </vertical>
       <vertical pref-width="40" pref-height="45" pad="2">
         <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" size-delta-x="50" size-delta-y="45" >

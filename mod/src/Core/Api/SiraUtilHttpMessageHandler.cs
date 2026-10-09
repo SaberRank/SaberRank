@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Core.Api {
+namespace SnoreSaber.Core.Api {
     internal class SiraUtilHttpMessageHandler : HttpMessageHandler {
         private const int RequestTimeoutSeconds = 30;
         private readonly IHttpService _httpService;
@@ -20,7 +20,7 @@ namespace SaberRank.Core.Api {
             string body = request.Content == null ? null : await request.Content.ReadAsStringAsync();
             var headers = GetHeaders(request);
 
-            Plugin.Log.Debug($"SaberRank API {request.Method} {request.RequestUri.AbsolutePath}");
+            Plugin.Log.Debug($"SnoreSaber API {request.Method} {request.RequestUri.AbsolutePath}");
             IHttpResponse siraResponse = await _httpService.SendAsync(
                 ToMethod(request.Method),
                 request.RequestUri.ToString(),
@@ -31,13 +31,13 @@ namespace SaberRank.Core.Api {
                 cancellationToken);
 
             if (siraResponse == null) {
-                Plugin.Log.Debug($"SaberRank API {request.RequestUri.AbsolutePath} completed: no response");
-                return CreateResponse(request, 0, Encoding.UTF8.GetBytes("SaberRank request failed before receiving an HTTP response"));
+                Plugin.Log.Debug($"SnoreSaber API {request.RequestUri.AbsolutePath} completed: no response");
+                return CreateResponse(request, 0, Encoding.UTF8.GetBytes("SnoreSaber request failed before receiving an HTTP response"));
             }
 
-            Plugin.Log.Debug($"SaberRank API {request.RequestUri.AbsolutePath} completed: {siraResponse.Code}");
+            Plugin.Log.Debug($"SnoreSaber API {request.RequestUri.AbsolutePath} completed: {siraResponse.Code}");
             if (siraResponse.Code <= 0) {
-                return CreateResponse(request, siraResponse.Code, Encoding.UTF8.GetBytes("SaberRank request timed out before receiving an HTTP response"));
+                return CreateResponse(request, siraResponse.Code, Encoding.UTF8.GetBytes("SnoreSaber request timed out before receiving an HTTP response"));
             }
 
             byte[] responseBody = await ReadResponseBody(siraResponse);
@@ -62,7 +62,7 @@ namespace SaberRank.Core.Api {
             try {
                 return await response.ReadAsByteArrayAsync() ?? new byte[0];
             } catch (Exception ex) {
-                string message = string.IsNullOrEmpty(ex.Message) ? "SaberRank response body could not be read" : ex.Message;
+                string message = string.IsNullOrEmpty(ex.Message) ? "SnoreSaber response body could not be read" : ex.Message;
                 return Encoding.UTF8.GetBytes(message);
             }
         }

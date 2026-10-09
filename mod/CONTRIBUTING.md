@@ -5,13 +5,13 @@
 - Follow `.editorconfig`
 - Keep warnings clean
 - Keep generated API files in `src/Core/Api/Generated` generated only
-- Keep SaberRank routes behind `SaberRankUrls` or local URL helpers
+- Keep SnoreSaber routes behind `SnoreSaberUrls` or local URL helpers
 
 ## API Client
 
 Generated API files live in `src/Core/Api/Generated`
 
-Do not edit them directly. Regenerate from SaberRank's OpenAPI spec:
+Do not edit them directly. Regenerate from SnoreSaber's OpenAPI spec:
 
 ```powershell
 tools/openapi/generate-openapi.ps1

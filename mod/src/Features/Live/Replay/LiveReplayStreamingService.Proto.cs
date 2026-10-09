@@ -1,18 +1,18 @@
-using SaberRank.Core;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
-using ReplayNoteEventSource = SaberRank.Features.Replays.Format.NoteEvent;
-using ReplayNoteEventTypeSource = SaberRank.Features.Replays.Format.NoteEventType;
-using ReplayPoseGroupSource = SaberRank.Features.Replays.Format.VRPoseGroup;
-using ReplayPoseSource = SaberRank.Features.Replays.Format.VRPose;
-using ReplayPositionSource = SaberRank.Features.Replays.Format.VRPosition;
-using ReplayQuaternionSource = SaberRank.Features.Replays.Format.VRRotation;
+using ReplayNoteEventSource = SnoreSaber.Features.Replays.Format.NoteEvent;
+using ReplayNoteEventTypeSource = SnoreSaber.Features.Replays.Format.NoteEventType;
+using ReplayPoseGroupSource = SnoreSaber.Features.Replays.Format.VRPoseGroup;
+using ReplayPoseSource = SnoreSaber.Features.Replays.Format.VRPose;
+using ReplayPositionSource = SnoreSaber.Features.Replays.Format.VRPosition;
+using ReplayQuaternionSource = SnoreSaber.Features.Replays.Format.VRRotation;
 
-namespace SaberRank.Features.Live.Replay {
+namespace SnoreSaber.Features.Live.Replay {
     internal partial class LiveReplayStreamingService {
         private ReplayCursor Cursor(ulong sequence, float songTime) {
             return new ReplayCursor {
@@ -24,7 +24,7 @@ namespace SaberRank.Features.Live.Replay {
 
         private PlayerIdentity PlayerIdentity() {
             return new PlayerIdentity {
-                PlayerId = _ludus.SaberRankPlayerId,
+                PlayerId = _ludus.SnoreSaberPlayerId,
                 Platform = PlatformFromAuthType(_ludus.LocalAuthType),
                 GameVersion = _runtimeInfo.GameVersion.ToString(),
                 ClientVersion = _runtimeInfo.PluginVersion.ToString(),
@@ -224,7 +224,7 @@ namespace SaberRank.Features.Live.Replay {
             }
         }
 
-        private static ReplayCompletion CompletionFromResults(LevelCompletionResults results, SaberRankPlayOutcome? playOutcomeOverride) {
+        private static ReplayCompletion CompletionFromResults(LevelCompletionResults results, SnoreSaberPlayOutcome? playOutcomeOverride) {
             if (playOutcomeOverride.HasValue) {
                 return CompletionFromPlayOutcome(playOutcomeOverride.Value);
             }
@@ -248,15 +248,15 @@ namespace SaberRank.Features.Live.Replay {
             return ReplayCompletion.ReplayCompletionAborted;
         }
 
-        private static ReplayCompletion CompletionFromPlayOutcome(SaberRankPlayOutcome outcome) {
+        private static ReplayCompletion CompletionFromPlayOutcome(SnoreSaberPlayOutcome outcome) {
             switch (outcome) {
-                case SaberRankPlayOutcome.Clear:
+                case SnoreSaberPlayOutcome.Clear:
                     return ReplayCompletion.ReplayCompletionPassed;
-                case SaberRankPlayOutcome.Fail:
+                case SnoreSaberPlayOutcome.Fail:
                     return ReplayCompletion.ReplayCompletionFailed;
-                case SaberRankPlayOutcome.Quit:
+                case SnoreSaberPlayOutcome.Quit:
                     return ReplayCompletion.ReplayCompletionQuit;
-                case SaberRankPlayOutcome.Restart:
+                case SnoreSaberPlayOutcome.Restart:
                     return ReplayCompletion.ReplayCompletionAborted;
                 default:
                     return ReplayCompletion.ReplayCompletionUnspecified;
@@ -278,7 +278,7 @@ namespace SaberRank.Features.Live.Replay {
 
         private static string ExtractMapHash(string levelId) {
             string songHash;
-            return SaberRankBeatmapKey.TryGetSongHash(levelId, out songHash) ? songHash : string.Empty;
+            return SnoreSaberBeatmapKey.TryGetSongHash(levelId, out songHash) ? songHash : string.Empty;
         }
 
         private static string ExtractLeaderboardId(string levelId) {
@@ -287,9 +287,9 @@ namespace SaberRank.Features.Live.Replay {
 
         private bool CanUsePublicPresenceForCurrentLevel() {
             string levelId = _metadata.LevelID;
-            return SaberRankBeatmapKey.IsCustomLevelId(levelId)
-                && !SaberRankBeatmapKey.IsWipLevelId(levelId)
-                && SaberRankBeatmapKey.TryGetSongHash(levelId, out _);
+            return SnoreSaberBeatmapKey.IsCustomLevelId(levelId)
+                && !SnoreSaberBeatmapKey.IsWipLevelId(levelId)
+                && SnoreSaberBeatmapKey.TryGetSongHash(levelId, out _);
         }
 
         private static string DifficultyName(int difficulty) {

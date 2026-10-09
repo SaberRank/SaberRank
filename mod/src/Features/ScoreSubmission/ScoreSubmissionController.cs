@@ -1,13 +1,13 @@
-using SaberRank.Core;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Live.Replay;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.Replays;
-using SaberRank.Features.ScoreSubmission.Domain;
-using SaberRank.Features.ScoreSubmission.Services;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Live.Replay;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.ScoreSubmission.Domain;
+using SnoreSaber.Features.ScoreSubmission.Services;
 using System;
 using System.Linq;
 using System.Threading;
@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.ScoreSubmission {
+namespace SnoreSaber.Features.ScoreSubmission {
     internal interface IScoreSubmissionStatusSource {
         bool IsUploading { get; }
         event Action<ScoreSubmissionStatus> StatusChanged;
@@ -73,7 +73,7 @@ namespace SaberRank.Features.ScoreSubmission {
 
         private void HandleLevelFinished(ScoreSubmissionRequest request) {
             try {
-                SaberRankPlayOutcome? playOutcomeOverride = GetPlayOutcomeOverride(request);
+                SnoreSaberPlayOutcome? playOutcomeOverride = GetPlayOutcomeOverride(request);
                 _liveReplayStreamingService.Complete(request.Results, request.PlayOutcomeTime, playOutcomeOverride);
                 ScoreSubmissionDecision decision = Decide(request, playOutcomeOverride);
                 Plugin.Log.Debug($"Score submission decision: {decision.Action} {decision.Reason}");
@@ -95,7 +95,7 @@ namespace SaberRank.Features.ScoreSubmission {
             }
         }
 
-        private async Task SubmitScore(ScoreSubmissionRequest request, ScoreSubmissionVisibility visibility, SaberRankPlayOutcome? playOutcomeOverride) {
+        private async Task SubmitScore(ScoreSubmissionRequest request, ScoreSubmissionVisibility visibility, SnoreSaberPlayOutcome? playOutcomeOverride) {
             bool visibleUpload = visibility == ScoreSubmissionVisibility.Visible && ShouldShowUploadStatus(request);
             if (visibleUpload) {
                 IsUploading = Interlocked.Increment(ref _visibleUploadCount) > 0;
@@ -152,7 +152,7 @@ namespace SaberRank.Features.ScoreSubmission {
                 return true;
             }
 
-            if (playerScore.PlayOutcome != SaberRankPlayOutcome.Clear) {
+            if (playerScore.PlayOutcome != SnoreSaberPlayOutcome.Clear) {
                 Plugin.Log.Debug("Cached API player score is not a clear; showing score upload status");
                 return true;
             }
@@ -174,7 +174,7 @@ namespace SaberRank.Features.ScoreSubmission {
 
         private void Emit(ScoreSubmissionStatus status) => StatusChanged?.Invoke(status);
 
-        private ScoreSubmissionDecision Decide(ScoreSubmissionRequest request, SaberRankPlayOutcome? playOutcomeOverride) {
+        private ScoreSubmissionDecision Decide(ScoreSubmissionRequest request, SnoreSaberPlayOutcome? playOutcomeOverride) {
             if (_replayState.IsPlaybackEnabled) {
                 return ScoreSubmissionDecision.Ignore("replay playback is active");
             }
@@ -183,8 +183,8 @@ namespace SaberRank.Features.ScoreSubmission {
                 return ScoreSubmissionDecision.Ignore("unsupported game mode");
             }
 
-            if (!SaberRankBeatmapKey.IsSupported(request.BeatmapKey)) {
-                return ScoreSubmissionDecision.Ignore("unsupported or WIP SaberRank level id");
+            if (!SnoreSaberBeatmapKey.IsSupported(request.BeatmapKey)) {
+                return ScoreSubmissionDecision.Ignore("unsupported or WIP SnoreSaber level id");
             }
 
             if (request.Practicing || IsPracticeViewActive()) {
@@ -195,7 +195,7 @@ namespace SaberRank.Features.ScoreSubmission {
                 return ScoreSubmissionDecision.Ignore("score is 0, server would reject it");
             }
 
-            if (playOutcomeOverride.HasValue && playOutcomeOverride.Value == SaberRankPlayOutcome.Quit) {
+            if (playOutcomeOverride.HasValue && playOutcomeOverride.Value == SnoreSaberPlayOutcome.Quit) {
                 return ScoreSubmissionDecision.SubmitScore(ScoreSubmissionVisibility.Silent, "live map was stopped by host");
             }
 
@@ -222,13 +222,13 @@ namespace SaberRank.Features.ScoreSubmission {
 
         private static float GetCurrentSongTime() => Resources.FindObjectsOfTypeAll<AudioTimeSyncController>().FirstOrDefault()?.songTime ?? 0f;
 
-        private SaberRankPlayOutcome? GetPlayOutcomeOverride(ScoreSubmissionRequest request) {
+        private SnoreSaberPlayOutcome? GetPlayOutcomeOverride(ScoreSubmissionRequest request) {
             string songHash;
-            if (!SaberRankBeatmapKey.TryGetSongHash(request.BeatmapKey, out songHash)) {
+            if (!SnoreSaberBeatmapKey.TryGetSongHash(request.BeatmapKey, out songHash)) {
                 songHash = string.Empty;
             }
 
-            return _competeGameplayState.TryConsumeHostStop(songHash) ? SaberRankPlayOutcome.Quit : (SaberRankPlayOutcome?)null;
+            return _competeGameplayState.TryConsumeHostStop(songHash) ? SnoreSaberPlayOutcome.Quit : (SnoreSaberPlayOutcome?)null;
         }
 
         public void Dispose() {

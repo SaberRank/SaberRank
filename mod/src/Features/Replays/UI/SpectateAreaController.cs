@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using SaberRank.Core.Configuration;
+using SnoreSaber.Core.Configuration;
 using Tweening;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class SpectateAreaController : ITickable, IDisposable {
         private static readonly int _colorID = Shader.PropertyToID("_Color");
         private readonly TimeTweeningManager _timeTweeningManager;

@@ -1,21 +1,21 @@
 using System;
-using SaberRank.Core;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Replays.Format;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class MetadataRecorder : TimeSynchronizer, IInitializable, IDisposable {
         BeatmapObjectSpawnController.InitData _beatmapObjectSpawnControllerInitData;
         private readonly GameplayCoreSceneSetupData _gameplayCoreSceneSetupData;
         private readonly RoomSettings _roomSettings;
         private readonly IGameEnergyCounter _gameEnergyCounter;
-        private readonly SaberRankRuntimeInfo _runtimeInfo;
+        private readonly SnoreSaberRuntimeInfo _runtimeInfo;
         private readonly AudioTimeSyncController.InitData _audioTimeSyncInitData;
         private readonly GameplayMetadataProvider _metadataProvider;
         private float _failTime;
 
-        public MetadataRecorder(GameplayCoreSceneSetupData gameplayCoreSceneSetupData, BeatmapObjectSpawnController.InitData beatmapObjectSpawnControllerInitData, IGameEnergyCounter gameEnergyCounter, RoomSettings roomSettings, SaberRankRuntimeInfo runtimeInfo, GameplayMetadataProvider metadataProvider, [InjectOptional] AudioTimeSyncController.InitData audioTimeSyncInitData) {
+        public MetadataRecorder(GameplayCoreSceneSetupData gameplayCoreSceneSetupData, BeatmapObjectSpawnController.InitData beatmapObjectSpawnControllerInitData, IGameEnergyCounter gameEnergyCounter, RoomSettings roomSettings, SnoreSaberRuntimeInfo runtimeInfo, GameplayMetadataProvider metadataProvider, [InjectOptional] AudioTimeSyncController.InitData audioTimeSyncInitData) {
 
             _beatmapObjectSpawnControllerInitData = beatmapObjectSpawnControllerInitData;
             _gameEnergyCounter = gameEnergyCounter;
@@ -82,7 +82,7 @@ namespace SaberRank.Features.Replays.Recorders {
 
         }
 
-        public string[] GetModifierList(GameplayModifiers modifiers) => SaberRankGameplayModifiers.ToCodeList(modifiers, true).ToArray();
+        public string[] GetModifierList(GameplayModifiers modifiers) => SnoreSaberGameplayModifiers.ToCodeList(modifiers, true).ToArray();
 
         private float SongSpeed() {
             if (_audioTimeSyncInitData != null && _audioTimeSyncInitData.timeScale > 0f) {

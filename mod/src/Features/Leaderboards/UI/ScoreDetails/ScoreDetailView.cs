@@ -1,12 +1,12 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Core;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Core;
 using System;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.Leaderboards.UI.ScoreDetails {
+namespace SnoreSaber.Features.Leaderboards.UI.ScoreDetails {
     internal class ScoreDetailView {
 
         #region BSML Components

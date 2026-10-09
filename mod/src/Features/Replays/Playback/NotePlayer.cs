@@ -1,5 +1,5 @@
 using IPA.Utilities;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using SiraUtil.Affinity;
 using SiraUtil.Logging;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class NotePlayer : TimeSynchronizer, ITickable, IScroller, IAffinity {
         private int _nextIndex = 0;
         private readonly SiraLog _siraLog;

@@ -1,13 +1,13 @@
-using SaberRank.Core.Api;
-using SaberRank.Features.Players.Domain;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Features.Players.Domain;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Players.Services {
+namespace SnoreSaber.Features.Players.Services {
     internal class PlayerProfileService {
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
 
-        public PlayerProfileService(ISaberRankApiClient apiClient) {
+        public PlayerProfileService(ISnoreSaberApiClient apiClient) {
             _apiClient = apiClient;
         }
 

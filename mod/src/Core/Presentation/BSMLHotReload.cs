@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SaberRank.Core.Presentation {
+namespace SnoreSaber.Core.Presentation {
     internal static class BSMLHotReload {
         internal static string ResourceContent(Assembly assembly, string resource, string relativePathToLayout = null, [CallerFilePath] string sourcePath = null) {
 #if DEBUG || USE_HOT_RELOAD

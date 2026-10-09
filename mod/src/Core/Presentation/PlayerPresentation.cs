@@ -1,6 +1,6 @@
 using System;
 
-namespace SaberRank.Core.Presentation {
+namespace SnoreSaber.Core.Presentation {
 
     internal static class PlayerPresentation {
         private const string Denyah = "76561198064659288";
@@ -16,7 +16,7 @@ namespace SaberRank.Core.Presentation {
                 return "Wagwan piffting wots ur bbm pin?";
             }
 
-            return "Successfully signed into SaberRank!";
+            return "Successfully signed into SnoreSaber!";
         }
 
         internal static bool UsesFurryFont(string playerId) {
@@ -34,13 +34,13 @@ namespace SaberRank.Core.Presentation {
         internal static Tuple<string, string> GetCrownDetails(string playerId) {
             switch (playerId) {
                 case Woops:
-                    return new Tuple<string, string>("SaberRank.Resources.crown-bronze.png", "Beat Saber Invitational 3rd place");
+                    return new Tuple<string, string>("SnoreSaber.Resources.crown-bronze.png", "Beat Saber Invitational 3rd place");
                 case Jones:
-                    return new Tuple<string, string>("SaberRank.Resources.crown-silver.png", "Beat Saber Invitational 2nd place");
+                    return new Tuple<string, string>("SnoreSaber.Resources.crown-silver.png", "Beat Saber Invitational 2nd place");
                 case Umbranox:
-                    return new Tuple<string, string>("SaberRank.Resources.crown-umby.png", "Owner of SaberRank");
+                    return new Tuple<string, string>("SnoreSaber.Resources.crown-umby.png", "Owner of SnoreSaber");
                 case Rain:
-                    return new Tuple<string, string>("SaberRank.Resources.crown-rain.png", "Owner of Umbranox's heart");
+                    return new Tuple<string, string>("SnoreSaber.Resources.crown-rain.png", "Owner of Umbranox's heart");
             }
             return new Tuple<string, string>("", "");
         }

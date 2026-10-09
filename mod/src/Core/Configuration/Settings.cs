@@ -2,12 +2,12 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace SaberRank.Core.Configuration {
+namespace SnoreSaber.Core.Configuration {
     internal class Settings {
         public bool hideReplayUI = false;
 
         public int fileVersion { get; set; }
-        public bool disableSaberRank { get; set; }
+        public bool disableSnoreSaber { get; set; }
         public bool showLocalPlayerRank { get; set; }
         public bool showScorePP { get; set; }
         public bool showStatusText { get; set; }
@@ -33,7 +33,7 @@ namespace SaberRank.Core.Configuration {
         public bool enableReplayFrameRenderer { get; set; }
         public string replayFramePath { get; set; }
         public bool hideNAScoresFromLeaderboard { get; set; }
-        public bool hasClickedSaberRankLogo { get; set; }
+        public bool hasClickedSnoreSaberLogo { get; set; }
         public bool hasOpenedReplayUI { get; set; }
         public bool leftHandedReplayUI { get; set; }
         public bool lockedReplayUIMode { get; set; }
@@ -41,7 +41,7 @@ namespace SaberRank.Core.Configuration {
 
         public void SetDefaults() {
 
-            disableSaberRank = false;
+            disableSnoreSaber = false;
             showLocalPlayerRank = true;
             showScorePP = true;
             showStatusText = true;
@@ -67,7 +67,7 @@ namespace SaberRank.Core.Configuration {
             enableReplayFrameRenderer = false;
             replayFramePath = "Z:\\Example\\Directory\\";
             hideNAScoresFromLeaderboard = false;
-            hasClickedSaberRankLogo = false;
+            hasClickedSnoreSaberLogo = false;
             hasOpenedReplayUI = false;
             leftHandedReplayUI = false;
             lockedReplayUIMode = false;

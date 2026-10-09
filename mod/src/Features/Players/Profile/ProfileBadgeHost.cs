@@ -2,7 +2,7 @@ using BeatSaberMarkupLanguage.Attributes;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.Players.Profile {
+namespace SnoreSaber.Features.Players.Profile {
     internal class ProfileBadgeHost {
         private const int BadgeCellCount = 12;
 

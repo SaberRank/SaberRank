@@ -1,11 +1,11 @@
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Live.V1;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Live.V1;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompeteGameplayLauncher {
         private const int MapStartReadyPollMs = 25;
         private const int MapStartReadyTimeoutMs = 30000;
@@ -14,14 +14,14 @@ namespace SaberRank.Features.Live.Compete.Services {
         private readonly MenuTransitionsHelper _menuTransitionsHelper;
         private readonly EnvironmentsListModel _environmentsListModel;
         private readonly CompeteGameplayState _gameplayState;
-        private readonly SaberRankClock _clock;
+        private readonly SnoreSaberClock _clock;
 
         internal CompeteGameplayLauncher(
             PlayerDataModel playerDataModel,
             MenuTransitionsHelper menuTransitionsHelper,
             EnvironmentsListModel environmentsListModel,
             CompeteGameplayState gameplayState,
-            SaberRankClock clock) {
+            SnoreSaberClock clock) {
 
             _playerDataModel = playerDataModel;
             _menuTransitionsHelper = menuTransitionsHelper;

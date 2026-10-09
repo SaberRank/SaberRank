@@ -2,14 +2,14 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 
-namespace SaberRank.Core.Configuration {
+namespace SnoreSaber.Core.Configuration {
     internal class SettingsService {
         private const int CurrentVersion = 12;
 
         internal string DataPath => "UserData";
-        internal string ConfigPath => DataPath + @"\SaberRank";
+        internal string ConfigPath => DataPath + @"\SnoreSaber";
         internal string ReplayPath => ConfigPath + @"\Replays";
-        private string SettingsPath => ConfigPath + @"\SaberRank.json";
+        private string SettingsPath => ConfigPath + @"\SnoreSaber.json";
 
         internal Settings Current { get; private set; } = CreateDefaultSettings();
 

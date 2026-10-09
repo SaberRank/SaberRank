@@ -1,11 +1,11 @@
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Features.Replays.Playback;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Playback;
 using System.Linq;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class NonVRReplayUI : MonoBehaviour {
         [Inject] private readonly AudioTimeSyncController _audioTimeSyncController = null;
         [Inject] private readonly PosePlayer _posePlayer = null;

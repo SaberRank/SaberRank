@@ -1,9 +1,9 @@
-using SaberRank.Features.Live.Compete.Packets;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Compete.Packets;
+using SnoreSaber.Live.V1;
 using Newtonsoft.Json;
 using System;
 
-namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Compete.Packets.Handlers {
     internal sealed class FollowPlayerCommandHandler : ILudusServerCommandHandler {
         public LudusCommandType Type => LudusCommandType.LudusCommandTypeFollowPlayer;
 

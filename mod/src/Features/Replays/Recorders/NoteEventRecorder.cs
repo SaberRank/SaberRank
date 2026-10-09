@@ -1,12 +1,12 @@
-using SaberRank.Features.Live.Replay;
-using SaberRank.Features.Replays;
+using SnoreSaber.Features.Live.Replay;
+using SnoreSaber.Features.Replays;
 using System;
 using System.Collections.Generic;
 using Zenject;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using SiraUtil.Affinity;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class NoteEventRecorder : TimeSynchronizer, IInitializable, IDisposable, IAffinity {
         private const int InitialNoteEventCapacity = 4096;
         private const int InitialCutInfoCapacity = 128;

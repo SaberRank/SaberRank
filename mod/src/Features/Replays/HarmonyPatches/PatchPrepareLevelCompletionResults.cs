@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace SaberRank.Features.Replays.HarmonyPatches {
+namespace SnoreSaber.Features.Replays.HarmonyPatches {
     [HarmonyPatch(typeof(PrepareLevelCompletionResults), nameof(PrepareLevelCompletionResults.FillLevelCompletionResults))]
     internal class PatchPrepareLevelCompletionResults {
         internal static void Prefix(ref LevelCompletionResults.LevelEndStateType levelEndStateType) {

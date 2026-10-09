@@ -1,12 +1,12 @@
 using IPA.Utilities;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class ScorePlayer : TimeSynchronizer, ITickable, IScroller {
         private int _nextIndex;
         private ScoreController _scoreController;
@@ -63,7 +63,7 @@ namespace SaberRank.Features.Replays.Playback {
 
         private void UpdateScore(int newScore, int? immediateMaxPossibleScore, float time) {
 
-            var immediate = immediateMaxPossibleScore ?? SaberRankScoreModel.OldMaxRawScoreForNumberOfNotes(CalculatePostNoteCountForTime(time));
+            var immediate = immediateMaxPossibleScore ?? SnoreSaberScoreModel.OldMaxRawScoreForNumberOfNotes(CalculatePostNoteCountForTime(time));
             var multiplier = _scoreController._prevMultiplierFromModifiers;
 
             var newModifiedScore = ScoreModel.GetModifiedScoreForGameplayModifiersScoreMultiplier(newScore, multiplier);

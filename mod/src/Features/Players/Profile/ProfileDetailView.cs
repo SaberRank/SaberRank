@@ -1,10 +1,10 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
-using SaberRank.Core.Presentation;
-using SaberRank.Core;
-using SaberRank.Features.Leaderboards.UI;
-using SaberRank.Features.Players.Services;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Leaderboards.UI;
+using SnoreSaber.Features.Players.Services;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Players.Profile {
+namespace SnoreSaber.Features.Players.Profile {
 
     internal class ProfileDetailView : MonoBehaviour, INotifyPropertyChanged {
 
@@ -93,11 +93,11 @@ namespace SaberRank.Features.Players.Profile {
         #endregion
 
         private PlayerProfileService _playerProfileService = null;
-        private SaberRankUIMaterials _materials = null;
+        private SnoreSaberUIMaterials _materials = null;
         private IDisposable _hotReload;
 
         [Inject]
-        private void Construct(PlayerProfileService playerProfileService, SaberRankUIMaterials materials) {
+        private void Construct(PlayerProfileService playerProfileService, SnoreSaberUIMaterials materials) {
             _playerProfileService = playerProfileService;
             _materials = materials;
             ApplyRoundedMaterials();
@@ -116,7 +116,7 @@ namespace SaberRank.Features.Players.Profile {
                 return;
             }
 
-            Application.OpenURL(SaberRankEndpoints.Player(_profileInfo.Player.Id));
+            Application.OpenURL(SnoreSaberEndpoints.Player(_profileInfo.Player.Id));
         }
 
         [UIAction("#post-parse")]

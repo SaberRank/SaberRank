@@ -1,25 +1,25 @@
 using HMUI;
 using IPA.Utilities.Async;
-using SaberRank.Core;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.CodeEntry;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Entry;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Center;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Left;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Rooms;
-using SaberRank.Features.Live.Compete.UI.ViewControllers.Shared;
-using SaberRank.Features.Live.UI.ViewControllers;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.CodeEntry;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Entry;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Room.Center;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Room.Left;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Rooms;
+using SnoreSaber.Features.Live.Compete.UI.ViewControllers.Shared;
+using SnoreSaber.Features.Live.UI.ViewControllers;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
 
-namespace SaberRank.Features.Live.Compete.UI.FlowCoordinators {
+namespace SnoreSaber.Features.Live.Compete.UI.FlowCoordinators {
     internal class CompeteFlowCoordinator : FlowCoordinator {
         private const int LoadingTransitionDelayMs = 450;
 
@@ -109,7 +109,7 @@ namespace SaberRank.Features.Live.Compete.UI.FlowCoordinators {
             SubscribeTournamentBrowserEvents();
 
             if (firstActivation) {
-                SetTitle("SaberRank Compete", ViewController.AnimationType.None);
+                SetTitle("SnoreSaber Compete", ViewController.AnimationType.None);
                 showBackButton = true;
                 ProvideInitialViewControllers(_modeSelectionViewController);
             }
@@ -569,7 +569,7 @@ namespace SaberRank.Features.Live.Compete.UI.FlowCoordinators {
 
         private bool RefreshRoomLeaderboard() {
             CompeteSongSelection song = _selectedRoom?.Song;
-            if (song == null || !SaberRankBeatmapKey.IsSupported(song.BeatmapKey)) {
+            if (song == null || !SnoreSaberBeatmapKey.IsSupported(song.BeatmapKey)) {
                 return false;
             }
 
@@ -579,7 +579,7 @@ namespace SaberRank.Features.Live.Compete.UI.FlowCoordinators {
 
         private void RestoreMenuLeaderboard() {
             BeatmapKey beatmapKey = _levelSelectionNavigationController.GetBeatmapKey();
-            if (SaberRankBeatmapKey.IsSupported(beatmapKey)) {
+            if (SnoreSaberBeatmapKey.IsSupported(beatmapKey)) {
                 _platformLeaderboardViewController.SetData(beatmapKey);
                 return;
             }
@@ -635,7 +635,7 @@ namespace SaberRank.Features.Live.Compete.UI.FlowCoordinators {
             }
 
             return status.IndexOf("denied mods", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                status.IndexOf("requires SaberRank to report installed mods", StringComparison.OrdinalIgnoreCase) >= 0;
+                status.IndexOf("requires SnoreSaber to report installed mods", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void ClearPrompts() {

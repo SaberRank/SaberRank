@@ -1,8 +1,8 @@
-using SaberRank.Core.Platform;
-using SaberRank.Features.Players.Services;
+using SnoreSaber.Core.Platform;
+using SnoreSaber.Features.Players.Services;
 using Zenject;
 
-namespace SaberRank.Features.Players {
+namespace SnoreSaber.Features.Players {
     internal class PlayersFeatureInstaller : Installer {
         public override void InstallBindings() {
             Container.BindInterfacesAndSelfTo<GamePlatformAdapter>().AsSingle();

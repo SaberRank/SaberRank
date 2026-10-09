@@ -1,10 +1,10 @@
 using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
-using SaberRank.Core;
-using SaberRank.Core.Presentation;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Presentation;
 using System;
 
-namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
+namespace SnoreSaber.Features.MainMenu.MainFlow.GlobalLeaderboard {
     internal class GlobalCell {
 
         #region BSML Components
@@ -34,9 +34,9 @@ namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
 
         private readonly string _identifier;
         private readonly Action<string, string> _profileClicked;
-        private readonly SaberRankUIMaterials _materials;
+        private readonly SnoreSaberUIMaterials _materials;
 
-        public GlobalCell(SaberRankUIMaterials materials, string id, string avatarUrl, string username, string country, string rank, double pp, Action<string, string> onActivateProfile = null) {
+        public GlobalCell(SnoreSaberUIMaterials materials, string id, string avatarUrl, string username, string country, string rank, double pp, Action<string, string> onActivateProfile = null) {
 
             _materials = materials;
             _identifier = id;
@@ -46,7 +46,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
             _globalRank = rank;
             _profileClicked = onActivateProfile;
             _countryText = $"{country}";
-            _flagUrl = SaberRankEndpoints.Flag(country);
+            _flagUrl = SnoreSaberEndpoints.Flag(country);
         }
 
         [UIAction("profile-clicked")]

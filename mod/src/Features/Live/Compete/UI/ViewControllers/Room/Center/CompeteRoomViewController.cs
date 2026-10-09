@@ -2,14 +2,14 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.UI.Components;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.UI.Components;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.Live.Compete.UI.ViewControllers.Room.Center {
+namespace SnoreSaber.Features.Live.Compete.UI.ViewControllers.Room.Center {
     [HotReload]
     internal class CompeteRoomViewController : BSMLAutomaticViewController {
         internal event Action ReadyToggled;

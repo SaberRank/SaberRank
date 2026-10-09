@@ -1,10 +1,10 @@
 using Legato.Gameplay.Movement;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal sealed class ReplayMovementDataEventHandler : IInitializable, IDisposable {
         private readonly ReplayFile _file;
         private readonly SettingsService _settings;

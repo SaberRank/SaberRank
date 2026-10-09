@@ -1,19 +1,19 @@
 using LeaderboardCore.Interfaces;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Leaderboards.UI;
-using SaberRank.Features.Leaderboards.UI.Avatars;
-using SaberRank.Features.Players.Services;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Leaderboards.UI;
+using SnoreSaber.Features.Leaderboards.UI.Avatars;
+using SnoreSaber.Features.Players.Services;
 
-namespace SaberRank.Features.Leaderboards {
+namespace SnoreSaber.Features.Leaderboards {
     internal partial class LeaderboardBeatmapController : INotifyLeaderboardSet {
-        private readonly SaberRankLeaderboardOverlayController _overlayController;
+        private readonly SnoreSaberLeaderboardOverlayController _overlayController;
         private readonly LeaderboardAvatarHost _avatarHost;
         private readonly GameSessionService _gameSessionService;
         private readonly LeaderboardScreenSession _leaderboardSession;
 
         public LeaderboardBeatmapController(
-            SaberRankLeaderboardOverlayController overlayController,
+            SnoreSaberLeaderboardOverlayController overlayController,
             LeaderboardAvatarHost avatarHost,
             GameSessionService gameSessionService,
             LeaderboardScreenSession leaderboardSession) {
@@ -24,7 +24,7 @@ namespace SaberRank.Features.Leaderboards {
         }
 
         public void OnLeaderboardSet(BeatmapKey beatmapKey) {
-            if (!SaberRankBeatmapKey.IsSupported(beatmapKey)) {
+            if (!SnoreSaberBeatmapKey.IsSupported(beatmapKey)) {
                 _leaderboardSession.ClearBeatmap();
                 return;
             }
@@ -35,7 +35,7 @@ namespace SaberRank.Features.Leaderboards {
                 _avatarHost.ClearAvatars();
             }
 
-            if (!SaberRankBeatmapKey.IsWip(beatmapKey)) {
+            if (!SnoreSaberBeatmapKey.IsWip(beatmapKey)) {
                 _gameSessionService.EnsureAuthenticated();
             }
             _leaderboardSession.SetBeatmap(beatmapKey);

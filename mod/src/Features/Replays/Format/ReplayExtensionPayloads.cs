@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SaberRank.Features.Replays.Format {
+namespace SnoreSaber.Features.Replays.Format {
     internal static class ReplayExtensionPayloads {
         internal const string PlaySettingsExtension = "scoresaber.play-settings";
         internal const string PauseEventsExtension = "scoresaber.pause-events";

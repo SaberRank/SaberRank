@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Players.Domain {
+namespace SnoreSaber.Features.Players.Domain {
     internal class PlayerProfile : PlayerSummary {
         internal string Bio { get; set; } = string.Empty;
         internal DateTimeOffset CreatedAt { get; set; }

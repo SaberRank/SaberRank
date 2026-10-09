@@ -2,7 +2,7 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
 using System;
 
-namespace SaberRank.Features.Live.Compete.UI.ViewControllers.Entry {
+namespace SnoreSaber.Features.Live.Compete.UI.ViewControllers.Entry {
     [HotReload]
     internal class CompeteModeSelectionViewController : BSMLAutomaticViewController {
         internal event Action BrowserSelected;

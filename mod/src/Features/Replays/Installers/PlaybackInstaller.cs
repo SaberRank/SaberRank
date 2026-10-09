@@ -1,13 +1,13 @@
-using SaberRank.Features.Replays.HarmonyPatches;
-using SaberRank.Features.Replays.Legacy;
-using SaberRank.Features.Replays.Legacy.UI;
-using SaberRank.Features.Replays.Playback;
-using SaberRank.Features.Replays.UI;
-using SaberRank.Patches;
+using SnoreSaber.Features.Replays.HarmonyPatches;
+using SnoreSaber.Features.Replays.Legacy;
+using SnoreSaber.Features.Replays.Legacy.UI;
+using SnoreSaber.Features.Replays.Playback;
+using SnoreSaber.Features.Replays.UI;
+using SnoreSaber.Patches;
 using SiraUtil.Affinity;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Installers {
+namespace SnoreSaber.Features.Replays.Installers {
 
     internal class PlaybackInstaller : Installer {
         private readonly GameplayCoreSceneSetupData _gameplayCoreSceneSetupData;
@@ -23,7 +23,7 @@ namespace SaberRank.Features.Replays.Installers {
 
             if (_replayState.IsPlaybackEnabled) {
                 Container.Bind<RoomSettings>().AsSingle();
-                Container.BindInstance(new object()).WithId("SaberRankReplay").AsCached();
+                Container.BindInstance(new object()).WithId("SnoreSaberReplay").AsCached();
                 if (!_replayState.IsLegacyReplay) {
                     Container.BindInstance(_replayState.LoadedReplayFile).AsSingle();
                     Container.BindInterfacesAndSelfTo<PosePlayer>().AsSingle();

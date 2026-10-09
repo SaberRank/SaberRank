@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
+namespace SnoreSaber.Features.MainMenu.MainFlow.GlobalLeaderboard {
     internal class GlobalLeaderboardHost : INotifyPropertyChanged {
         public event PropertyChangedEventHandler PropertyChanged;
 

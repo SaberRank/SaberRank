@@ -51,10 +51,10 @@ if [[ ! -d "$refs/Beat Saber_Data/Managed" && "$target_version" == "$default_tar
   refs="$refs_root"
 fi
 build_platform="Any CPU"
-output_dll="$root/src/bin/Release/ScoreSaber.dll"
+output_dll="$root/src/bin/Release/SnoreSaber.dll"
 if $target_version_set; then
   build_platform="BS$target_version"
-  output_dll="$root/src/bin/$target_version/Release/ScoreSaber.dll"
+  output_dll="$root/src/bin/$target_version/Release/SnoreSaber.dll"
 fi
 output_dir="$(dirname "$output_dll")"
 output_pdb="${output_dll%.dll}.pdb"
@@ -66,10 +66,10 @@ output_pdb="${output_dll%.dll}.pdb"
 
 rm -rf "$output_dir/Artifact" "$output_dir/zip"
 
-dotnet build "$root/ScoreSaber.sln" -c Release \
+dotnet build "$root/SnoreSaber.sln" -c Release \
   -p:Platform="$build_platform" \
-  -p:ScoreSaberTargetVersion="$target_version" \
-  -p:ScoreSaberUseLocalRefs=true \
+  -p:SnoreSaberTargetVersion="$target_version" \
+  -p:SnoreSaberUseLocalRefs=true \
   -p:LocalRefsDir="$refs" \
   -p:GameReferences="$refs" \
   -p:DisableCopyToGame=True
@@ -79,20 +79,20 @@ $deploy || exit 0
 prop() { sed -nE "s:.*<$1[^>]*>(.*)</$1>.*:\\1:p" "$root/Directory.Build.local.props" 2>/dev/null | tail -n 1; }
 version_prop_suffix="${target_version//./_}"
 
-target="$(prop "ScoreSaberSshTarget$version_prop_suffix")"
-target="${target:-$(prop ScoreSaberSshTarget)}"
-game="$(prop "ScoreSaberSshBeatSaberDir$version_prop_suffix")"
-game="${game:-$(prop ScoreSaberSshBeatSaberDir)}"
+target="$(prop "SnoreSaberSshTarget$version_prop_suffix")"
+target="${target:-$(prop SnoreSaberSshTarget)}"
+game="$(prop "SnoreSaberSshBeatSaberDir$version_prop_suffix")"
+game="${game:-$(prop SnoreSaberSshBeatSaberDir)}"
 [[ -n "$target" && -n "$game" ]] || {
-  echo "Directory.Build.local.props must set ScoreSaberSshTarget and ScoreSaberSshBeatSaberDir, or version-specific variants for $target_version." >&2
+  echo "Directory.Build.local.props must set SnoreSaberSshTarget and SnoreSaberSshBeatSaberDir, or version-specific variants for $target_version." >&2
   exit 1
 }
 
 remote_dir="${game}\\Plugins"
-remote_dll="${remote_dir}\\ScoreSaber.dll"
-remote_pdb="${remote_dir}\\ScoreSaber.pdb"
-remote_staging_dll="ScoreSaber.deploy.dll"
-remote_staging_pdb="ScoreSaber.deploy.pdb"
+remote_dll="${remote_dir}\\SnoreSaber.dll"
+remote_pdb="${remote_dir}\\SnoreSaber.pdb"
+remote_staging_dll="SnoreSaber.deploy.dll"
+remote_staging_pdb="SnoreSaber.deploy.pdb"
 mkdir_command="\$ErrorActionPreference = 'Stop'; \$ProgressPreference = 'SilentlyContinue'; New-Item -ItemType Directory -Force -Path '$remote_dir' | Out-Null; [void]0"
 ps_encode() { printf "%s" "$1" | iconv -f UTF-8 -t UTF-16LE | base64 | tr -d '\n'; }
 

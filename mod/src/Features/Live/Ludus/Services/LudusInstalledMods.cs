@@ -1,10 +1,10 @@
 using IPA.Loader;
-using SaberRank.Live.V1;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal static class LudusInstalledMods {
         internal static List<LiveMod> List() {
             try {

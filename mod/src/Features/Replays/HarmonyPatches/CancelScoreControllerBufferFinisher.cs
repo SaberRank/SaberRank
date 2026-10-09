@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace SaberRank.Features.Replays.HarmonyPatches {
+namespace SnoreSaber.Features.Replays.HarmonyPatches {
     internal class CancelScoreControllerBufferFinisher : IAffinity {
         private static readonly FieldInfo _multScore = typeof(ScoreController).GetField("_multipliedScore", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo _immediateScore = typeof(ScoreController).GetField("_immediateMaxPossibleMultipliedScore", BindingFlags.Instance | BindingFlags.NonPublic);

@@ -1,7 +1,7 @@
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal class ReplayFileCodec {
         internal Task<ReplayFile> Read(byte[] replay) {
             return Task.Run(() => new ReplayFileReader().Read(replay));

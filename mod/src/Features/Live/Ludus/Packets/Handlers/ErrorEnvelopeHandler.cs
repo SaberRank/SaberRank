@@ -1,10 +1,10 @@
-using SaberRank.Core;
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Protocol;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Protocol;
+using SnoreSaber.Live.V1;
 using System;
 
-namespace SaberRank.Features.Live.Ludus.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Ludus.Packets.Handlers {
     internal sealed class ErrorEnvelopeHandler<TSession> : ILudusEnvelopeHandler<TSession>
         where TSession : ILudusSessionPacketContext {
         public LudusEnvelopeType Type => LudusEnvelopeType.Error;

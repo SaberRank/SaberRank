@@ -1,11 +1,11 @@
 using HarmonyLib;
-using SaberRank.Features.Replays;
-using SaberRank.Features.Replays.Legacy;
+using SnoreSaber.Features.Replays;
+using SnoreSaber.Features.Replays.Legacy;
 using SiraUtil.Affinity;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Patches {
+namespace SnoreSaber.Patches {
 
     internal class LegacyReplayPatches : IInitializable, IAffinity {
 

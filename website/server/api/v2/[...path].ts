@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 import { defineHandler } from 'nitro';
 import { db } from '../../utils/db';
 
@@ -1406,9 +1406,84 @@ export default defineHandler(async (event: any) => {
     return json({data,metadata:metadata(data.length,1,data.length||1)});
   }
   if (route.startsWith('/leaderboards/hash/') && method === 'GET') {
-    const hash = route.split('/')[2];
-    if (sql) { const rows:any[] = await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${hash}) ORDER BY l.difficulty LIMIT 1`; return rows[0] ? json(dbLeaderboard(rows[0])) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404); }
-    const m = maps.find((x)=>x.hash.toLowerCase()===hash.toLowerCase()); return m ? json(m.leaderboards[0]) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+    const seg = route.split('/');
+    const hash = seg[2];
+    const hasScores = seg.length >= 6 && seg[5] === 'scores';
+    if (hasScores) {
+      const mode = seg[3];
+      const difficulty = Number(seg[4]);
+      const page = Math.max(1, Number(query.get('page') || 1));
+      const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
+      const session = await getGameSession(request, sql);
+      const viewerId = session?.player_id || null;
+
+      if (sql) {
+        const lbRows:any[] = await sql`
+          SELECT l.*, m.*
+          FROM leaderboards l
+          JOIN maps m ON m.id=l.map_id
+          WHERE lower(m.hash)=lower(${hash})
+            AND l.game_mode=${mode}
+            AND l.difficulty=${difficulty}
+          ORDER BY l.id
+          LIMIT 1
+        `;
+        if (!lbRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+        const lb=lbRows[0];
+        const lbId=Number(lb.id);
+        const rows2:any[]=await sql`
+          SELECT s.*, p.id AS p_id,p.name,p.country,p.avatar,
+                 l.id AS lb_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.created_at AS lb_created_at,
+                 m.id AS map_id,m.hash AS map_hash,m.bsid AS map_bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.created_at AS map_created_at
+          FROM scores s
+          JOIN players p ON p.id=s.player_id
+          JOIN leaderboards l ON l.id=s.leaderboard_id
+          JOIN maps m ON m.id=l.map_id
+          WHERE s.leaderboard_id=${lbId}
+          ORDER BY s.score DESC, s.accuracy DESC, s.created_at ASC
+        `;
+        const best=new Map<string,any>();
+        for(const x of rows2) if(!best.has(String(x.player_id))) best.set(String(x.player_id),x);
+        let ranked=[...best.values()];
+
+        const pivot=(query.get('pivot')||'').toLowerCase();
+        if (pivot==='player' && viewerId) {
+          const idx=ranked.findIndex((x:any)=>String(x.player_id)===String(viewerId));
+          if(idx>=0) ranked=ranked.slice(Math.max(0,idx-5),Math.min(ranked.length,idx+6));
+        } else if (pivot==='friends' && viewerId) {
+          const friends:any[]=await sql`SELECT following_id AS id FROM player_follows WHERE follower_id=${viewerId} UNION SELECT follower_id AS id FROM player_follows WHERE following_id=${viewerId}`;
+          const ids=new Set(friends.map((x:any)=>String(x.id)));
+          ranked=ranked.filter((x:any)=>ids.has(String(x.player_id)) || String(x.player_id)===String(viewerId));
+        }
+
+        const data=ranked.slice((page-1)*limit,(page-1)*limit+limit)
+          .map((x,i)=>dbScore(x,{id:x.p_id,name:x.name,country:x.country,avatar:x.avatar},
+            {id:x.lb_id,difficulty:x.difficulty,game_mode:x.game_mode,raw_difficulty:x.raw_difficulty,max_score:x.max_score,stars:x.stars,status:x.status,created_at:x.lb_created_at},
+            {id:x.map_id,hash:x.map_hash,bsid:x.map_bsid,song_name:x.song_name,song_sub_name:x.song_sub_name,song_author_name:x.song_author_name,level_author_name:x.level_author_name,bpm:x.bpm,cover_url:x.cover_url,verified:x.verified,created_at:x.map_created_at},
+            ((page-1)*limit)+i+1,true));
+        let playerScore=null;
+        if (viewerId && query.get('includePlayerScore') === 'true') {
+          const own=ranked.find((x:any)=>String(x.player_id)===String(viewerId));
+          if (own) playerScore=dbScore(own,{id:own.p_id,name:own.name,country:own.country,avatar:own.avatar},
+            {id:own.lb_id,difficulty:own.difficulty,game_mode:own.game_mode,raw_difficulty:own.raw_difficulty,max_score:own.max_score,stars:own.stars,status:own.status,created_at:own.lb_created_at},
+            {id:own.map_id,hash:own.map_hash,bsid:own.map_bsid,song_name:own.song_name,song_sub_name:own.song_sub_name,song_author_name:own.song_author_name,level_author_name:own.level_author_name,bpm:own.bpm,cover_url:own.cover_url,verified:own.verified,created_at:own.map_created_at},
+            ranked.indexOf(own)+1,true);
+        }
+        return json({data,metadata:metadata(ranked.length,page,limit),playerScore});
+      }
+
+      const m=maps.find((x:any)=>String(x.hash).toLowerCase()===String(hash).toLowerCase());
+      if(!m) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+      const fallbackScores=scores.filter((s:any)=>s.leaderboard?.map?.id===m.id || s.leaderboard?.id===m.leaderboards[0]?.id);
+      return json({data:fallbackScores.map((s:any,i:number)=>({...s,rank:i+1})),metadata:metadata(fallbackScores.length,page,limit),playerScore:null});
+    }
+
+    if (sql) {
+      const rows:any[] = await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${hash}) ORDER BY l.difficulty LIMIT 1`;
+      return rows[0] ? json(dbLeaderboard(rows[0])) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+    }
+    const m = maps.find((x)=>x.hash.toLowerCase()===hash.toLowerCase());
+    return m ? json(m.leaderboards[0]) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
   }
   if (route.startsWith('/leaderboards/')) {
     const seg = route.split('/'); const id = Number(seg[2]);
@@ -2330,6 +2405,204 @@ export default defineHandler(async (event: any) => {
     if (!p || !passwordMatches(password, p.password_hash)) return null;
     await sql`UPDATE players SET last_seen_at=now() WHERE id=${p.id}`;
     return String(p.id);
+  }
+
+
+  // ------------------------- GAME SESSIONS -------------------------
+  // The PC mod authenticates against /api/v2/game/auth and then uses the
+  // returned x-session-id/x-session-key for leaderboard queries. Keep these
+  // sessions in PostgreSQL so Vercel/serverless instances can share them.
+  async function ensureGameSessionTable(sql: any) {
+    if (!sql) return;
+    await sql`
+      CREATE TABLE IF NOT EXISTS game_sessions (
+        session_id TEXT PRIMARY KEY,
+        session_key TEXT NOT NULL UNIQUE,
+        player_id TEXT NOT NULL,
+        auth_type INTEGER NOT NULL DEFAULT 0,
+        client_trust TEXT NOT NULL DEFAULT 'legacy',
+        upload_protocol_version INTEGER NOT NULL DEFAULT 0,
+        upload_version_hash TEXT,
+        build_id TEXT,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS idx_game_sessions_player ON game_sessions(player_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_game_sessions_expires ON game_sessions(expires_at)`;
+  }
+
+  async function resolveGamePlayer(sql: any, body: any) {
+    const authType = Number(body.at);
+    const playerId = String(body.playerId || '').trim();
+    const name = String(body.name || '').trim().slice(0, 64) || `Player_${playerId.slice(-6)}`;
+    if (!/^\d+$/.test(playerId)) return { playerId: null, error: 'A numeric platform player ID is required' };
+
+    let verifiedId = playerId;
+
+    // Steam: the game supplies a Steam authentication ticket as nonce.
+    if (authType === 0) {
+      const ticket = String(body.nonce || '');
+      if (!ticket) return { playerId: null, error: 'Steam authentication ticket is required' };
+      if (STEAM_API_KEY) {
+        try {
+          const response = await fetch(
+            `https://api.steampowered.com/ISteamUserAuth/AuthenticateUserTicket/v1/?key=${encodeURIComponent(STEAM_API_KEY)}&appid=620980&ticket=${encodeURIComponent(ticket)}`,
+            { headers: { accept: 'application/json' }, cache: 'no-store' }
+          );
+          if (!response.ok) return { playerId: null, error: 'Steam authentication failed' };
+          const data: any = await response.json();
+          const steamId = String(data?.response?.params?.steamid || '');
+          if (!steamId || steamId !== playerId) return { playerId: null, error: 'Steam player ID does not match the authentication ticket' };
+          verifiedId = steamId;
+        } catch {
+          return { playerId: null, error: 'Steam authentication service is unavailable' };
+        }
+      } else {
+        // Keep local development usable when no Steam API key is configured.
+        // Production deployments should set STEAM_API_KEY.
+        console.warn('[SnoreSaber] STEAM_API_KEY is not configured; accepting the supplied Steam player ID for game auth.');
+      }
+    } else if (authType === 1) {
+      // Oculus nonce is authToken,crossPlatformToken in the PC mod.
+      const token = String(body.nonce || '').split(',')[0].trim();
+      if (!token) return { playerId: null, error: 'Oculus authentication token is required' };
+      try {
+        const response = await fetch('https://graph.oculus.com/me?fields=id', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store'
+        });
+        if (!response.ok) return { playerId: null, error: 'Oculus authentication failed' };
+        const data: any = await response.json();
+        const oculusId = String(data?.id || '');
+        if (!oculusId || oculusId !== playerId) return { playerId: null, error: 'Oculus player ID does not match the authentication token' };
+        verifiedId = oculusId;
+      } catch {
+        return { playerId: null, error: 'Oculus authentication service is unavailable' };
+      }
+    } else if (authType === 3) {
+      const expected = process.env.SNORESABER_DEV_AUTH_NONCE || '';
+      if (expected && String(body.nonce || '') !== expected) {
+        return { playerId: null, error: 'Development authentication failed' };
+      }
+    } else if (authType !== 2 && authType !== 4) {
+      return { playerId: null, error: 'Unsupported game authentication type' };
+    }
+
+    if (!sql) {
+      if (!players.some((p) => String(p.id) === verifiedId)) {
+        players.push(player(verifiedId, name, 'XX', players.length + 1, 0));
+      }
+      return { playerId: verifiedId, error: null };
+    }
+
+    await sql`ALTER TABLE players ADD COLUMN IF NOT EXISTS steam_id TEXT`;
+    let rows: any[] = [];
+    if (authType === 0) {
+      rows = await sql`SELECT id FROM players WHERE steam_id=${verifiedId} OR id=${verifiedId} LIMIT 1`;
+    } else {
+      rows = await sql`SELECT id FROM players WHERE id=${verifiedId} OR name=${name} LIMIT 1`;
+    }
+
+    if (rows[0]) {
+      verifiedId = String(rows[0].id);
+      await sql`
+        UPDATE players
+        SET name=${name}, last_seen_at=now()
+        WHERE id=${verifiedId}
+      `;
+      if (authType === 0) {
+        await sql`UPDATE players SET steam_id=${playerId} WHERE id=${verifiedId}`;
+      }
+    } else {
+      if (authType === 0) {
+        const created: any[] = await sql`
+          INSERT INTO players (id, steam_id, name, country, avatar, last_seen_at)
+          VALUES (${verifiedId}, ${verifiedId}, ${name}, 'XX', '', now())
+          RETURNING id
+        `;
+        verifiedId = String(created[0].id);
+      } else {
+        const created: any[] = await sql`
+          INSERT INTO players (id, name, country, avatar, last_seen_at)
+          VALUES (${verifiedId}, ${name}, 'XX', '', now())
+          RETURNING id
+        `;
+        verifiedId = String(created[0].id);
+      }
+    }
+
+    return { playerId: verifiedId, error: null };
+  }
+
+  async function getGameSession(request: Request, sql: any) {
+    const sessionId = request.headers.get('x-session-id') || '';
+    const sessionKey = request.headers.get('x-session-key') || '';
+    if (!sessionId || !sessionKey) return null;
+
+    if (sql) {
+      await ensureGameSessionTable(sql);
+      const rows: any[] = await sql`
+        SELECT session_id, session_key, player_id, expires_at
+        FROM game_sessions
+        WHERE session_id=${sessionId} AND session_key=${sessionKey} AND expires_at > now()
+        LIMIT 1
+      `;
+      return rows[0] || null;
+    }
+
+    return null;
+  }
+
+  // ------------------------- GAME AUTH -------------------------
+  if (route === '/game/auth' && method === 'POST') {
+    let body: any = {};
+    try { body = JSON.parse(await request.text() || '{}'); }
+    catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }
+
+    const playerId = String(body.playerId || '').trim();
+    const nonce = String(body.nonce || '').trim();
+    if (!playerId || !nonce) {
+      return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'playerId and nonce are required'},400);
+    }
+
+    const resolved = await resolveGamePlayer(sql, body);
+    if (!resolved.playerId) {
+      return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:resolved.error || 'Game authentication failed'},401);
+    }
+
+    const sessionId = randomUUID();
+    const sessionKey = randomBytes(32).toString('hex');
+    const uploadProtocolVersion = Number(body.uploadProtocolVersion || 0);
+    const clientKind = String(body.clientKind || 'legacy').toLowerCase();
+    const clientTrust = clientKind === 'official' || clientKind === 'development' || clientKind === 'legacy'
+      ? clientKind
+      : 'untrusted';
+    const uploadVersionHash = String(body.uploadVersionHash || '');
+    const buildId = String(body.clientBuildId || '');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    if (sql) {
+      await ensureGameSessionTable(sql);
+      await sql`DELETE FROM game_sessions WHERE expires_at <= now()`;
+      await sql`
+        INSERT INTO game_sessions
+          (session_id, session_key, player_id, auth_type, client_trust, upload_protocol_version, upload_version_hash, build_id, expires_at)
+        VALUES
+          (${sessionId}, ${sessionKey}, ${resolved.playerId}, ${Number(body.at || 0)}, ${clientTrust},
+           ${uploadProtocolVersion}, ${uploadVersionHash || null}, ${buildId || null}, ${expiresAt})
+      `;
+    }
+
+    return json({
+      key: sessionKey,
+      sessionId,
+      uploadProtocolVersion,
+      clientTrust,
+      buildId: buildId || '',
+      uploadVersionHash: uploadVersionHash || '',
+      playerId: resolved.playerId
+    }, 201);
   }
 
   // ------------------------- AUTH -------------------------

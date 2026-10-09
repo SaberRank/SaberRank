@@ -1,14 +1,14 @@
-using SaberRank.Core;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Leaderboards.UI;
-using SaberRank.Features.Leaderboards.UI.Avatars;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.ScoreSubmission;
-using SaberRank.Features.ScoreSubmission.Domain;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Leaderboards.UI;
+using SnoreSaber.Features.Leaderboards.UI.Avatars;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.ScoreSubmission;
+using SnoreSaber.Features.ScoreSubmission.Domain;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Leaderboards {
+namespace SnoreSaber.Features.Leaderboards {
     internal class LeaderboardStatusController : IInitializable, IDisposable {
         private readonly PanelView _panelView;
         private readonly IScoreSubmissionStatusSource _submissionStatusSource;

@@ -1,4 +1,4 @@
-namespace SaberRank.Features.ScoreSubmission.Services {
+namespace SnoreSaber.Features.ScoreSubmission.Services {
     internal static class ScoreSubmissionRegistry {
         private static ScoreSubmissionService _service;
         internal static bool IsEnabled { get; private set; } = true;

@@ -1,12 +1,12 @@
 using IPA.Utilities.Async;
-using SaberRank.Core.Api;
-using SaberRank.Core.Api.Generated;
-using SaberRank.Core.BeatSaver;
-using SaberRank.Features.Live.Ludus.Domain;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Live.V1;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Api.Generated;
+using SnoreSaber.Core.BeatSaver;
+using SnoreSaber.Features.Live.Ludus.Domain;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,13 +16,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal enum LiveChatLinkKind {
         ExternalUrl,
         BeatSaverId,
         BeatSaverHash,
-        SaberRankMapId,
-        SaberRankLeaderboardId
+        SnoreSaberMapId,
+        SnoreSaberLeaderboardId
     }
 
     internal sealed class LiveChatLinkTarget {
@@ -43,7 +43,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
         private static readonly Regex DisplayMarkupTagPattern = new Regex(@"<[^>\r\n]{1,128}>", RegexOptions.Compiled);
 
         private readonly BeatSaverService _beatSaver;
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly CompeteSongService _songService;
         private readonly LiveChatSongNavigator _songNavigator;
         private readonly LudusSessionService _ludusSession;
@@ -57,7 +57,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
 
         internal LiveChatLinkService(
             BeatSaverService beatSaver,
-            ISaberRankApiClient apiClient,
+            ISnoreSaberApiClient apiClient,
             CompeteSongService songService,
             LiveChatSongNavigator songNavigator,
             LudusSessionService ludusSession) {
@@ -199,9 +199,9 @@ namespace SaberRank.Features.Live.Ludus.Services {
             switch (target.Kind) {
                 case LiveChatLinkKind.BeatSaverId:
                     return SongFromBeatSaverId(target.Value, cancellationToken);
-                case LiveChatLinkKind.SaberRankMapId:
-                case LiveChatLinkKind.SaberRankLeaderboardId:
-                    return SongFromSaberRankMap(target, cancellationToken);
+                case LiveChatLinkKind.SnoreSaberMapId:
+                case LiveChatLinkKind.SnoreSaberLeaderboardId:
+                    return SongFromSnoreSaberMap(target, cancellationToken);
                 default:
                     return Task.FromResult(new LiveSongCommand { Hash = target.Value });
             }
@@ -218,7 +218,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
             };
         }
 
-        private async Task<LiveSongCommand> SongFromSaberRankMap(LiveChatLinkTarget target, CancellationToken cancellationToken) {
+        private async Task<LiveSongCommand> SongFromSnoreSaberMap(LiveChatLinkTarget target, CancellationToken cancellationToken) {
             if (!int.TryParse(target.Value, out int mapId)) {
                 return null;
             }
@@ -366,7 +366,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
             }
 
             if (host.EndsWith("saberrank.local", StringComparison.Ordinal)) {
-                if (TryResolveSaberRankUri(uri, out target)) {
+                if (TryResolveSnoreSaberUri(uri, out target)) {
                     return true;
                 }
 
@@ -391,7 +391,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
             return false;
         }
 
-        private static bool TryResolveSaberRankUri(Uri uri, out LiveChatLinkTarget target) {
+        private static bool TryResolveSnoreSaberUri(Uri uri, out LiveChatLinkTarget target) {
             target = null;
             string[] parts = uri.AbsolutePath.Trim('/').Split('/');
             for (int i = 0; i < parts.Length; i++) {
@@ -402,7 +402,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
                 for (int j = i + 2; j + 1 < parts.Length; j++) {
                     if (parts[j].Equals("difficulty", StringComparison.OrdinalIgnoreCase) && IsNumericId(parts[j + 1])) {
                         target = new LiveChatLinkTarget {
-                            Kind = LiveChatLinkKind.SaberRankLeaderboardId,
+                            Kind = LiveChatLinkKind.SnoreSaberLeaderboardId,
                             Value = parts[i + 1],
                             SecondaryValue = parts[j + 1],
                             Url = uri.ToString()
@@ -412,7 +412,7 @@ namespace SaberRank.Features.Live.Ludus.Services {
                 }
 
                 target = new LiveChatLinkTarget {
-                    Kind = LiveChatLinkKind.SaberRankMapId,
+                    Kind = LiveChatLinkKind.SnoreSaberMapId,
                     Value = parts[i + 1],
                     Url = uri.ToString()
                 };

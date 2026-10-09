@@ -1,6 +1,6 @@
 using SiraUtil.Affinity;
 
-namespace SaberRank.Features.Replays.HarmonyPatches {
+namespace SnoreSaber.Features.Replays.HarmonyPatches {
     internal class CancelSaberCuttingPatch : IAffinity {
 
         private readonly SaberManager _saberManager;

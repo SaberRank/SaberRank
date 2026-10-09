@@ -1,19 +1,19 @@
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Protocol;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Live.V1;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Protocol;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Ludus.Packets {
+namespace SnoreSaber.Features.Live.Ludus.Packets {
     internal sealed class LudusPacketSender {
         private readonly Action<byte[]> _send;
         private readonly Func<Func<byte[]>, bool> _sendDeferred;
-        private readonly SaberRankClock _clock;
+        private readonly SnoreSaberClock _clock;
         private ulong _outgoingSequence = 1;
 
-        internal LudusPacketSender(Action<byte[]> send, Func<Func<byte[]>, bool> sendDeferred, SaberRankClock clock) {
+        internal LudusPacketSender(Action<byte[]> send, Func<Func<byte[]>, bool> sendDeferred, SnoreSaberClock clock) {
             _send = send;
             _sendDeferred = sendDeferred;
             _clock = clock;

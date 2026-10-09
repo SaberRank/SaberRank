@@ -1,10 +1,10 @@
-using SaberRank.Features.Replays.Format;
-using SaberRank.Features.Live.Replay;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Features.Live.Replay;
 using System;
 using System.Collections.Generic;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Recorders {
+namespace SnoreSaber.Features.Replays.Recorders {
     internal class WallEventRecorder : TimeSynchronizer, IInitializable, ITickable, IDisposable {
         private const int InitialWallEventCapacity = 16;
 

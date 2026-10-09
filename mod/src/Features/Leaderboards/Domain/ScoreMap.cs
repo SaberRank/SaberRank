@@ -1,9 +1,9 @@
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Replays;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Replays;
 using System;
 using System.Linq;
 
-namespace SaberRank.Features.Leaderboards.Domain {
+namespace SnoreSaber.Features.Leaderboards.Domain {
     internal class ScoreMap {
 
         internal LeaderboardScore Score { get; private set; }
@@ -19,7 +19,7 @@ namespace SaberRank.Features.Leaderboards.Domain {
 
             GameplayModifiersMap replayMods = new GameplayModifiersMap();
             if (score.Mods.Count > 0) {
-                replayMods = SaberRankGameplayModifiers.FromCodes(score.Mods.ToArray(), false);
+                replayMods = SnoreSaberGameplayModifiers.FromCodes(score.Mods.ToArray(), false);
             }
 
             double maxScore = maxMultipliedScore * replayMods.TotalMultiplier;

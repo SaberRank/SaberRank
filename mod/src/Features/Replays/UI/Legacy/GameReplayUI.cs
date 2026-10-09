@@ -1,5 +1,5 @@
 using HMUI;
-using SaberRank.Core.Gameplay;
+using SnoreSaber.Core.Gameplay;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -7,7 +7,7 @@ using TMPro;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Legacy.UI {
+namespace SnoreSaber.Features.Replays.Legacy.UI {
     internal class GameReplayUI : MonoBehaviour {
 
         [Inject] private readonly GameplayCoreSceneSetupData _gameplayCoreSceneSetupData = null;
@@ -56,7 +56,7 @@ namespace SaberRank.Features.Replays.Legacy.UI {
 
         public TextMeshProUGUI CreateText(RectTransform parent, string text, Vector2 anchoredPosition, Vector2 sizeDelta, float fontSize) {
 
-            GameObject gameObject = new GameObject("CustomUIText-SaberRank");
+            GameObject gameObject = new GameObject("CustomUIText-SnoreSaber");
             gameObject.SetActive(false);
             TextMeshProUGUI textMeshProUGUI = gameObject.AddComponent<TextMeshProUGUI>();
             textMeshProUGUI.font = Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First((TMP_FontAsset t) => t.name == "Teko-Medium SDF"));
@@ -74,7 +74,7 @@ namespace SaberRank.Features.Replays.Legacy.UI {
 
         public string GetFriendlyModifiers(GameplayModifiers gameplayModifiers) {
 
-            return gameplayModifiers == null ? string.Empty : string.Join(",", SaberRankGameplayModifiers.ToCodeList(gameplayModifiers, true));
+            return gameplayModifiers == null ? string.Empty : string.Join(",", SnoreSaberGameplayModifiers.ToCodeList(gameplayModifiers, true));
         }
 
     }

@@ -1,5 +1,5 @@
 using HMUI;
-using SaberRank.Core.Configuration;
+using SnoreSaber.Core.Configuration;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -7,7 +7,7 @@ using UnityEngine.XR;
 using VRUIControls;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class ImberUIPositionController : IInitializable, ITickable, IDisposable {
         private bool _isActive = false;
         private bool _isClicking = false;

@@ -67,5 +67,5 @@
     </vertical>
   </vertical>
 
-  <ss-profile id="profile-modal" show-event="show-profile" loading="false" />
+  <snoresaber-profile id="profile-modal" show-event="show-profile" loading="false" />
 </bg>

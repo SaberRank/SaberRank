@@ -9,9 +9,9 @@ using UnityEngine;
 using UnityEngine.XR;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     [HotReload(RelativePathToLayout = @"imber-panel.bsml")]
-    [ViewDefinition("SaberRank.Features.Replays.UI.imber-panel.bsml")]
+    [ViewDefinition("SnoreSaber.Features.Replays.UI.imber-panel.bsml")]
     internal class MainImberPanelView : BSMLAutomaticViewController {
         private FloatingScreen _floatingScreen;
         public event Action<bool> DidPositionTabVisibilityChange;

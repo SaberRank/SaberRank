@@ -1,8 +1,8 @@
 using IPA.Utilities.Async;
-using SaberRank.Core.Configuration;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Features.ScoreSubmission.Services;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Features.ScoreSubmission.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +10,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
     internal class ReplayLoader {
 
         private readonly PlayerDataModel _playerDataModel;
@@ -171,7 +171,7 @@ namespace SaberRank.Features.Replays {
                 replayEnvironmentSettings ?? playerData.overrideEnvironmentSettings,
                 playerColorScheme,
                 replayColorScheme != null ? replayColorScheme.ShouldOverrideLightshowColors() : playerData.colorSchemesSettings.ShouldOverrideLightshowColors(),
-                SaberRankGameplayModifiers.FromCodes(replay.metadata.Modifiers, false).GameplayModifiers,
+                SnoreSaberGameplayModifiers.FromCodes(replay.metadata.Modifiers, false).GameplayModifiers,
                 playerSettings,
                 null,
                 _environmentsListModel,

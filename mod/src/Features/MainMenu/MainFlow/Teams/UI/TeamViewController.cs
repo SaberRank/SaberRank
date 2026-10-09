@@ -3,16 +3,16 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
 using Newtonsoft.Json;
-using SaberRank.Core.Presentation;
-using SaberRank.Features.MainMenu.MainFlow.Teams;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.MainMenu.MainFlow.Teams;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Zenject;
 
-namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
+namespace SnoreSaber.Features.MainMenu.MainFlow.Teams.UI {
     [HotReload]
     internal class TeamViewController : BSMLAutomaticViewController {
-        private const string TeamUrl = "https://raw.githubusercontent.com/Umbranoxio/SaberRank-Team/main/team.json";
+        private const string TeamUrl = "https://raw.githubusercontent.com/Umbranoxio/SnoreSaber-Team/main/team.json";
 
         [UIComponent("tab-selector")]
         protected readonly TabSelector _tabSelector = null;
@@ -21,10 +21,10 @@ namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
         protected readonly List<object> _teamHosts = new List<object>();
 
         private Http _http = null;
-        private SaberRankUIMaterials _materials = null;
+        private SnoreSaberUIMaterials _materials = null;
 
         [Inject]
-        internal void Construct(Http http, SaberRankUIMaterials materials) {
+        internal void Construct(Http http, SnoreSaberUIMaterials materials) {
             _http = http;
             _materials = materials;
         }
@@ -87,9 +87,9 @@ namespace SaberRank.Features.MainMenu.MainFlow.Teams.UI {
             return new TeamHost(teamName, host);
         }
 
-        private async Task<SaberRankTeam> GetTeam() {
+        private async Task<SnoreSaberTeam> GetTeam() {
             string response = await _http.GetRawAsync(TeamUrl);
-            return JsonConvert.DeserializeObject<SaberRankTeam>(response);
+            return JsonConvert.DeserializeObject<SnoreSaberTeam>(response);
         }
     }
 }

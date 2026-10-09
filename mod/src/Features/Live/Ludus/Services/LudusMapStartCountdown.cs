@@ -1,21 +1,21 @@
-using SaberRank.Core;
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Compete.Domain;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Compete.Domain;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal sealed class LudusMapStartCountdown {
         private readonly LudusMainThreadQueue _mainThread;
         private readonly Func<string> _defaultMatchId;
-        private readonly SaberRankClock _clock;
+        private readonly SnoreSaberClock _clock;
 
         private CancellationTokenSource _cancellation;
         private string _matchId = string.Empty;
         private int _version;
 
-        internal LudusMapStartCountdown(LudusMainThreadQueue mainThread, Func<string> defaultMatchId, SaberRankClock clock) {
+        internal LudusMapStartCountdown(LudusMainThreadQueue mainThread, Func<string> defaultMatchId, SnoreSaberClock clock) {
             _mainThread = mainThread;
             _defaultMatchId = defaultMatchId;
             _clock = clock;

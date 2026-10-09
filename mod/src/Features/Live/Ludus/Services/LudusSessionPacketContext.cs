@@ -1,11 +1,11 @@
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Ludus.Domain;
-using SaberRank.Features.Live.Protocol;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Ludus.Domain;
+using SnoreSaber.Features.Live.Protocol;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal sealed class LudusSessionPacketContext : ILudusSessionPacketContext {
         private readonly Func<ulong> _getLastReceivedSequence;
         private readonly Action<ulong> _setLastReceivedSequence;

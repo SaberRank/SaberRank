@@ -1,15 +1,15 @@
-using SaberRank.Core.Api;
-using SaberRank.Core.Platform;
-using SaberRank.Core.Api.UploadTrust;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Core.Presentation;
-using SaberRank.Core;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Platform;
+using SnoreSaber.Core.Api.UploadTrust;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Core;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Players.Services {
+namespace SnoreSaber.Features.Players.Services {
     internal class GameSessionService {
 
         public LocalPlayerInfo LocalPlayerInfo { get; private set; }
@@ -20,7 +20,7 @@ namespace SaberRank.Features.Players.Services {
         internal bool HasAuthenticatedSession => LocalPlayerInfo != null && GameSession != null && GameSession.IsAuthenticated;
         internal bool CanUseUploadProtocolV2 => _buildMetadata.IsOfficial || _buildMetadata.IsDevelopment;
         public event Action<LoginStatus, string> LoginStatusChanged;
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly IPlatformUserProvider _platformUser;
         private readonly IPlatformAuthenticationProvider _platformAuthentication;
         private readonly IPlatformFriendsProvider _platformFriends;
@@ -35,7 +35,7 @@ namespace SaberRank.Features.Players.Services {
         }
 
         public GameSessionService(
-            ISaberRankApiClient apiClient,
+            ISnoreSaberApiClient apiClient,
             IPlatformUserProvider platformUser,
             IPlatformAuthenticationProvider platformAuthentication,
             IPlatformFriendsProvider platformFriends) {
@@ -95,7 +95,7 @@ namespace SaberRank.Features.Players.Services {
 
             bool updateLoginStatus = notifyStatus || !HasAuthenticatedSession;
             if (updateLoginStatus) {
-                ChangeLoginStatus(LoginStatus.InProgress, "Signing into SaberRank...", notifyStatus);
+                ChangeLoginStatus(LoginStatus.InProgress, "Signing into SnoreSaber...", notifyStatus);
             }
 
             var playerInfo = _buildMetadata.HasDevelopmentAuth
@@ -106,7 +106,7 @@ namespace SaberRank.Features.Players.Services {
 
             while (attempts < 4) {
 
-                var authenticated = await AuthenticateWithSaberRank(playerInfo);
+                var authenticated = await AuthenticateWithSnoreSaber(playerInfo);
 
                 if (authenticated) {
                     LocalPlayerInfo = playerInfo;
@@ -125,13 +125,13 @@ namespace SaberRank.Features.Players.Services {
             }
 
             if (updateLoginStatus && Status != LoginStatus.Success) {
-                ChangeLoginStatus(LoginStatus.Error, "Failed to authenticate with SaberRank! Please restart your game", notifyStatus);
+                ChangeLoginStatus(LoginStatus.Error, "Failed to authenticate with SnoreSaber! Please restart your game", notifyStatus);
             }
 
             return false;
         }
 
-        private Task<bool> RefreshUploadTrustSession(CancellationToken cancellationToken) => AuthenticateWithSaberRank(LocalPlayerInfo);
+        private Task<bool> RefreshUploadTrustSession(CancellationToken cancellationToken) => AuthenticateWithSnoreSaber(LocalPlayerInfo);
 
         private async Task<LocalPlayerInfo> CreatePlatformPlayerInfo(CancellationToken cancellationToken) {
             var authToken = await _platformAuthentication.GetAuthToken();
@@ -177,11 +177,11 @@ namespace SaberRank.Features.Players.Services {
             return new LocalPlayerInfo(playerId, playerName, friends, "3", _buildMetadata.DevelopmentAuthNonce);
         }
 
-        private async Task<bool> AuthenticateWithSaberRank(LocalPlayerInfo playerInfo) {
+        private async Task<bool> AuthenticateWithSnoreSaber(LocalPlayerInfo playerInfo) {
 
 
             try {
-                Plugin.Log.Debug($"Authenticating SaberRank player {playerInfo.playerId} with {CountFriendIds(playerInfo.playerFriends)} friends");
+                Plugin.Log.Debug($"Authenticating SnoreSaber player {playerInfo.playerId} with {CountFriendIds(playerInfo.playerFriends)} friends");
                 var request = new GameAuthenticationRequest {
                     AuthType = Convert.ToInt32(playerInfo.authType),
                     PlayerId = playerInfo.playerId,

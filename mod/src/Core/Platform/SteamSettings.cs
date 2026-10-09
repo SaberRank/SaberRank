@@ -2,7 +2,7 @@ using Microsoft.Win32;
 using System;
 using System.IO;
 
-namespace SaberRank.Core.Platform {
+namespace SnoreSaber.Core.Platform {
     internal class SteamSettings {
 
         internal class PartialSteamVRSettings {

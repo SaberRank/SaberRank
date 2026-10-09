@@ -1,7 +1,7 @@
-using SaberRank.Features.Players.Domain;
+using SnoreSaber.Features.Players.Domain;
 using System;
 
-namespace SaberRank.Features.Players.Services {
+namespace SnoreSaber.Features.Players.Services {
     internal class GlobalPlayerSession {
         internal GlobalPlayerScope Scope { get; private set; }
         internal int Page { get; private set; } = 1;

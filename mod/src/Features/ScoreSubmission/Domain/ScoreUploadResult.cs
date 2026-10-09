@@ -1,6 +1,6 @@
-using SaberRank.Core.Api;
+using SnoreSaber.Core.Api;
 
-namespace SaberRank.Features.ScoreSubmission.Domain {
+namespace SnoreSaber.Features.ScoreSubmission.Domain {
     internal enum ScoreUploadStatus {
         Packaging,
         Uploading,
@@ -14,7 +14,7 @@ namespace SaberRank.Features.ScoreSubmission.Domain {
         internal ScoreUploadStatus Status { get; set; }
         internal bool Success { get; set; }
         internal string Message { get; set; } = string.Empty;
-        internal SaberRankApiError Error { get; set; }
+        internal SnoreSaberApiError Error { get; set; }
     }
 
     internal class ScoreSubmissionStatus {

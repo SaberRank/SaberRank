@@ -1,18 +1,18 @@
-using SaberRank.Features.Leaderboards.Adapters.LeaderboardCore;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Leaderboards.UI;
+using SnoreSaber.Features.Leaderboards.Adapters.LeaderboardCore;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Leaderboards.UI;
 using System;
 using Zenject;
 
-namespace SaberRank.Features.Leaderboards {
+namespace SnoreSaber.Features.Leaderboards {
     internal class LeaderboardInteractionController : IInitializable, IDisposable {
-        private readonly SaberRankLeaderboardCoreViewController _leaderboardViewController;
+        private readonly SnoreSaberLeaderboardCoreViewController _leaderboardViewController;
         private readonly LeaderboardScreenSession _leaderboardSession;
         private readonly LeaderboardModalFlow _modalFlow;
 
         public LeaderboardInteractionController(
-            SaberRankLeaderboardCoreViewController leaderboardViewController,
+            SnoreSaberLeaderboardCoreViewController leaderboardViewController,
             LeaderboardScreenSession leaderboardSession,
             LeaderboardModalFlow modalFlow) {
             _leaderboardViewController = leaderboardViewController;

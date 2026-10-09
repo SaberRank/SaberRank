@@ -2,12 +2,12 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.UI.Cells;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.UI.Cells;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Compete.UI.ViewControllers.Rooms {
+namespace SnoreSaber.Features.Live.Compete.UI.ViewControllers.Rooms {
     [HotReload]
     internal class CompeteRoomListViewController : BSMLAutomaticViewController {
         internal event Action RefreshRequested;

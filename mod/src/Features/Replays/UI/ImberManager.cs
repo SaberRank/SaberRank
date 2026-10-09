@@ -1,7 +1,7 @@
 using HMUI;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Features.Replays.Playback;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Playback;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.XR;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class ImberManager : IInitializable, IDisposable {
         private readonly IGamePause _gamePause;
         private readonly float _initialTimeScale;

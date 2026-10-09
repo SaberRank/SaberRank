@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Leaderboards.UI.ScoreDetails {
+namespace SnoreSaber.Features.Leaderboards.UI.ScoreDetails {
     internal static class ScoreAgeFormatter {
         internal static string FormatAgo(DateTime createdAt) {
             return ToNaturalTime(new TimeSpan(DateTime.UtcNow.Ticks - createdAt.Ticks), 2) + " ago";

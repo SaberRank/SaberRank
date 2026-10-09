@@ -1,14 +1,14 @@
 using HMUI;
 using IPA.Utilities.Async;
-using SaberRank.Core;
-using SaberRank.Features.Live.Compete.Domain;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Live.Compete.Domain;
 using System;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.Live.Compete.UI.Components {
+namespace SnoreSaber.Features.Live.Compete.UI.Components {
     internal class CompeteSongPreview {
         private const float MinSongTextWidth = 18f;
         private const float MaxSongTextWidth = 38f;

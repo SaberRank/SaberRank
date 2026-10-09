@@ -1,11 +1,11 @@
 using IPA.Utilities.Async;
-using SaberRank.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Domain;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal sealed class LiveChatSongNavigator {
         internal Task<bool> TryFocusSong(CompeteSongSelection selection, CancellationToken cancellationToken) {
             if (selection?.BeatmapLevel == null) {

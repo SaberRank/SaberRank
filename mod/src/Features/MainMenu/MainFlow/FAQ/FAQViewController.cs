@@ -1,11 +1,11 @@
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
-using SaberRank.Core.Presentation;
+using SnoreSaber.Core.Presentation;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.MainMenu.MainFlow.FAQ {
+namespace SnoreSaber.Features.MainMenu.MainFlow.FAQ {
     [HotReload]
     internal class FAQViewController : BSMLAutomaticViewController {
         [UIAction("website-clicked")]
@@ -32,14 +32,14 @@ namespace SaberRank.Features.MainMenu.MainFlow.FAQ {
         [UIComponent("bsmg-image")]
         protected readonly ImageView _bsmgImageView = null;
 
-        private SaberRankUIMaterials _materials = null;
+        private SnoreSaberUIMaterials _materials = null;
 
         [Inject]
-        internal void Construct(SaberRankUIMaterials materials) {
+        internal void Construct(SnoreSaberUIMaterials materials) {
             _materials = materials;
         }
 
-        private string _scoreSaberImage = "SaberRank.Resources.logo-large.png";
+        private string _scoreSaberImage = "SnoreSaber.Resources.logo-large.png";
         [UIValue("scoresaber-image")]
         public string scoreSaberImage {
             get => _scoreSaberImage;
@@ -49,7 +49,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.FAQ {
             }
         }
 
-        private string _bsmgImage = "SaberRank.Resources.bsmg.jpg";
+        private string _bsmgImage = "SnoreSaber.Resources.bsmg.jpg";
         [UIValue("bsmg-image")]
         public string bsmgImage {
             get => _bsmgImage;
@@ -61,14 +61,14 @@ namespace SaberRank.Features.MainMenu.MainFlow.FAQ {
 
         private int _scoreSaberCounter;
         [UIAction("scoresaber-image-clicked")]
-        public void SaberRankImageClicked() {
+        public void SnoreSaberImageClicked() {
 
             _scoreSaberCounter++;
             if (_scoreSaberCounter == 5) {
-                scoreSaberImage = "SaberRank.Resources.logo-flushed.png";
+                scoreSaberImage = "SnoreSaber.Resources.logo-flushed.png";
             }
             if (_scoreSaberCounter == 10) {
-                scoreSaberImage = "SaberRank.Resources.logo-large.png";
+                scoreSaberImage = "SnoreSaber.Resources.logo-large.png";
                 _scoreSaberCounter = 0;
             }
         }
@@ -79,13 +79,13 @@ namespace SaberRank.Features.MainMenu.MainFlow.FAQ {
 
             _bsmgCounter++;
             if (_bsmgCounter == 5) {
-                bsmgImage = "SaberRank.Resources.cmb.png";
+                bsmgImage = "SnoreSaber.Resources.cmb.png";
             }
             if (_bsmgCounter == 10) {
-                bsmgImage = "SaberRank.Resources.cmb-blush.png";
+                bsmgImage = "SnoreSaber.Resources.cmb-blush.png";
             }
             if (_bsmgCounter == 15) {
-                bsmgImage = "SaberRank.Resources.bsmg.jpg";
+                bsmgImage = "SnoreSaber.Resources.bsmg.jpg";
                 _bsmgCounter = 0;
             }
         }

@@ -1,11 +1,11 @@
-using SaberRank.Core;
+using SnoreSaber.Core;
 using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal sealed class LudusSessionTransport {
         private readonly LudusMainThreadQueue _mainThread;
         private readonly object _sendTaskLock = new object();

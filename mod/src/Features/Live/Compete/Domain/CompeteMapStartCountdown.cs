@@ -1,4 +1,4 @@
-namespace SaberRank.Features.Live.Compete.Domain {
+namespace SnoreSaber.Features.Live.Compete.Domain {
     internal class CompeteMapStartCountdown {
         internal string MatchId { get; }
         internal int RemainingSeconds { get; }

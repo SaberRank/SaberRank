@@ -1,7 +1,7 @@
-using SaberRank.Live.V1;
+using SnoreSaber.Live.V1;
 using System;
 
-namespace SaberRank.Features.Live.Ludus.Domain {
+namespace SnoreSaber.Features.Live.Ludus.Domain {
     internal sealed class LiveChatEntry {
         internal string MessageId { get; }
         internal string MatchId { get; }

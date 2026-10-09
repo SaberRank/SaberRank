@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Ludus.Services {
+namespace SnoreSaber.Features.Live.Ludus.Services {
     internal sealed class LudusMainThreadQueue {
         private readonly Queue<Action> _actions = new Queue<Action>();
         private readonly object _lock = new object();

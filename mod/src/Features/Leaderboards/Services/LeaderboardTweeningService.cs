@@ -5,7 +5,7 @@ using Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace SaberRank.Features.Leaderboards.Services {
+namespace SnoreSaber.Features.Leaderboards.Services {
     internal class LeaderboardTweeningService {
 
         private readonly TimeTweeningManager _timeTweeningManager;

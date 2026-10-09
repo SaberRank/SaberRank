@@ -1,6 +1,6 @@
 using System;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompeteGameplayState {
         internal event Action<bool> LiveGameplayActiveChanged;
 

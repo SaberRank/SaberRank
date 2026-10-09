@@ -1,16 +1,16 @@
-using SaberRank.Core.Api;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Replays;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Replays;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Replays.Services {
+namespace SnoreSaber.Features.Replays.Services {
     internal class ReplayQueryService {
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly ReplayStorageService _replayStorageService;
 
-        public ReplayQueryService(ISaberRankApiClient apiClient, ReplayStorageService replayStorageService) {
+        public ReplayQueryService(ISnoreSaberApiClient apiClient, ReplayStorageService replayStorageService) {
             _apiClient = apiClient;
             _replayStorageService = replayStorageService;
         }
@@ -24,7 +24,7 @@ namespace SaberRank.Features.Replays.Services {
                 }
             } catch (Exception ex) {
                 downloadError = ex;
-                Plugin.Log.Debug($"Failed to download SaberRank replay, checking local fallback: {ex.Message}");
+                Plugin.Log.Debug($"Failed to download SnoreSaber replay, checking local fallback: {ex.Message}");
             }
 
             if (scoreMap.HasLocalReplay) {

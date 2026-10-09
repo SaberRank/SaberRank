@@ -6,7 +6,7 @@
 
     <horizontal pref-width="90" horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
       <vertical pref-width="40" pref-height="60" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" bg="round-rect-panel" bg-color="cyan" pad="4">
-        <clickable-text text="ScoreSaber" font-size="6.5" align="Center" bold="true" italics="true" on-click="website-clicked" />
+        <clickable-text text="SnoreSaber" font-size="6.5" align="Center" bold="true" italics="true" on-click="website-clicked" />
         <button active="true" text="Discord" on-click="discord-clicked" pref-width="20" />
         <button active="true" text="Twitter" on-click="twitter-clicked" pref-width="20" />
         <button active="true" text="Patreon 💕" on-click="patreon-clicked" pref-width="23" />

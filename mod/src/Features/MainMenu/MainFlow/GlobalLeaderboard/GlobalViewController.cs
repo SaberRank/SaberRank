@@ -3,13 +3,13 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
-using SaberRank.Core.Configuration;
-using SaberRank.Core;
-using SaberRank.Core.Presentation;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Features.Players.Services;
-using SaberRank.Features.Players.Profile;
-using SaberRank.Features.Leaderboards.UI;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Features.Players.Services;
+using SnoreSaber.Features.Players.Profile;
+using SnoreSaber.Features.Leaderboards.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,7 +18,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
-namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
+namespace SnoreSaber.Features.MainMenu.MainFlow.GlobalLeaderboard {
     [HotReload]
     internal class GlobalViewController : BSMLAutomaticViewController {
 
@@ -60,7 +60,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
         #region Handlers
         [UIAction("global-up")] private void GlobalUpClicked() => PageButtonClicked(false);
         [UIAction("global-down")] private void GlobalDownClicked() => PageButtonClicked(true);
-        [UIAction("global-click")] private void GlobalTextClicked() => Application.OpenURL(SaberRankEndpoints.GlobalLeaderboard());
+        [UIAction("global-click")] private void GlobalTextClicked() => Application.OpenURL(SnoreSaberEndpoints.GlobalLeaderboard());
 
         [UIAction("global-scope-click")] private void GlobalScopeClicked() => ScopeClicked(GlobalPlayerScope.Global);
         [UIAction("player-scope-click")] private void PlayerScopeClicked() => ScopeClicked(GlobalPlayerScope.AroundPlayer);
@@ -76,7 +76,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
         private GlobalPlayerSession _globalPlayerSession = null;
         private GlobalLeaderboardHost _globalLeaderboardHost = null;
         private SettingsService _settings = null;
-        private SaberRankUIMaterials _materials = null;
+        private SnoreSaberUIMaterials _materials = null;
         private CancellationTokenSource _refreshCancellation = null;
 
         [Inject]
@@ -86,7 +86,7 @@ namespace SaberRank.Features.MainMenu.MainFlow.GlobalLeaderboard {
             GlobalPlayerSession globalPlayerSession,
             GlobalLeaderboardHost globalLeaderboardHost,
             SettingsService settings,
-            SaberRankUIMaterials materials) {
+            SnoreSaberUIMaterials materials) {
 
             _container = container;
             _globalPlayerQueryService = globalPlayerQueryService;

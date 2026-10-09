@@ -3,7 +3,7 @@ using HMUI;
 using System.Linq;
 using UnityEngine;
 
-namespace SaberRank.Features.Replays.UI.Components {
+namespace SnoreSaber.Features.Replays.UI.Components {
     internal class AmeBar : MonoBehaviour {
         private RectTransform _rectTransform;
         private RectTransform _fillBarTransform;

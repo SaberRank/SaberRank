@@ -1,8 +1,8 @@
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
 
     internal class ReplayService {
 

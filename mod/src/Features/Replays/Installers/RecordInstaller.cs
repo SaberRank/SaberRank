@@ -1,8 +1,8 @@
 using Zenject;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Replays.Recorders;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Replays.Recorders;
 
-namespace SaberRank.Features.Replays.Installers {
+namespace SnoreSaber.Features.Replays.Installers {
     internal class RecordInstaller : Installer {
         private readonly ReplayState _replayState;
 

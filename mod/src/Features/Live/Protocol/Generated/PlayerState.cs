@@ -6,7 +6,7 @@
 
 #region Designer generated code
 #pragma warning disable CS0612, CS0618, CS1591, CS3021, CS8981, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
-namespace SaberRank.Live.V1
+namespace SnoreSaber.Live.V1
 {
 
     [global::ProtoBuf.ProtoContract()]

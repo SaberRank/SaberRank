@@ -1,7 +1,7 @@
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Protocol;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Protocol;
 
-namespace SaberRank.Features.Live.Ludus.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Ludus.Packets.Handlers {
     internal sealed class ChatSnapshotEnvelopeHandler<TSession> : ILudusEnvelopeHandler<TSession>
         where TSession : ILudusSessionPacketContext {
         private readonly LudusChatMessageBuffer _messages;

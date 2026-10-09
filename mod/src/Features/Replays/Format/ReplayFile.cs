@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 #pragma warning disable IDE1006 // Naming Styles
-namespace SaberRank.Features.Replays.Format {
+namespace SnoreSaber.Features.Replays.Format {
     internal class ReplayFile {
         internal Metadata metadata;
         internal List<VRPoseGroup> poseKeyframes;

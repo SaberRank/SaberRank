@@ -1,23 +1,23 @@
-using SaberRank.Core;
-using SaberRank.Core.Timing;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Replays.Format;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Timing;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Replays.Format;
+using SnoreSaber.Live.V1;
 using System.Collections.Generic;
 using Zenject;
-using ReplayMetadataSource = SaberRank.Features.Replays.Format.Metadata;
+using ReplayMetadataSource = SnoreSaber.Features.Replays.Format.Metadata;
 
-namespace SaberRank.Features.Live.Replay {
+namespace SnoreSaber.Features.Live.Replay {
     internal partial class LiveReplayStreamingService : ITickable {
         private const int MaxEventsPerChunk = 64;
         private const float MaxChunkAgeSeconds = 0.25f;
         private const uint RecommendedChunkSizeBytes = 64 * 1024;
         private const uint MaxChunkSizeBytes = 256 * 1024;
 
-        private readonly SaberRankRuntimeInfo _runtimeInfo;
+        private readonly SnoreSaberRuntimeInfo _runtimeInfo;
         private readonly CompeteGameplayState _competeGameplayState;
-        private readonly SaberRankClock _clock;
+        private readonly SnoreSaberClock _clock;
 
         private LudusSessionService _ludus;
         private ReplayMetadataSource _metadata;
@@ -43,7 +43,7 @@ namespace SaberRank.Features.Live.Replay {
         private float _pendingBatchStartedAt;
         private uint _lastMaxScore;
 
-        internal LiveReplayStreamingService(SaberRankRuntimeInfo runtimeInfo, CompeteGameplayState competeGameplayState, SaberRankClock clock) {
+        internal LiveReplayStreamingService(SnoreSaberRuntimeInfo runtimeInfo, CompeteGameplayState competeGameplayState, SnoreSaberClock clock) {
             _runtimeInfo = runtimeInfo;
             _competeGameplayState = competeGameplayState;
             _clock = clock;

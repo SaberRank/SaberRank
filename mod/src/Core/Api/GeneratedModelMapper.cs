@@ -1,13 +1,13 @@
-using SaberRank.Core.Api.Generated;
-using SaberRank.Core.Api.Paging;
-using SaberRank.Core.Gameplay;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Features.Leaderboards.Domain;
+using SnoreSaber.Core.Api.Generated;
+using SnoreSaber.Core.Api.Paging;
+using SnoreSaber.Core.Gameplay;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Features.Leaderboards.Domain;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace SaberRank.Core.Api {
+namespace SnoreSaber.Core.Api {
 
     internal static class GeneratedModelMapper {
 
@@ -346,29 +346,29 @@ namespace SaberRank.Core.Api {
             }
         }
 
-        private static SaberRankPlayOutcome ToDomain(LeaderboardScoresResponseDataItemPlayOutcome outcome) {
+        private static SnoreSaberPlayOutcome ToDomain(LeaderboardScoresResponseDataItemPlayOutcome outcome) {
             switch (outcome) {
                 case LeaderboardScoresResponseDataItemPlayOutcome.FAIL:
-                    return SaberRankPlayOutcome.Fail;
+                    return SnoreSaberPlayOutcome.Fail;
                 case LeaderboardScoresResponseDataItemPlayOutcome.QUIT:
-                    return SaberRankPlayOutcome.Quit;
+                    return SnoreSaberPlayOutcome.Quit;
                 case LeaderboardScoresResponseDataItemPlayOutcome.RESTART:
-                    return SaberRankPlayOutcome.Restart;
+                    return SnoreSaberPlayOutcome.Restart;
                 default:
-                    return SaberRankPlayOutcome.Clear;
+                    return SnoreSaberPlayOutcome.Clear;
             }
         }
 
-        private static SaberRankPlayOutcome ToDomain(LeaderboardScoresResponsePlayerScorePlayOutcome outcome) {
+        private static SnoreSaberPlayOutcome ToDomain(LeaderboardScoresResponsePlayerScorePlayOutcome outcome) {
             switch (outcome) {
                 case LeaderboardScoresResponsePlayerScorePlayOutcome.FAIL:
-                    return SaberRankPlayOutcome.Fail;
+                    return SnoreSaberPlayOutcome.Fail;
                 case LeaderboardScoresResponsePlayerScorePlayOutcome.QUIT:
-                    return SaberRankPlayOutcome.Quit;
+                    return SnoreSaberPlayOutcome.Quit;
                 case LeaderboardScoresResponsePlayerScorePlayOutcome.RESTART:
-                    return SaberRankPlayOutcome.Restart;
+                    return SnoreSaberPlayOutcome.Restart;
                 default:
-                    return SaberRankPlayOutcome.Clear;
+                    return SnoreSaberPlayOutcome.Clear;
             }
         }
 

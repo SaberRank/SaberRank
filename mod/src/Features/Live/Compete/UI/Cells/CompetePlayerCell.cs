@@ -1,16 +1,16 @@
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Core.Presentation;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Core.Presentation;
 using HMUI;
 using BeatSaberMarkupLanguage.Attributes;
 using System;
 
-namespace SaberRank.Features.Live.Compete.UI.Cells {
+namespace SnoreSaber.Features.Live.Compete.UI.Cells {
     internal class CompetePlayerCell : CompeteListRowCell {
-        private const string DefaultAvatar = "SaberRank.Resources.user.png";
+        private const string DefaultAvatar = "SnoreSaber.Resources.user.png";
 
         private CompetePlayer _player;
         private readonly Action<string, string> _profileClicked;
-        private readonly SaberRankUIMaterials _materials;
+        private readonly SnoreSaberUIMaterials _materials;
         private string _key;
 
         [UIValue("avatar-url")]
@@ -19,7 +19,7 @@ namespace SaberRank.Features.Live.Compete.UI.Cells {
         [UIComponent("profile-image")]
         private readonly ImageView _profileImage = null;
 
-        internal CompetePlayerCell(CompetePlayer player, SaberRankUIMaterials materials, Action<string, string> profileClicked)
+        internal CompetePlayerCell(CompetePlayer player, SnoreSaberUIMaterials materials, Action<string, string> profileClicked)
             : base(
                 player.IsLocalPlayer ? $"{player.DisplayName} (you)" : player.DisplayName,
                 player.Rank,

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace SaberRank.Core.BeatSaver {
+namespace SnoreSaber.Core.BeatSaver {
     internal sealed class BeatSaverMap {
         [JsonProperty("name")]
         public string Name { get; set; }

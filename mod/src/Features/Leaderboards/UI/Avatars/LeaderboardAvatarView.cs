@@ -1,21 +1,21 @@
 using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
-using SaberRank.Core.Presentation;
-using SaberRank.Features.Leaderboards.Services;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Features.Leaderboards.Services;
 using System;
 using System.Threading;
 using UnityEngine;
 
-namespace SaberRank.Features.Leaderboards.UI.Avatars {
+namespace SnoreSaber.Features.Leaderboards.UI.Avatars {
     internal class LeaderboardAvatarView {
         private int _index;
 
         private readonly RemoteImageService _remoteImageService;
-        private readonly SaberRankUIMaterials _materials;
+        private readonly SnoreSaberUIMaterials _materials;
         private readonly LeaderboardTweeningService _leaderboardTweeningService;
         private readonly Sprite _blankSprite = BeatSaberMarkupLanguage.Utilities.ImageResources.BlankSprite;
 
-        public LeaderboardAvatarView(int index, RemoteImageService remoteImageService, SaberRankUIMaterials materials, LeaderboardTweeningService leaderboardTweeningService) {
+        public LeaderboardAvatarView(int index, RemoteImageService remoteImageService, SnoreSaberUIMaterials materials, LeaderboardTweeningService leaderboardTweeningService) {
             _index = index;
             _remoteImageService = remoteImageService;
             _materials = materials;

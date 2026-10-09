@@ -3,7 +3,7 @@ using BeatSaberMarkupLanguage.ViewControllers;
 using System;
 using UnityEngine;
 
-namespace SaberRank.Features.Live.Compete.UI.ViewControllers.CodeEntry {
+namespace SnoreSaber.Features.Live.Compete.UI.ViewControllers.CodeEntry {
     [HotReload]
     internal class CompeteCodeEntryViewController : BSMLAutomaticViewController {
         internal event Action<string> JoinRequested;

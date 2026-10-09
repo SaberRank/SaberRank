@@ -11,19 +11,19 @@
               </vertical>
               <horizontal child-align="UpperLeft" child-expand-width="false" spacing="1" size-delta-x="15" pref-width="15" size-delta-y="5" pref-height="5">
                 <macro.if bool="discord">
-                  <clickable-image active="~discord" src="ScoreSaber.Resources.discord.png" hover-hint="Opens In Browser" on-click="discord-clicked" preserve-aspect="true" />
+                  <clickable-image active="~discord" src="SnoreSaber.Resources.discord.png" hover-hint="Opens In Browser" on-click="discord-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="github">
-                  <clickable-image active="~github" src="ScoreSaber.Resources.github.png" hover-hint="Opens In Browser" on-click="github-clicked" preserve-aspect="true" />
+                  <clickable-image active="~github" src="SnoreSaber.Resources.github.png" hover-hint="Opens In Browser" on-click="github-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="twitch">
-                  <clickable-image active="~twitch" src="ScoreSaber.Resources.twitch.png" hover-hint="Opens In Browser" on-click="twitter-clicked" preserve-aspect="true" />
+                  <clickable-image active="~twitch" src="SnoreSaber.Resources.twitch.png" hover-hint="Opens In Browser" on-click="twitter-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="twitter">
-                  <clickable-image active="~twitter" src="ScoreSaber.Resources.twitter.png" hover-hint="Opens In Browser" on-click="twitch-clicked" preserve-aspect="true" />
+                  <clickable-image active="~twitter" src="SnoreSaber.Resources.twitter.png" hover-hint="Opens In Browser" on-click="twitch-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="youtube">
-                  <clickable-image active="~youtube" src="ScoreSaber.Resources.youtube.png" hover-hint="Opens In Browser" on-click="youtube-clicked" preserve-aspect="true" />
+                  <clickable-image active="~youtube" src="SnoreSaber.Resources.youtube.png" hover-hint="Opens In Browser" on-click="youtube-clicked" preserve-aspect="true" />
                 </macro.if>
               </horizontal>
             </vertical>
@@ -45,19 +45,19 @@
               </vertical>
               <horizontal child-align="UpperLeft" child-expand-width="false" spacing="1" size-delta-x="15" pref-width="15" size-delta-y="5" pref-height="5">
                 <macro.if bool="discord">
-                  <clickable-image active="~discord" src="ScoreSaber.Resources.discord.png" hover-hint="Opens In Browser" on-click="discord-clicked" preserve-aspect="true" />
+                  <clickable-image active="~discord" src="SnoreSaber.Resources.discord.png" hover-hint="Opens In Browser" on-click="discord-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="github">
-                  <clickable-image active="~github" src="ScoreSaber.Resources.github.png" hover-hint="Opens In Browser" on-click="github-clicked" preserve-aspect="true" />
+                  <clickable-image active="~github" src="SnoreSaber.Resources.github.png" hover-hint="Opens In Browser" on-click="github-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="twitch">
-                  <clickable-image active="~twitch" src="ScoreSaber.Resources.twitch.png" hover-hint="Opens In Browser" on-click="twitter-clicked" preserve-aspect="true" />
+                  <clickable-image active="~twitch" src="SnoreSaber.Resources.twitch.png" hover-hint="Opens In Browser" on-click="twitter-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="twitter">
-                  <clickable-image active="~twitter" src="ScoreSaber.Resources.twitter.png" hover-hint="Opens In Browser" on-click="twitch-clicked" preserve-aspect="true" />
+                  <clickable-image active="~twitter" src="SnoreSaber.Resources.twitter.png" hover-hint="Opens In Browser" on-click="twitch-clicked" preserve-aspect="true" />
                 </macro.if>
                 <macro.if bool="youtube">
-                  <clickable-image active="~youtube" src="ScoreSaber.Resources.youtube.png" hover-hint="Opens In Browser" on-click="youtube-clicked" preserve-aspect="true" />
+                  <clickable-image active="~youtube" src="SnoreSaber.Resources.youtube.png" hover-hint="Opens In Browser" on-click="youtube-clicked" preserve-aspect="true" />
                 </macro.if>
               </horizontal>
             </vertical>

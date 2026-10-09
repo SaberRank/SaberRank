@@ -1,17 +1,17 @@
-using SaberRank.Core.Api;
-using SaberRank.Core.Api.Paging;
-using SaberRank.Features.Players.Domain;
+using SnoreSaber.Core.Api;
+using SnoreSaber.Core.Api.Paging;
+using SnoreSaber.Features.Players.Domain;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Players.Services {
+namespace SnoreSaber.Features.Players.Services {
 
     internal class GlobalPlayerQueryService {
 
-        private readonly ISaberRankApiClient _apiClient;
+        private readonly ISnoreSaberApiClient _apiClient;
         private readonly GameSessionService _gameSessionService;
 
-        public GlobalPlayerQueryService(ISaberRankApiClient apiClient, GameSessionService gameSessionService) {
+        public GlobalPlayerQueryService(ISnoreSaberApiClient apiClient, GameSessionService gameSessionService) {
             _apiClient = apiClient;
             _gameSessionService = gameSessionService;
             Plugin.Log.Debug("GlobalPlayerQueryService Setup");

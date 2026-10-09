@@ -1,13 +1,13 @@
 using HMUI;
 using IPA.Utilities;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class EnergyPlayer : TimeSynchronizer, IScroller {
         private const float EnergyIconPositionX = 59f;
         private const string LaserCloudName = "Laser";

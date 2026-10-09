@@ -1,12 +1,12 @@
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.ScoreSubmission.Domain;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.ScoreSubmission.Domain;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace SaberRank.Features.Replays {
+namespace SnoreSaber.Features.Replays {
 
     internal class ReplayStorageService {
         private readonly SettingsService _settings;
@@ -22,7 +22,7 @@ namespace SaberRank.Features.Replays {
             return replayPath == null ? null : File.ReadAllBytes(replayPath);
         }
 
-        internal void SaveLocalReplay(SaberRankUploadData uploadData, BeatmapKey beatmapKey, byte[] replay) {
+        internal void SaveLocalReplay(SnoreSaberUploadData uploadData, BeatmapKey beatmapKey, byte[] replay) {
             if (!_settings.Current.saveLocalReplays || replay == null) {
                 return;
             }

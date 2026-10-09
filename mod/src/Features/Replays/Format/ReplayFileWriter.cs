@@ -5,12 +5,12 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SaberRank.Features.Replays.Format {
+namespace SnoreSaber.Features.Replays.Format {
     internal class ReplayFileWriter {
         private const int _pointerSize = 38;
         private const int ExtensionMagic = 0x31585353; // SSX1
         private const int ExtensionTableVersion = 1;
-        private static readonly byte[] FileHeader = Encoding.UTF8.GetBytes("SaberRank Replay 👌🤠\r\n");
+        private static readonly byte[] FileHeader = Encoding.UTF8.GetBytes("SnoreSaber Replay 👌🤠\r\n");
         private delegate int WriteItem<T>(T value, MemoryStream outputStream);
 
         internal byte[] Write(ReplayFile file) {

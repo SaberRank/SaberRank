@@ -87,7 +87,7 @@ jobs:
         upload_version_hash=$(printf "%s%s" "$plugin_version" "$game_version" | md5sum | awk '{print $1}')
         artifact_game_version=$(echo "$compatible_versions" | jq -r '.[0] + "-to-" + .[-1]')
         short_sha=$(echo "${{ github.sha }}" | cut -c1-7)
-        artifact_name="SaberRank-v$manifest_plugin_version-bs$artifact_game_version-$short_sha"
+        artifact_name="SnoreSaber-v$manifest_plugin_version-bs$artifact_game_version-$short_sha"
 
         supported_versions="[]"
         for version in $(echo "$compatible_versions" | jq -r '.[]'); do
@@ -153,7 +153,7 @@ jobs:
     - name: Checkout stripped dlls
       uses: actions/checkout@v5
       with:
-        repository: SaberRank/pc-ci-stripped
+        repository: SnoreSaber/pc-ci-stripped
         token: ${{ secrets.CI_PAT }}
         path: Stripped
         sparse-checkout: |
@@ -193,14 +193,14 @@ jobs:
     - name: Build
       env:
         FrameworkPathOverride: /usr/lib/mono/4.8-api
-        SaberRankOfficialBuildId: ${{ steps.official-build.outputs.build_id }}
-        SaberRankOfficialBuildCredential: ${{ steps.official-build.outputs.credential }}
+        SnoreSaberOfficialBuildId: ${{ steps.official-build.outputs.build_id }}
+        SnoreSaberOfficialBuildCredential: ${{ steps.official-build.outputs.credential }}
       run: |
-        dotnet build SaberRank.sln \
+        dotnet build SnoreSaber.sln \
           --configuration Release \
           -p:Platform="BS${{ steps.read-json.outputs.base_version }}" \
-          -p:SaberRankTargetVersion="${{ steps.read-json.outputs.base_version }}" \
-          -p:SaberRankUseLocalRefs=true \
+          -p:SnoreSaberTargetVersion="${{ steps.read-json.outputs.base_version }}" \
+          -p:SnoreSaberUseLocalRefs=true \
           -p:LocalRefsDir="${{ github.workspace }}/Refs" \
           -p:GameReferences="${{ github.workspace }}/Refs" \
           -p:Version="${{ steps.read-json.outputs.manifest_plugin_version }}" \
@@ -230,7 +230,7 @@ jobs:
         echo "path=$staging_dir" >> "$GITHUB_OUTPUT"
 
     - name: Check formatting
-      run: dotnet format whitespace SaberRank.sln --verify-no-changes --no-restore --exclude src/Core/Api/Generated src/Libraries/SevenZip
+      run: dotnet format whitespace SnoreSaber.sln --verify-no-changes --no-restore --exclude src/Core/Api/Generated src/Libraries/SevenZip
       
     - name: Git Status
       run: git status

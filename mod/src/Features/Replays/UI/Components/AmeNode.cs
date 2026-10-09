@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace SaberRank.Features.Replays.UI.Components {
+namespace SnoreSaber.Features.Replays.UI.Components {
     public class AmeNode : MonoBehaviour {
         public event Action<float> PositionDidChange;
 

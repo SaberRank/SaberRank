@@ -1,9 +1,9 @@
 using IPA.Utilities;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class MultiplierPlayer : TimeSynchronizer, IScroller {
         private ScoreController _scoreController;
         private readonly List<MultiplierEvent> _multiplierEvents;

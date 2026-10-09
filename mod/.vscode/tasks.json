@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/SaberRank.sln",
+                "${workspaceFolder}/SnoreSaber.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/SaberRank.sln",
+                "${workspaceFolder}/SnoreSaber.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -33,7 +33,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/SaberRank.sln"
+                "${workspaceFolder}/SnoreSaber.sln"
             ],
             "problemMatcher": "$msCompile"
         }

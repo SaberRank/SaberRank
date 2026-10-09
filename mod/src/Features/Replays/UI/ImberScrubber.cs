@@ -1,16 +1,16 @@
 using BeatSaberMarkupLanguage;
 using HMUI;
-using SaberRank.Features.Replays.UI.Components;
+using SnoreSaber.Features.Replays.UI.Components;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 using VRUIControls;
 using Zenject;
 
-namespace SaberRank.Features.Replays.UI {
+namespace SnoreSaber.Features.Replays.UI {
     internal class ImberScrubber : IInitializable, ITickable, IDisposable {
         public event Action<float> DidCalculateNewTime;
-        private static readonly Color SaberRankBlue = new Color(0f, 0.4705882f, 0.7254902f);
+        private static readonly Color SnoreSaberBlue = new Color(0f, 0.4705882f, 0.7254902f);
 
         public Transform transform => _parent;
 
@@ -175,7 +175,7 @@ namespace SaberRank.Features.Replays.UI {
             progressImage.rectTransform.sizeDelta = barSize;
             progressImage.rectTransform.anchorMin = new Vector2(0f, 0.5f);
             progressImage.rectTransform.anchorMax = new Vector2(0f, 0.5f);
-            progressImage.color = SaberRankBlue;
+            progressImage.color = SnoreSaberBlue;
             progressImage.name = "Progress Bar";
 
             ImageView clickScrubImage = CreateImage(rectTransformBar);

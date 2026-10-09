@@ -1,18 +1,18 @@
-using SaberRank.Features.Leaderboards.Adapters.LeaderboardCore;
-using SaberRank.Features.Leaderboards.Domain;
-using SaberRank.Features.Leaderboards.Services;
-using SaberRank.Features.Leaderboards.UI;
-using SaberRank.Features.Leaderboards.UI.Avatars;
+using SnoreSaber.Features.Leaderboards.Adapters.LeaderboardCore;
+using SnoreSaber.Features.Leaderboards.Domain;
+using SnoreSaber.Features.Leaderboards.Services;
+using SnoreSaber.Features.Leaderboards.UI;
+using SnoreSaber.Features.Leaderboards.UI.Avatars;
 using System;
 using System.Threading;
 using Zenject;
 
-namespace SaberRank.Features.Leaderboards {
+namespace SnoreSaber.Features.Leaderboards {
     internal class LeaderboardPresentationController : IInitializable, IDisposable {
         private readonly PanelView _panelView;
         private readonly LeaderboardScreenSession _leaderboardSession;
-        private readonly SaberRankLeaderboardCoreViewController _leaderboardViewController;
-        private readonly SaberRankLeaderboardOverlayController _overlayController;
+        private readonly SnoreSaberLeaderboardCoreViewController _leaderboardViewController;
+        private readonly SnoreSaberLeaderboardOverlayController _overlayController;
         private readonly LeaderboardAvatarHost _avatarHost;
 
         private CancellationTokenSource _avatarCancellation;
@@ -20,8 +20,8 @@ namespace SaberRank.Features.Leaderboards {
         public LeaderboardPresentationController(
             PanelView panelView,
             LeaderboardScreenSession leaderboardSession,
-            SaberRankLeaderboardCoreViewController leaderboardViewController,
-            SaberRankLeaderboardOverlayController overlayController,
+            SnoreSaberLeaderboardCoreViewController leaderboardViewController,
+            SnoreSaberLeaderboardOverlayController overlayController,
             LeaderboardAvatarHost avatarHost) {
             _panelView = panelView;
             _leaderboardSession = leaderboardSession;

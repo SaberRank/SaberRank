@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Zenject;
 
-namespace SaberRank.Features.Live.Compete.Services {
+namespace SnoreSaber.Features.Live.Compete.Services {
     internal class CompeteFpsStabilityStartGate : IInitializable, ITickable, IDisposable {
         private const float StabilityDurationSeconds = 0.3f;
         private const float MaxWaitSeconds = 5f;

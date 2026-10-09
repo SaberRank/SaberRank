@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace SaberRank.Features.Replays.Format {
+namespace SnoreSaber.Features.Replays.Format {
     internal static class HsvReplayConfigCodec {
         internal const int MaxJsonBytes = 32 * 1024;
         internal const int MaxPayloadBytes = 8 * 1024;

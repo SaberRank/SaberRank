@@ -1,9 +1,9 @@
-using SaberRank.Features.Live.Ludus.Domain;
-using SaberRank.Live.V1;
+using SnoreSaber.Features.Live.Ludus.Domain;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 
-namespace SaberRank.Features.Live.Ludus.Packets {
+namespace SnoreSaber.Features.Live.Ludus.Packets {
     internal sealed class LudusChatMessageBuffer {
         private const int MaxMessages = 200;
         private readonly List<LiveChatEntry> _messages = new List<LiveChatEntry>();

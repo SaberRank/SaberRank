@@ -1,13 +1,13 @@
-using SaberRank.Core;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Packets;
-using SaberRank.Features.Live.Compete.Services;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Packets;
+using SnoreSaber.Features.Live.Compete.Services;
+using SnoreSaber.Live.V1;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Compete.Packets.Handlers {
     internal sealed class StartMapCommandHandler : ILudusServerCommandHandler {
         public LudusCommandType Type => LudusCommandType.LudusCommandTypeStartMap;
 

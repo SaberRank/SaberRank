@@ -1,13 +1,13 @@
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Players.Domain;
-using SaberRank.Core.Presentation;
-using SaberRank.Core;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Players.Domain;
+using SnoreSaber.Core.Presentation;
+using SnoreSaber.Core;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
 
-namespace SaberRank.Features.Players.Services {
+namespace SnoreSaber.Features.Players.Services {
     internal class LocalPlayerPanelSession : IInitializable, IDisposable {
         private const int RefreshIntervalMilliseconds = 240000;
 
@@ -97,18 +97,18 @@ namespace SaberRank.Features.Players.Services {
         }
 
         private LocalPlayerPanelState FromHttpError(HttpErrorException ex) {
-            if (!ex.isSaberRankError) {
+            if (!ex.isSnoreSaberError) {
                 Plugin.Log.Error("Failed to update local player ranking " + ex.ToString());
                 return LocalPlayerPanelState.PromptError(CurrentState, "Failed to update local player ranking", 1.5f);
             }
 
             return ex.scoreSaberError.ErrorMessage == "Player not found"
-                ? LocalPlayerPanelState.Message("Welcome to SaberRank! Set a score to create a profile")
+                ? LocalPlayerPanelState.Message("Welcome to SnoreSaber! Set a score to create a profile")
                 : LocalPlayerPanelState.Message($"Failed to load player ranking: {ex.scoreSaberError.ErrorMessage}");
         }
 
         private async Task<LocalPlayerPanelData> GetLocalPlayerPanelData() {
-            await SaberRank.Core.TaskExtensions.WaitUntil(() => _gameSessionService.Status == GameSessionService.LoginStatus.Success);
+            await SnoreSaber.Core.TaskExtensions.WaitUntil(() => _gameSessionService.Status == GameSessionService.LoginStatus.Success);
 
             string playerId = _gameSessionService.LocalPlayerInfo.playerId;
             return new LocalPlayerPanelData {

@@ -1,11 +1,11 @@
 using IPA.Utilities;
-using SaberRank.Features.Replays.Format;
+using SnoreSaber.Features.Replays.Format;
 using System;
 using System.Collections.Generic;
 using Zenject;
-using HeightEvent = SaberRank.Features.Replays.Format.HeightEvent;
+using HeightEvent = SnoreSaber.Features.Replays.Format.HeightEvent;
 
-namespace SaberRank.Features.Replays.Playback {
+namespace SnoreSaber.Features.Replays.Playback {
     internal class HeightPlayer : TimeSynchronizer, IInitializable, ITickable, IScroller {
         private int _nextIndex = 0;
         private readonly List<HeightEvent> _heightEvents;

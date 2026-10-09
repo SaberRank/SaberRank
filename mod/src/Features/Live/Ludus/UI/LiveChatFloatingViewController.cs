@@ -3,10 +3,10 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Parser;
-using SaberRank.Core;
-using SaberRank.Core.Configuration;
-using SaberRank.Features.Live.Ludus.Domain;
-using SaberRank.Features.Live.Ludus.Services;
+using SnoreSaber.Core;
+using SnoreSaber.Core.Configuration;
+using SnoreSaber.Features.Live.Ludus.Domain;
+using SnoreSaber.Features.Live.Ludus.Services;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
-namespace SaberRank.Features.Live.Ludus.UI {
+namespace SnoreSaber.Features.Live.Ludus.UI {
     [HotReload(RelativePathToLayout = @"./LiveChatFloatingViewController.bsml")]
     internal class LiveChatFloatingViewController : BSMLAutomaticViewController {
         internal const float ChatWidth = 120f;

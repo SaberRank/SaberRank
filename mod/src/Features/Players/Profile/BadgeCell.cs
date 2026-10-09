@@ -1,11 +1,11 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
-using SaberRank.Core;
+using SnoreSaber.Core;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SaberRank.Features.Players.Profile {
+namespace SnoreSaber.Features.Players.Profile {
     internal class BadgeCell : INotifyPropertyChanged {
 
         [UIComponent("image")]

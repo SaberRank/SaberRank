@@ -1,8 +1,8 @@
-using SaberRank.Features.Live.Ludus.Services;
-using SaberRank.Features.Live.Ludus.Packets;
-using SaberRank.Features.Live.Protocol;
+using SnoreSaber.Features.Live.Ludus.Services;
+using SnoreSaber.Features.Live.Ludus.Packets;
+using SnoreSaber.Features.Live.Protocol;
 
-namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Compete.Packets.Handlers {
     internal sealed class ServerCommandEnvelopeHandler : ILudusEnvelopeHandler<ILudusSessionPacketContext> {
         private readonly LudusServerCommandDispatcher _commandDispatcher;
         private readonly ILudusServerCommandSession _commandSession;

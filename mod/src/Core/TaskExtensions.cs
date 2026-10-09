@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace SaberRank.Core {
+namespace SnoreSaber.Core {
     internal static class TaskExtensions {
         internal static async Task WaitWhile(Func<bool> condition, int frequency = 25, int timeout = -1) {
             var waitTask = Task.Run(async () => {

@@ -1,14 +1,14 @@
-using SaberRank.Core;
-using SaberRank.Features.Live.Compete.Domain;
-using SaberRank.Features.Live.Compete.Packets;
-using SaberRank.Live.V1;
+using SnoreSaber.Core;
+using SnoreSaber.Features.Live.Compete.Domain;
+using SnoreSaber.Features.Live.Compete.Packets;
+using SnoreSaber.Live.V1;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SaberRank.Features.Live.Compete.Packets.Handlers {
+namespace SnoreSaber.Features.Live.Compete.Packets.Handlers {
     internal sealed class CreateRoomCommandHandler : ILudusServerCommandHandler {
         public LudusCommandType Type => LudusCommandType.LudusCommandTypeCreateRoom;
 
