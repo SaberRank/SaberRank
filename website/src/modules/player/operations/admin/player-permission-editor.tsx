@@ -23,6 +23,24 @@ interface Permission {
    value: number;
 }
 
+const permissionDescriptions: Record<string, string> = {
+   RT: 'Ranking Team — review ranking requests and manage ranked map status, stars and PP.',
+   RTR: 'Ranking Team Reviewer — review ranking work and perform the same map-ranking actions as RT.',
+   QAT: 'Quality Assurance Team — review and approve map quality/ranking requests.',
+   QATHead: 'Quality Assurance Team Lead — manage QAT decisions and quality review.',
+   NAT: 'Nominations / Admin Team — qualify, deny and replace ranking requests.',
+   ADMIN: 'Administrator — full site administration and account management.',
+   PANDA: 'Panda / Super Admin — unrestricted administrative access.',
+   DEV: 'Developer — development and internal tooling access.',
+   CCT: 'Community Content Team — community/content moderation tools.',
+   CCTHead: 'Community Content Team Lead — lead community/content moderation.',
+   CAT: 'Community Administration Team — community administration tools.',
+   SUPPORTER: 'Supporter — supporter features and profile extras.',
+   PPFARMER: 'PP Farmer — PP/profile tooling access.',
+   EXTERNAL_DEV: 'External Developer — approved external developer tools.',
+   TOURNAMENT_ORGANIZER: 'Tournament Organizer — tournament management tools.'
+};
+
 type UpdatePermissionsResult = Extract<Awaited<ReturnType<typeof updatePermissions>>, { ok: true }>['value'];
 
 const permissionOrder = ['PANDA', 'ADMIN', 'QATHead', 'CCTHead', 'NAT', 'RT', 'RTR', 'QAT', 'CAT', 'CCT', 'DEV'];
@@ -48,6 +66,16 @@ interface PlayerPermissionEditorProps {
    playerPermissions: number;
    currentUserPermissions: number;
    isOwnProfile: boolean;
+}
+
+function permissionDisplayName(name: string) {
+   const names: Record<string, string> = {
+      RT: 'Ranking Team', RTR: 'Ranking Team Reviewer', QAT: 'Quality Assurance Team', QATHead: 'Quality Assurance Team Lead',
+      NAT: 'Nominations / Admin Team', ADMIN: 'Administrator', PANDA: 'Panda / Super Admin', DEV: 'Developer', CCT: 'Community Content Team',
+      CCTHead: 'Community Content Team Lead', CAT: 'Community Administration Team', SUPPORTER: 'Supporter', PPFARMER: 'PP Farmer',
+      EXTERNAL_DEV: 'External Developer', TOURNAMENT_ORGANIZER: 'Tournament Organizer'
+   };
+   return names[name] ?? name;
 }
 
 export function PlayerPermissionEditor({
@@ -206,6 +234,7 @@ export function PlayerPermissionEditor({
                            const isChecked = (draftPerms & perm.value) === perm.value;
                            const isDisabled = pending || !canModifyPermission(perm);
 
+                           const description = permissionDescriptions[perm.name] ?? 'SnoreSaber permission.';
                            return (
                               <Label
                                  key={perm.name}
@@ -216,7 +245,10 @@ export function PlayerPermissionEditor({
                                     onCheckedChange={(checked) => toggleDraft(perm, checked === true)}
                                     disabled={isDisabled}
                                  />
-                                 <span>{perm.name}</span>
+                                 <span className="min-w-0">
+                                    <span className="block font-medium">{permissionDisplayName(perm.name)}</span>
+                                    <span className="text-muted-foreground block text-xs leading-snug">{description}</span>
+                                 </span>
                               </Label>
                            );
                         })}

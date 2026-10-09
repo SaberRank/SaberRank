@@ -2,7 +2,6 @@
 
 import { useState, type CSSProperties, type ReactNode } from 'react';
 
-import { getRouteApi } from '@tanstack/react-router';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import type { IconType } from 'react-icons';
 import {
@@ -49,7 +48,6 @@ import { cn, formatAccuracy, formatNumber, formatPP, rankToPage } from '@/shared
 import { normalizePlayerRoleText } from '@/shared/format/styling';
 import Permissions from '@/shared/permissions';
 
-const rankingsRoute = getRouteApi('/rankings');
 
 const ppBadgeClass =
    'border-primary/25 bg-primary/15 text-primary-foreground dark:text-primary rounded-full border px-2.5 py-0.5 text-sm font-semibold tabular-nums';
@@ -334,9 +332,9 @@ export function PlayerProfileHeader({ player, aliases, actions, customization, p
                               label: t('player.countryRank')
                            }
                         ].map(({ page, countries, icon, value, change, label }) => (
-                           <rankingsRoute.Link
+                           <a
                               key={label}
-                              search={{ page, countries, highlight: player.id, includeInactive: 'false' }}
+                              href={`/rankings?${new URLSearchParams({ page: String(page), ...(countries ? { countries } : {}), highlight: player.id, includeInactive: 'false' }).toString()}`}
                               className={hasCustomAccent ? rankPillAccentClass : rankPillClass}
                               style={rankPillStyle}
                            >
@@ -348,7 +346,7 @@ export function PlayerProfileHeader({ player, aliases, actions, customization, p
                                  </div>
                                  <div className="text-muted-foreground text-[9px] tracking-wider uppercase">{label}</div>
                               </div>
-                           </rankingsRoute.Link>
+                           </a>
                         ))}
                         {stats.device?.hmd &&
                            (denyahMode ? (

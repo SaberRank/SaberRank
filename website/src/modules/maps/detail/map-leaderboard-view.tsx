@@ -36,6 +36,8 @@ export function MapLeaderboardView<TLocation>({
    const canReplace = Permissions.checkPermissionNumber(userPermissions, Permissions.security.NAT);
    const canApprove = Permissions.checkPermissionNumber(userPermissions, Permissions.security.ADMIN);
    const canAdmin =
+      Permissions.checkPermissionNumber(userPermissions, Permissions.security.RT) ||
+      Permissions.checkPermissionNumber(userPermissions, Permissions.security.RTR) ||
       Permissions.checkPermissionNumber(userPermissions, Permissions.security.ADMIN) ||
       Permissions.checkPermissionNumber(userPermissions, Permissions.security.PANDA);
    const isRanked = isLeaderboardRanked(leaderboard);

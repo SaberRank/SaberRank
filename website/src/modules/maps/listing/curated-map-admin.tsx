@@ -30,6 +30,8 @@ function difficultyLabel(value: number) {
 export function CuratedMapAdmin() {
    const { user } = useAuth();
    const canAdmin =
+      Permissions.checkPermissionNumber(user?.permissions ?? 0, Permissions.security.RT) ||
+      Permissions.checkPermissionNumber(user?.permissions ?? 0, Permissions.security.RTR) ||
       Permissions.checkPermissionNumber(user?.permissions ?? 0, Permissions.security.ADMIN) ||
       Permissions.checkPermissionNumber(user?.permissions ?? 0, Permissions.security.PANDA);
 
@@ -129,7 +131,7 @@ export function CuratedMapAdmin() {
                <DialogHeader>
                   <DialogTitle>SnoreSaber Map Ranking</DialogTitle>
                   <DialogDescription>
-                     Paste any BeatSaver map link, load its difficulties, then enter your SnoreSaber star value for each difficulty. You can add as many maps as you want.
+                     Paste one of the six curated BeatSaver links, load its difficulties, then enter your own SnoreSaber star value for each difficulty.
                   </DialogDescription>
                </DialogHeader>
 
@@ -140,7 +142,7 @@ export function CuratedMapAdmin() {
                         <Input
                            id="beatsaver-admin-link"
                            className="mt-1.5"
-                           placeholder="https://beatsaver.com/maps/<key>"
+                           placeholder="https://beatsaver.com/maps/4fdd2"
                            value={link}
                            onChange={(event) => setLink(event.target.value)}
                            disabled={loading || saving}
