@@ -3,8 +3,8 @@ using System.Reflection;
 
 namespace SnoreSaber.Core {
     internal static class SnoreSaberEndpoints {
-        private const string DefaultWebsiteBaseUrl = "https://snoresaber.com";
-        private const string DefaultApiBaseUrl = "https://snoresaber.com";
+        private const string DefaultWebsiteBaseUrl = "https://snoresaber.vercel.app";
+        private const string DefaultApiBaseUrl = "https://snoresaber.vercel.app";
         private const string DefaultCdnBaseUrl = "https://cdn.saberrank.local";
         private const string DefaultLudusUrl = "wss://ludus-1.saberrank.local/v1/connect";
 

@@ -15,7 +15,7 @@
     "protobuf-net": "^3.0.102"
   },
   "links": {
-    "website": "https://snoresaber.com"
+    "website": "https://snoresaber.vercel.app"
   },
   "loadBefore": [
     "LeaderboardCore"

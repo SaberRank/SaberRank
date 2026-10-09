@@ -11,8 +11,8 @@
   </PropertyGroup>
   <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
   <PropertyGroup>
-    <SnoreSaberWebsiteBaseUrl Condition="'$(SnoreSaberWebsiteBaseUrl)' == ''">https://snoresaber.com</SnoreSaberWebsiteBaseUrl>
-    <SnoreSaberApiBaseUrl Condition="'$(SnoreSaberApiBaseUrl)' == ''">https://snoresaber.com</SnoreSaberApiBaseUrl>
+    <SnoreSaberWebsiteBaseUrl Condition="'$(SnoreSaberWebsiteBaseUrl)' == ''">https://snoresaber.vercel.app</SnoreSaberWebsiteBaseUrl>
+    <SnoreSaberApiBaseUrl Condition="'$(SnoreSaberApiBaseUrl)' == ''">https://snoresaber.vercel.app</SnoreSaberApiBaseUrl>
     <SnoreSaberCdnBaseUrl Condition="'$(SnoreSaberCdnBaseUrl)' == ''">https://cdn.saberrank.local</SnoreSaberCdnBaseUrl>
     <SnoreSaberLudusUrl Condition="'$(SnoreSaberLudusUrl)' == ''">wss://ludus-1.saberrank.local/v1/connect</SnoreSaberLudusUrl>
   </PropertyGroup>

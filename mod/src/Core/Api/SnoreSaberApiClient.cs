@@ -45,6 +45,7 @@ namespace SnoreSaber.Core.Api {
                 };
                 _uploadTrustClient.ApplyAuthMetadata(generatedRequest);
 
+                Plugin.Log.Debug($"SnoreSaber game auth -> {SnoreSaberEndpoints.ApiBaseUrl}/api/v2/game/auth (type={request.AuthType}, player={request.PlayerId})");
                 GameAuthenticateResponse response = await client.AuthenticateGameAsync(generatedRequest, cancellationToken);
 
                 if (string.IsNullOrEmpty(response.SessionId) || string.IsNullOrEmpty(response.Key)) {
@@ -67,7 +68,6 @@ namespace SnoreSaber.Core.Api {
 
                 return GameAuthenticationResult.Success(session);
             } catch (GeneratedApiException ex) {
-                Plugin.Log.Error($"SnoreSaber game auth HTTP {ex.StatusCode}: {ex.Response ?? ex.Message}");
                 return GameAuthenticationResult.Failure(ex.Message, MapError(ex));
             } catch (Exception ex) {
                 return GameAuthenticationResult.Failure(ex.Message, SnoreSaberApiError.FromMessage(ex.Message));

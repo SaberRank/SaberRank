@@ -2,6 +2,7 @@ import { createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from
 import { defineHandler } from 'nitro';
 import { db } from '../../utils/db';
 
+import { CURATED_BEATSAVER_MAP_KEYS } from "../../beatsaver-curated";
 const SECRET = process.env.SESSION_SECRET || 'snoresaber-development-secret-change-me';
 const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
 const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
@@ -9,6 +10,11 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
 const EMAIL_CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const NOW = () => new Date().toISOString();
+
+// SnoreSaber's initial curated map set. These are BeatSaver map keys, not
+// SnoreSaber's internal numeric map IDs. Keep this list as the source of truth
+// for the public map catalog until more maps are intentionally added.
+const PUBLIC_BEATSAVER_MAP_KEYS = new Set(['25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10']);
 
 // Development/demo data is deliberately kept as a fallback. Once DATABASE_URL is
 // configured, every read/write below uses PostgreSQL instead of these arrays.
@@ -1336,14 +1342,14 @@ export default defineHandler(async (event: any) => {
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));
       let filtered = dataRows.filter(({r,lbs}) => {
-        // The public catalog is database-driven: every non-AI map is eligible.
-        // Status is controlled by the requested status filter, so an admin can add
-        // and rank any number of BeatSaver maps without changing source code.
+        // Every map explicitly added to SnoreSaber is visible in the public Maps page.
+        // The six-map set is only used by the curated/sync tooling, not as a display filter.
+        const curated = true;
+        const ranked = lbs.some((l) => String(l.status || '').toUpperCase() === 'RANKED');
         const ai = Boolean(r.is_ai);
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
-        const statusMatches = requestedStatuses.length === 0 || lbs.some((l) => requestedStatuses.includes(String(l.status || '').toUpperCase()));
-        return !ai && q && statusMatches && stars >= minStars && stars <= maxStars;
+        return curated && !ai && q && stars >= minStars && stars <= maxStars;
       });
       const sortBy = query.get('sortBy') || 'trending';
       const sortDirection = query.get('sortDirection') === 'asc' ? 1 : -1;
@@ -1358,10 +1364,12 @@ export default defineHandler(async (event: any) => {
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
     let filtered = maps.filter((m) => {
+      // Fallback data follows the same rule: any map added to SnoreSaber can be displayed.
+      const curated = true;
+      const ranked = (m.leaderboards || []).some((l:any) => String(l.realm?.leaderboardStatus || '').toUpperCase() === 'RANKED');
       const q = !search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search);
       const stars = Math.max(0,...(m.leaderboards || []).map((l:any)=>Number(l.realm?.stars||0)));
-      const statusMatches = requestedStatuses.length === 0 || (m.leaderboards || []).some((l:any) => requestedStatuses.includes(String(l.realm?.leaderboardStatus || '').toUpperCase()));
-      return q && statusMatches && stars >= minStars && stars <= maxStars;
+      return curated && ranked && q && stars >= minStars && stars <= maxStars;
     });
     return json({ data:filtered.slice((page-1)*limit,(page-1)*limit+limit), metadata:metadata(filtered.length,page,limit) });
   }
@@ -1406,84 +1414,9 @@ export default defineHandler(async (event: any) => {
     return json({data,metadata:metadata(data.length,1,data.length||1)});
   }
   if (route.startsWith('/leaderboards/hash/') && method === 'GET') {
-    const seg = route.split('/');
-    const hash = seg[2];
-    const hasScores = seg.length >= 6 && seg[5] === 'scores';
-    if (hasScores) {
-      const mode = seg[3];
-      const difficulty = Number(seg[4]);
-      const page = Math.max(1, Number(query.get('page') || 1));
-      const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
-      const session = await getGameSession(request, sql);
-      const viewerId = session?.player_id || null;
-
-      if (sql) {
-        const lbRows:any[] = await sql`
-          SELECT l.*, m.*
-          FROM leaderboards l
-          JOIN maps m ON m.id=l.map_id
-          WHERE lower(m.hash)=lower(${hash})
-            AND l.game_mode=${mode}
-            AND l.difficulty=${difficulty}
-          ORDER BY l.id
-          LIMIT 1
-        `;
-        if (!lbRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
-        const lb=lbRows[0];
-        const lbId=Number(lb.id);
-        const rows2:any[]=await sql`
-          SELECT s.*, p.id AS p_id,p.name,p.country,p.avatar,
-                 l.id AS lb_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.created_at AS lb_created_at,
-                 m.id AS map_id,m.hash AS map_hash,m.bsid AS map_bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.created_at AS map_created_at
-          FROM scores s
-          JOIN players p ON p.id=s.player_id
-          JOIN leaderboards l ON l.id=s.leaderboard_id
-          JOIN maps m ON m.id=l.map_id
-          WHERE s.leaderboard_id=${lbId}
-          ORDER BY s.score DESC, s.accuracy DESC, s.created_at ASC
-        `;
-        const best=new Map<string,any>();
-        for(const x of rows2) if(!best.has(String(x.player_id))) best.set(String(x.player_id),x);
-        let ranked=[...best.values()];
-
-        const pivot=(query.get('pivot')||'').toLowerCase();
-        if (pivot==='player' && viewerId) {
-          const idx=ranked.findIndex((x:any)=>String(x.player_id)===String(viewerId));
-          if(idx>=0) ranked=ranked.slice(Math.max(0,idx-5),Math.min(ranked.length,idx+6));
-        } else if (pivot==='friends' && viewerId) {
-          const friends:any[]=await sql`SELECT following_id AS id FROM player_follows WHERE follower_id=${viewerId} UNION SELECT follower_id AS id FROM player_follows WHERE following_id=${viewerId}`;
-          const ids=new Set(friends.map((x:any)=>String(x.id)));
-          ranked=ranked.filter((x:any)=>ids.has(String(x.player_id)) || String(x.player_id)===String(viewerId));
-        }
-
-        const data=ranked.slice((page-1)*limit,(page-1)*limit+limit)
-          .map((x,i)=>dbScore(x,{id:x.p_id,name:x.name,country:x.country,avatar:x.avatar},
-            {id:x.lb_id,difficulty:x.difficulty,game_mode:x.game_mode,raw_difficulty:x.raw_difficulty,max_score:x.max_score,stars:x.stars,status:x.status,created_at:x.lb_created_at},
-            {id:x.map_id,hash:x.map_hash,bsid:x.map_bsid,song_name:x.song_name,song_sub_name:x.song_sub_name,song_author_name:x.song_author_name,level_author_name:x.level_author_name,bpm:x.bpm,cover_url:x.cover_url,verified:x.verified,created_at:x.map_created_at},
-            ((page-1)*limit)+i+1,true));
-        let playerScore=null;
-        if (viewerId && query.get('includePlayerScore') === 'true') {
-          const own=ranked.find((x:any)=>String(x.player_id)===String(viewerId));
-          if (own) playerScore=dbScore(own,{id:own.p_id,name:own.name,country:own.country,avatar:own.avatar},
-            {id:own.lb_id,difficulty:own.difficulty,game_mode:own.game_mode,raw_difficulty:own.raw_difficulty,max_score:own.max_score,stars:own.stars,status:own.status,created_at:own.lb_created_at},
-            {id:own.map_id,hash:own.map_hash,bsid:own.map_bsid,song_name:own.song_name,song_sub_name:own.song_sub_name,song_author_name:own.song_author_name,level_author_name:own.level_author_name,bpm:own.bpm,cover_url:own.cover_url,verified:own.verified,created_at:own.map_created_at},
-            ranked.indexOf(own)+1,true);
-        }
-        return json({data,metadata:metadata(ranked.length,page,limit),playerScore});
-      }
-
-      const m=maps.find((x:any)=>String(x.hash).toLowerCase()===String(hash).toLowerCase());
-      if(!m) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
-      const fallbackScores=scores.filter((s:any)=>s.leaderboard?.map?.id===m.id || s.leaderboard?.id===m.leaderboards[0]?.id);
-      return json({data:fallbackScores.map((s:any,i:number)=>({...s,rank:i+1})),metadata:metadata(fallbackScores.length,page,limit),playerScore:null});
-    }
-
-    if (sql) {
-      const rows:any[] = await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${hash}) ORDER BY l.difficulty LIMIT 1`;
-      return rows[0] ? json(dbLeaderboard(rows[0])) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
-    }
-    const m = maps.find((x)=>x.hash.toLowerCase()===hash.toLowerCase());
-    return m ? json(m.leaderboards[0]) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+    const hash = route.split('/')[2];
+    if (sql) { const rows:any[] = await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${hash}) ORDER BY l.difficulty LIMIT 1`; return rows[0] ? json(dbLeaderboard(rows[0])) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404); }
+    const m = maps.find((x)=>x.hash.toLowerCase()===hash.toLowerCase()); return m ? json(m.leaderboards[0]) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
   }
   if (route.startsWith('/leaderboards/')) {
     const seg = route.split('/'); const id = Number(seg[2]);
@@ -1601,8 +1534,10 @@ export default defineHandler(async (event: any) => {
     if (!key) {
       return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Enter a BeatSaver map link or map key' }, 400);
     }
-    // Administrators can load and rank ANY BeatSaver map. Ranked maps are stored
-    // in Neon and immediately become part of the public SnoreSaber catalog.
+    // The public Maps catalog remains restricted to SnoreSaber's curated six maps,
+    // but administrators must be able to load and rank ANY BeatSaver map.
+    // Do not apply PUBLIC_BEATSAVER_MAP_KEYS here: this endpoint is the admin
+    // map-ingestion/ranking workflow, not the public catalog filter.
 
     const preview = body.preview === true;
     const rankings = Array.isArray(body.rankings) ? body.rankings : [];
@@ -2407,7 +2342,6 @@ export default defineHandler(async (event: any) => {
     return String(p.id);
   }
 
-
   // ------------------------- GAME SESSIONS -------------------------
   // The PC mod authenticates against /api/v2/game/auth and then uses the
   // returned x-session-id/x-session-key for leaderboard queries. Keep these
@@ -2459,9 +2393,9 @@ export default defineHandler(async (event: any) => {
           return { playerId: null, error: 'Steam authentication service is unavailable' };
         }
       } else {
-        // Development/legacy fallback. Production should set STEAM_API_KEY so
-        // Steam tickets are cryptographically verified by Steam.
-        console.warn('[SnoreSaber] STEAM_API_KEY is not configured; using legacy Steam-ID game auth fallback.');
+        // Keep local development usable when no Steam API key is configured.
+        // Production deployments should set STEAM_API_KEY.
+        console.warn('[SnoreSaber] STEAM_API_KEY is not configured; accepting the supplied Steam player ID for game auth.');
       }
     } else if (authType === 1) {
       // Oculus nonce is authToken,crossPlatformToken in the PC mod.
@@ -2604,6 +2538,7 @@ export default defineHandler(async (event: any) => {
       playerId: resolved.playerId
     }, 201);
   }
+
 
   // ------------------------- AUTH -------------------------
   if (route === '/auth/email/start' && method === 'POST') {

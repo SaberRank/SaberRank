@@ -29,3 +29,7 @@ For local MSBuild secrets/settings, copy `Directory.Build.local.props.example` t
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for code standards and pull request expectations
+## SnoreSaber API endpoint
+
+The PC mod defaults to `https://snoresaber.vercel.app` for the SnoreSaber API.
+Override `SnoreSaberApiBaseUrl` in the build properties if you use another deployment.
