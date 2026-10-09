@@ -1109,6 +1109,7 @@ export default defineHandler(async (event: any) => {
   const request: Request = event.req;
   const method = request.method || 'GET';
   const rawUrl = request.url || 'https://snoresaber.vercel.app/api/v2/health';
+  const sql = db();
   await ensureScoreAccuracyScale(sql);
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'snoresaber.vercel.app';
   const proto = request.headers.get('x-forwarded-proto') || 'https';
@@ -1120,7 +1121,6 @@ export default defineHandler(async (event: any) => {
 
   if (!path.startsWith('api/v2/')) return json({ error: 'SnoreSaber API route not found' }, 404);
   const route = '/' + parts.slice(2).join('/');
-  const sql = db();
 
   if (route === '/health') return json({ ok: true, service: 'SnoreSaber API', version: '3.0.0', database: Boolean(sql) });
 

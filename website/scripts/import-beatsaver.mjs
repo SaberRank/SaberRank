@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const CURATED_BEATSAVER_MAP_KEYS = new Set(["25198","4fdd2","52dfb","4e692","4d977","51e10"]);
 /**
  * SnoreSaber BeatSaver catalog importer
  *
@@ -106,6 +107,7 @@ async function fetchPage(before = null) {
 
       if (response.ok) {
         const payload = await response.json();
+        if (Array.isArray(payload?.docs)) payload.docs = payload.docs.filter((m) => CURATED_BEATSAVER_MAP_KEYS.has(String(m?.id ?? '')));
         return payload;
       }
 
@@ -239,9 +241,8 @@ async function pruneAiMaps() {
 }
 
 async function pruneNonCuratedMaps() {
-  console.log('Legacy prune requested: deleting every cached map except the explicitly supplied keep list.');
-  const keep = (process.env.SNORE_KEEP_MAP_KEYS || '').split(',').map((x) => x.trim()).filter(Boolean);
-  if (!keep.length) { console.log('No keep list supplied; refusing to delete maps.'); return; }
+  console.log('Deleting every cached map except the six curated BeatSaver maps...');
+  const keep = [...CURATED_BEATSAVER_MAP_KEYS];
   // leaderboards reference maps with ON DELETE CASCADE in the project schema.
   // Delete maps in one statement; associated leaderboards/scores cascade.
   const result = await sql`
@@ -396,9 +397,8 @@ async function incrementalImport() {
 
 
 async function syncCuratedMaps() {
-  console.log('Syncing explicitly selected BeatSaver maps directly...');
-  const keys = (process.env.SNORE_CURATED_MAP_KEYS || '').split(',').map((x) => x.trim()).filter(Boolean);
-  if (!keys.length) { throw new Error('SNORE_CURATED_MAP_KEYS is empty; this command is intentionally opt-in.'); }
+  console.log('Syncing the six curated BeatSaver maps directly...');
+  const keys = [...CURATED_BEATSAVER_MAP_KEYS];
 
   for (const key of keys) {
     const response = await fetch(`${API}/maps/id/${encodeURIComponent(key)}`, {
@@ -429,7 +429,9 @@ async function syncCuratedMaps() {
   const rows = await sql`
     SELECT bsid
     FROM maps
-    WHERE COALESCE(bsid, '') = ANY(${keys})
+    WHERE COALESCE(bsid, '') IN (
+      '25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10'
+    )
     ORDER BY bsid
   `;
 
@@ -440,7 +442,7 @@ async function syncCuratedMaps() {
     throw new Error(`Curated sync finished but these maps are missing from Neon: ${missing.join(', ')}`);
   }
 
-  console.log(`Done. Neon contains the explicitly synchronized BeatSaver maps: ${keys.join(', ')}`);
+  console.log(`Done. Neon now contains the six curated BeatSaver maps: ${keys.join(', ')}`);
 }
 
 async function main() {

@@ -49,7 +49,7 @@ Set the trigger to daily at midnight.
 
 The website itself reads the cached map catalog from Neon, so browsing `/maps` does not need to contact BeatSaver.
 
-## Sync an explicit set of maps (optional legacy helper)
+## Sync exactly the six curated maps
 
 After installing dependencies and restoring `.env`, run:
 
@@ -67,6 +67,6 @@ Run this once after deploying the ranking-source change:
 
     npm run beatsaver:reset-rankings
 
-This sets every leaderboard on the explicitly selected maps to UNRANKED with 0 stars. The public catalog itself is no longer limited to a fixed map list.
+This sets every leaderboard on the six curated maps to UNRANKED with 0 stars.
 After that, use the **Map Admin** button on the Maps page to paste a curated
 BeatSaver link and assign SnoreSaber star values per difficulty.

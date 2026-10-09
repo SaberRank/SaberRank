@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 
+import { getRouteApi } from '@tanstack/react-router';
+
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 

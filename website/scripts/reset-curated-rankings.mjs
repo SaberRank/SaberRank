@@ -1,9 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL);
-const keys = (process.env.SNORE_RANKING_RESET_KEYS || '').split(',').map((x) => x.trim()).filter(Boolean);
-
-if (!keys.length) throw new Error('SNORE_RANKING_RESET_KEYS is required; refusing to reset rankings without an explicit map list.');
+const keys = ['25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10'];
 
 await sql`
   UPDATE leaderboards
@@ -20,5 +18,5 @@ const rows = await sql`
   ORDER BY m.bsid
 `;
 
-console.log('Reset SnoreSaber rankings for explicitly selected maps.');
+console.log('Reset SnoreSaber rankings for curated maps.');
 for (const row of rows) console.log(`  ${row.bsid}: ${row.difficulties} difficulties reset`);
