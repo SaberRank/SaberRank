@@ -137,24 +137,44 @@ namespace SnoreSaber.Features.Players.Profile {
             ApplyCrown(null);
             SetLoadingState(true);
 
-            _profileInfo = ProfileDetailData.Create(await _playerProfileService.GetPlayerInfo(playerId, full: true));
+            try {
+                if (string.IsNullOrWhiteSpace(playerId)) {
+                    throw new InvalidOperationException("SnoreSaber profile was requested without a player ID.");
+                }
 
-            await ApplyProfileFont(_profileInfo);
+                Plugin.Log.Debug($"Loading SnoreSaber profile for player {playerId}.");
+                var player = await _playerProfileService.GetPlayerInfo(playerId, full: true);
+                if (player == null) {
+                    throw new InvalidOperationException($"SnoreSaber returned no profile for player {playerId}.");
+                }
 
-            playerNameText.text = _profileInfo.DisplayName;
+                _profileInfo = ProfileDetailData.Create(player);
+
+                await ApplyProfileFont(_profileInfo);
+
+                playerNameText.text = _profileInfo.DisplayName;
 #pragma warning disable CS0612 // Type or member is obsolete
-            profilePicture.SetImage(_profileInfo.Avatar);
+                profilePicture.SetImage(_profileInfo.Avatar);
 #pragma warning restore CS0612 // Type or member is obsolete
 
-            rankText.text = _profileInfo.RankText;
-            ppText.text = _profileInfo.PPText;
+                rankText.text = _profileInfo.RankText;
+                ppText.text = _profileInfo.PPText;
+                rankedAccText.text = _profileInfo.RankedAccuracyText;
+                totalScoreText.text = _profileInfo.TotalScoreText;
 
-            rankedAccText.text = _profileInfo.RankedAccuracyText;
-            totalScoreText.text = _profileInfo.TotalScoreText;
-
-            SetProfileBadges(_profileInfo.Badges);
-            ApplyCrown(_profileInfo.Crown);
-            SetLoadingState(false);
+                SetProfileBadges(_profileInfo.Badges);
+                ApplyCrown(_profileInfo.Crown);
+                SetLoadingState(false);
+            } catch (Exception ex) {
+                Plugin.Log.Error($"Failed to load SnoreSaber profile for {playerId}: {ex}");
+                playerNameText.text = "Profile unavailable";
+                rankText.text = "#0";
+                ppText.text = "<color=#6772E5>0pp</color>";
+                rankedAccText.text = "--";
+                totalScoreText.text = "--";
+                SetProfileBadges(new System.Collections.Generic.List<ProfileBadgeData>());
+                SetLoadingState(false);
+            }
         }
 
         public void SetProfileBadges(System.Collections.Generic.IReadOnlyList<ProfileBadgeData> badges) => _badgeHost.SetBadges(badges);

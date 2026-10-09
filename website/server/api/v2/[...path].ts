@@ -412,6 +412,15 @@ function beatSaverGameMode(value: unknown) {
   return text.replace(/[^a-zA-Z0-9]+/g, '');
 }
 
+// The PC mod sends Beat Saber leaderboard modes as SoloStandard, SoloOneSaber,
+// etc.  SnoreSaber stores the canonical mode names without the Solo prefix.
+// Accept both forms so ranked status and scores resolve to the same leaderboard.
+function normalizeClientGameMode(value: unknown) {
+  const text = String(value || 'Standard').trim();
+  const withoutSolo = text.replace(/^Solo/i, '');
+  return beatSaverGameMode(withoutSolo || text);
+}
+
 async function syncBeatSaverMaps(sql: any, options: { maxPages?: number; forceBootstrap?: boolean } = {}) {
   if (!sql) return { synced: 0, source: 'fallback', complete: true };
 
@@ -861,6 +870,7 @@ function dbPlayer(r: any) {
     createdAt: r.created_at ? new Date(r.created_at).toISOString() : NOW(),
     lastSeenAt: r.last_seen_at ? new Date(r.last_seen_at).toISOString() : NOW(),
     badges: [],
+    followers: Number(r.followers || 0), following: Number(r.following || 0),
     relationships: { following: [], mutuals: [] }
   };
 }
@@ -1298,8 +1308,14 @@ export default defineHandler(async (event: any) => {
         const data = [...best.values()].slice((page-1)*limit, (page-1)*limit+limit).map((r, i) => dbScore(r, pr[0], r, r, i+1, true));
         return json({ data, metadata: metadata(best.size,page,limit) });
       }
-      if (seg[3] === 'history' || seg[3] === 'global-history') return json({ data: [], metadata: metadata(0,1,50) });
+      if (seg[3] === 'history' || seg[3] === 'global-history') return json([]);
       if (seg[3] === 'basic') return json({ id:p.id,name:p.name,country:p.country,avatar:p.avatar,stats:p.stats });
+      if (!seg[3]) {
+        const viewerId = await authPlayerId(request, sql);
+        const rel = await relationshipSummary(sql, pr[0].id, viewerId);
+        const badges = await getPlayerBadges(sql, pr[0].id);
+        return json({ ...p, badges, followers: rel.followers, following: rel.following });
+      }
       return json(p);
     }
     const p = players.find((x) => x.id === id);
@@ -1308,7 +1324,7 @@ export default defineHandler(async (event: any) => {
       const limit = Math.min(100, Number(query.get('limit') || 8)); const ps = scores.filter((s) => s.player.id === p.id);
       return json({ data: ps.slice(0,limit), metadata: metadata(ps.length,1,limit) });
     }
-    if (seg[3] === 'history' || seg[3] === 'global-history') return json({ data: [], metadata: metadata(0,1,50) });
+    if (seg[3] === 'history' || seg[3] === 'global-history') return json([]);
     return json(p);
   }
 
@@ -1413,10 +1429,115 @@ export default defineHandler(async (event: any) => {
     const data = maps.flatMap((m) => m.leaderboards.map((l:any) => ({ id:l.id,map:m,difficulty:{id:l.id,difficulty:l.difficulty,rawDifficulty:l.rawDifficulty,gameMode:l.gameMode},maxScore:l.maxScore,totalScores:l.totalScores,dailyScores:l.dailyScores,createdAt:l.createdAt,realm:l.realm })));
     return json({data,metadata:metadata(data.length,1,data.length||1)});
   }
+  // The PC mod uses the fully-qualified leaderboard routes generated from the
+  // OpenAPI contract: /leaderboards/hash/{hash}/{mode}/{difficulty} and
+  // /leaderboards/hash/{hash}/{mode}/{difficulty}/scores. Keep these ahead of
+  // the legacy hash-only route because the latter also matches the longer path.
   if (route.startsWith('/leaderboards/hash/') && method === 'GET') {
-    const hash = route.split('/')[2];
-    if (sql) { const rows:any[] = await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${hash}) ORDER BY l.difficulty LIMIT 1`; return rows[0] ? json(dbLeaderboard(rows[0])) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404); }
-    const m = maps.find((x)=>x.hash.toLowerCase()===hash.toLowerCase()); return m ? json(m.leaderboards[0]) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+    const seg = route.split('/').filter(Boolean);
+    const hash = decodeURIComponent(seg[2] || '');
+    const requestedMode = decodeURIComponent(seg[3] || '');
+    const mode = normalizeClientGameMode(requestedMode);
+    const difficulty = Number(decodeURIComponent(seg[4] || ''));
+
+    if (seg.length >= 6 && seg[5] === 'scores') {
+      if (!sql) {
+        const m = maps.find((x:any) => String(x.hash).toLowerCase() === hash.toLowerCase());
+        const lb = m?.leaderboards?.find((l:any) => (String(l.gameMode).toLowerCase() === mode.toLowerCase() || String(l.gameMode).toLowerCase() === requestedMode.toLowerCase()) && Number(l.difficulty) === difficulty);
+        const data = lb ? scores.filter((x:any) => x.leaderboard?.id === lb.id).map((x:any,i:number) => ({...x, rank:i+1})) : [];
+        return json({data, metadata:metadata(data.length,1,50), playerScore:null});
+      }
+
+      if (!hash || !Number.isInteger(difficulty) || !mode) {
+        return json({statusCode:400,error:'Bad Request',code:'INVALID_PATH_PARAMETER',message:'hash, mode and difficulty are required'},400);
+      }
+
+      const lbRows:any[] = await sql`
+        SELECT l.*, m.*
+        FROM leaderboards l JOIN maps m ON m.id=l.map_id
+        WHERE lower(m.hash)=lower(${hash})
+          AND lower(l.game_mode) IN (lower(${requestedMode}), lower(${mode}))
+          AND l.difficulty=${difficulty}
+        LIMIT 1`;
+      if (!lbRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+
+      const lb = lbRows[0];
+      const page = Math.max(1, Number(query.get('page') || 1));
+      const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
+      const search = (query.get('search') || '').trim().toLowerCase();
+      const session = await getGameSession(request, sql);
+      const viewerId = session?.player_id ? String(session.player_id) : null;
+
+      const rows:any[] = await sql`
+        SELECT s.*, p.id AS p_id,p.name,p.country,p.avatar,p.role,p.permissions,
+          l.id AS lb_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.created_at AS lb_created_at,
+          m.id AS map_id,m.hash AS map_hash,m.bsid AS map_bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.created_at AS map_created_at
+        FROM scores s
+        JOIN players p ON p.id=s.player_id
+        JOIN leaderboards l ON l.id=s.leaderboard_id
+        JOIN maps m ON m.id=l.map_id
+        WHERE s.leaderboard_id=${lb.id}
+        ORDER BY s.score DESC, s.accuracy DESC, s.created_at ASC`;
+
+      const filtered = search ? rows.filter((r:any) => String(r.name || '').toLowerCase().includes(search)) : rows;
+      const best = new Map<string,any>();
+      for (const r of filtered) {
+        if (!best.has(String(r.player_id))) best.set(String(r.player_id), r);
+      }
+      const ranked = [...best.values()];
+      const start = (page - 1) * limit;
+      const pageRows = ranked.slice(start, start + limit);
+      const data = pageRows.map((r:any,i:number) => dbScore(
+        r,
+        {id:r.p_id,name:r.name,country:r.country,avatar:r.avatar},
+        {id:r.lb_id,difficulty:r.difficulty,game_mode:r.game_mode,raw_difficulty:r.raw_difficulty,max_score:r.max_score,stars:r.stars,status:r.status,created_at:r.lb_created_at},
+        {id:r.map_id,hash:r.map_hash,bsid:r.map_bsid,song_name:r.song_name,song_sub_name:r.song_sub_name,song_author_name:r.song_author_name,level_author_name:r.level_author_name,bpm:r.bpm,cover_url:r.cover_url,verified:r.verified,created_at:r.map_created_at},
+        start + i + 1,
+        viewerId ? String(r.player_id) === viewerId : false
+      ));
+
+      let playerScore:any = null;
+      if (query.get('includePlayerScore') === 'true' && viewerId) {
+        const own = ranked.find((r:any) => String(r.player_id) === viewerId);
+        if (own) {
+          const ownRank = ranked.indexOf(own) + 1;
+          playerScore = dbScore(
+            own,
+            {id:own.p_id,name:own.name,country:own.country,avatar:own.avatar},
+            {id:own.lb_id,difficulty:own.difficulty,game_mode:own.game_mode,raw_difficulty:own.raw_difficulty,max_score:own.max_score,stars:own.stars,status:own.status,created_at:own.lb_created_at},
+            {id:own.map_id,hash:own.map_hash,bsid:own.map_bsid,song_name:own.song_name,song_sub_name:own.song_sub_name,song_author_name:own.song_author_name,level_author_name:own.level_author_name,bpm:own.bpm,cover_url:own.cover_url,verified:own.verified,created_at:own.map_created_at},
+            ownRank, true
+          );
+        }
+      }
+
+      return json({data, metadata:metadata(ranked.length,page,limit), playerScore});
+    }
+
+    if (seg.length >= 5 && seg[3] && Number.isInteger(difficulty)) {
+      if (!sql) {
+        const m = maps.find((x:any) => String(x.hash).toLowerCase() === hash.toLowerCase());
+        const lb = m?.leaderboards?.find((l:any) => (String(l.gameMode).toLowerCase() === mode.toLowerCase() || String(l.gameMode).toLowerCase() === requestedMode.toLowerCase()) && Number(l.difficulty) === difficulty);
+        return lb ? json({id:lb.id,map:m,difficulty:{id:lb.id,difficulty:lb.difficulty,rawDifficulty:lb.rawDifficulty,gameMode:lb.gameMode},maxScore:lb.maxScore,totalScores:lb.totalScores,dailyScores:lb.dailyScores,createdAt:lb.createdAt,realm:lb.realm}) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+      }
+
+      const rows:any[] = await sql`
+        SELECT l.*, m.*
+        FROM leaderboards l JOIN maps m ON m.id=l.map_id
+        WHERE lower(m.hash)=lower(${hash})
+          AND lower(l.game_mode) IN (lower(${requestedMode}), lower(${mode}))
+          AND l.difficulty=${difficulty}
+        LIMIT 1`;
+      if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
+      const r = rows[0];
+      const count:any[] = await sql`SELECT COUNT(*)::int AS count FROM scores WHERE leaderboard_id=${r.id}`;
+      return json({id:Number(r.id),map:dbMap(r),difficulty:{id:Number(r.id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode},maxScore:Number(r.max_score),totalScores:Number(count[0]?.count||0),dailyScores:0,createdAt:new Date(r.created_at).toISOString(),realm:realm(Number(r.stars||0),r.status)});
+    }
+
+    // hash-only compatibility route (/leaderboards/hash/{hash})
+    const hashOnly = hash;
+    if (sql) { const rows:any[] = await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${hashOnly}) ORDER BY l.difficulty LIMIT 1`; return rows[0] ? json(dbLeaderboard(rows[0])) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404); }
+    const m = maps.find((x)=>x.hash.toLowerCase()===hashOnly.toLowerCase()); return m ? json(m.leaderboards[0]) : json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
   }
   if (route.startsWith('/leaderboards/')) {
     const seg = route.split('/'); const id = Number(seg[2]);
