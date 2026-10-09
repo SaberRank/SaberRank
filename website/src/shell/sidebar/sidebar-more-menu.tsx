@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react';
 
 import { getRouteApi, Link, useRouter } from '@tanstack/react-router';
-import { ChevronRight, Cookie, Copyright, Loader2, LogOut, Scale, Settings, Shield, ShieldCheck } from 'lucide-react';
+import { Loader2, LogOut, Settings, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 
 import { Button } from '@/components/ui/button';
@@ -16,9 +16,6 @@ import { cn } from '@/shared/format/helpers';
 import Permissions from '@/shared/permissions';
 import { SidebarAppSettings } from '@/shell/sidebar/sidebar-app-settings';
 
-const privacyRoute = getRouteApi('/legal/privacy');
-const copyrightRoute = getRouteApi('/legal/copyright');
-const cookiesPolicyRoute = getRouteApi('/legal/cookies-policy');
 const settingsAccountRoute = getRouteApi('/settings/account');
 
 type SidebarMoreMenuProps = {
@@ -33,7 +30,6 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
    const [mounted, setMounted] = useState(false);
    const [open, setOpen] = useState(false);
    const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-   const [isLegalOpen, setIsLegalOpen] = useState(false);
    const [pending, startTransition] = useTransition();
    const tNav = useTranslations();
    const tSidebar = useTranslations();
@@ -52,7 +48,7 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
    }
 
    function handleOpenChange(nextOpen: boolean) {
-      if (!nextOpen && (isLanguageOpen || isLegalOpen)) {
+      if (!nextOpen && isLanguageOpen) {
          return;
       }
 
@@ -60,12 +56,10 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
 
       if (!nextOpen) {
          setIsLanguageOpen(false);
-         setIsLegalOpen(false);
       }
    }
 
    function closeMenu() {
-      setIsLegalOpen(false);
       setOpen(false);
    }
 
@@ -84,7 +78,7 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
             align={align}
             collisionPadding={16}
             onInteractOutside={(event) => {
-               if (isLanguageOpen || isLegalOpen) {
+               if (isLanguageOpen) {
                   event.preventDefault();
                }
             }}
@@ -93,47 +87,8 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
             <div className="flex flex-col gap-3 p-3">
                <SidebarAppSettings isLanguageOpen={isLanguageOpen} onLanguageOpenChangeAction={setIsLanguageOpen} />
 
-               <Separator />
-               <div className="flex flex-col gap-1">
-                  <Popover open={isLegalOpen} onOpenChange={setIsLegalOpen}>
-                     <PopoverTrigger asChild>
-                        <Button variant="menu" size="sm" className={cn(menuActionClass, 'cursor-default')}>
-                           <Scale data-icon />
-                           <span className="flex-1 text-left">{tSidebar('sidebar.legal')}</span>
-                           <ChevronRight data-icon className="ml-auto" aria-hidden="true" />
-                        </Button>
-                     </PopoverTrigger>
-                     <PopoverContent side="right" align="start" collisionPadding={16} className="w-56 p-2">
-                        <div className="flex flex-col gap-1">
-                           <Button asChild variant="menu" size="sm" className={menuActionClass}>
-                              <privacyRoute.Link onClick={closeMenu}>
-                                 <span className="flex min-w-0 items-center gap-2">
-                                    <Shield data-icon />
-                                    <span className="truncate">{tSidebar('common.privacyPolicy')}</span>
-                                 </span>
-                              </privacyRoute.Link>
-                           </Button>
-                           <Button asChild variant="menu" size="sm" className={menuActionClass}>
-                              <cookiesPolicyRoute.Link onClick={closeMenu}>
-                                 <span className="flex min-w-0 items-center gap-2">
-                                    <Cookie data-icon />
-                                    <span className="truncate">{tSidebar('common.cookiesPolicy')}</span>
-                                 </span>
-                              </cookiesPolicyRoute.Link>
-                           </Button>
-                           <Button asChild variant="menu" size="sm" className={menuActionClass}>
-                              <copyrightRoute.Link onClick={closeMenu}>
-                                 <span className="flex min-w-0 items-center gap-2">
-                                    <Copyright data-icon />
-                                    <span className="truncate">{tSidebar('sidebar.copyrightTakedowns')}</span>
-                                 </span>
-                              </copyrightRoute.Link>
-                           </Button>
-                        </div>
-                     </PopoverContent>
-                  </Popover>
-               </div>
             </div>
+
 
             {user && (
                <>

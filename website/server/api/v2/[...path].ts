@@ -2127,6 +2127,205 @@ export default defineHandler(async (event: any) => {
     })));
   }
 
+  // ------------------------- GAME SCORE UPLOAD -------------------------
+  // PC mod score submission uses a multipart form containing the JSON score
+  // payload in `data` and the replay in `zr`. The game session established by
+  // /game/auth is the only authentication required for this endpoint.
+  if (route === '/game/upload' && method === 'POST') {
+    const session = await getGameSession(request, sql);
+    if (!session) {
+      return json({
+        statusCode: 401,
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+        message: 'A valid SnoreSaber game session is required'
+      }, 401);
+    }
+
+    let form: FormData;
+    try {
+      form = await request.formData();
+    } catch (error) {
+      console.error('[SnoreSaber] game/upload multipart parse failed', error);
+      return json({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: 'INVALID_MULTIPART',
+        message: 'Invalid multipart score upload'
+      }, 400);
+    }
+
+    const rawData = String(form.get('data') || '').trim();
+    if (!rawData) {
+      return json({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: 'MISSING_SCORE_DATA',
+        message: 'Score data is required'
+      }, 400);
+    }
+
+    let body: any;
+    try {
+      body = JSON.parse(rawData);
+    } catch (error) {
+      console.error('[SnoreSaber] game/upload score JSON parse failed', error);
+      return json({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: 'INVALID_SCORE_DATA',
+        message: 'Score data is not valid JSON'
+      }, 400);
+    }
+
+    const playerId = String(session.player_id || '');
+    const requestedPlayerId = String(body.playerId || '');
+    if (!playerId || !requestedPlayerId || requestedPlayerId !== playerId) {
+      return json({
+        statusCode: 403,
+        error: 'Forbidden',
+        code: 'PLAYER_MISMATCH',
+        message: 'Score player does not match the authenticated game session'
+      }, 403);
+    }
+
+    const mapHash = String(body.leaderboardId || body.infoHash || '').trim().toUpperCase();
+    const gameMode = normalizeLeaderboardGameMode(body.gameMode);
+    const difficulty = Number(body.difficulty);
+    const scoreValue = Math.max(0, Math.round(Number(body.score || 0)));
+
+    if (!mapHash || !Number.isFinite(difficulty) || !Number.isFinite(scoreValue)) {
+      return json({
+        statusCode: 400,
+        error: 'Bad Request',
+        code: 'INVALID_SCORE_DATA',
+        message: 'Map hash, difficulty and score are required'
+      }, 400);
+    }
+
+    if (!sql) {
+      return json({ success: true, accepted: true, personalBest: true });
+    }
+
+    const playerRows: any[] = await sql`SELECT id FROM players WHERE id=${playerId} LIMIT 1`;
+    if (!playerRows[0]) {
+      return json({
+        statusCode: 404,
+        error: 'Not Found',
+        code: 'PLAYER_NOT_FOUND',
+        message: 'Authenticated player was not found'
+      }, 404);
+    }
+
+    const mapRows: any[] = await sql`
+      SELECT id, hash
+      FROM maps
+      WHERE upper(hash)=upper(${mapHash})
+      LIMIT 1
+    `;
+    if (!mapRows[0]) {
+      return json({
+        statusCode: 404,
+        error: 'Not Found',
+        code: 'MAP_NOT_FOUND',
+        message: `SnoreSaber map ${mapHash} was not found`
+      }, 404);
+    }
+
+    const leaderboardRows: any[] = await sql`
+      SELECT *
+      FROM leaderboards
+      WHERE map_id=${Number(mapRows[0].id)}
+        AND difficulty=${difficulty}
+        AND lower(game_mode)=lower(${gameMode})
+      ORDER BY id ASC
+      LIMIT 1
+    `;
+    if (!leaderboardRows[0]) {
+      return json({
+        statusCode: 404,
+        error: 'Not Found',
+        code: 'LEADERBOARD_NOT_FOUND',
+        message: `SnoreSaber leaderboard for ${mapHash} / ${gameMode} / ${difficulty} was not found`
+      }, 404);
+    }
+
+    const lb = leaderboardRows[0];
+    const maxScore = Number(lb.max_score || 0);
+    const accuracy = maxScore > 0
+      ? Math.max(0, Math.min(100, (scoreValue / maxScore) * 100))
+      : 0;
+    const maxPP = Number(lb.stars || 0) * 450 / 10.685333512;
+    const pp = String(lb.status || '').toUpperCase() === 'RANKED'
+      ? Math.max(0, Math.min(maxPP, maxPP * (accuracy / 100)))
+      : 0;
+
+    const existingRows: any[] = await sql`
+      SELECT id, score, pp
+      FROM scores
+      WHERE leaderboard_id=${Number(lb.id)} AND player_id=${playerId}
+      ORDER BY score DESC, created_at ASC
+      LIMIT 1
+    `;
+
+    const existing = existingRows[0];
+    if (existing && Number(existing.score) >= scoreValue) {
+      await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
+      return json({
+        success: true,
+        accepted: true,
+        personalBest: false,
+        reason: 'not_a_personal_best',
+        scoreId: Number(existing.id),
+        score: Number(existing.score),
+        pp: Number(existing.pp || 0)
+      });
+    }
+
+    const mods = Array.isArray(body.modifiers)
+      ? body.modifiers.join(',')
+      : String(body.modifiers || body.mods || '');
+    const badCuts = Number(body.badCutsCount || body.badCuts || 0);
+    const missedNotes = Number(body.missedCount || body.missedNotes || 0);
+    const maxCombo = Number(body.maxCombo || 0);
+    const fullCombo = Boolean(body.fullCombo);
+    const replayPart = form.get('zr');
+    const hasReplay = replayPart instanceof Blob && replayPart.size > 0;
+
+    const inserted: any[] = await sql`
+      INSERT INTO scores
+        (leaderboard_id, player_id, score, accuracy, pp, weight, mods, bad_cuts, missed_notes, max_combo, full_combo, has_replay)
+      VALUES
+        (${Number(lb.id)}, ${playerId}, ${scoreValue}, ${accuracy}, ${pp},
+         ${String(lb.status || '').toUpperCase() === 'RANKED' ? 1 : 0}, ${mods},
+         ${Number.isFinite(badCuts) ? badCuts : 0}, ${Number.isFinite(missedNotes) ? missedNotes : 0},
+         ${Number.isFinite(maxCombo) ? maxCombo : 0}, ${fullCombo}, ${hasReplay})
+      RETURNING id
+    `;
+
+    await sql`
+      UPDATE leaderboards
+      SET total_scores=COALESCE(total_scores,0)+1
+      WHERE id=${Number(lb.id)}
+    `;
+    await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
+    await recalculatePlayerStats(sql, playerId);
+
+    console.log(`[SnoreSaber] game/upload accepted player=${playerId} leaderboard=${Number(lb.id)} score=${scoreValue} accuracy=${accuracy.toFixed(4)} pp=${pp.toFixed(2)}`);
+    return json({
+      success: true,
+      accepted: true,
+      personalBest: true,
+      playerId,
+      mapHash,
+      leaderboardId: Number(lb.id),
+      score: scoreValue,
+      accuracy,
+      pp,
+      scoreId: Number(inserted[0].id)
+    });
+  }
+
   // ------------------------- SCORE DETAIL / SUBMISSION -------------------------
   if (route.startsWith('/scores/') && method === 'GET') {
     const id=Number(route.split('/')[2]);
