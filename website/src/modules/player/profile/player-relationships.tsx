@@ -17,7 +17,6 @@ import { useAuth } from '@/modules/auth';
 import { PlayerFollowButton } from '@/modules/player/operations/member/player-follow-button';
 import { versionedImageUrl } from '@/modules/player/shared/player-avatar';
 import { PlayerLink } from '@/modules/player/shared/player-link';
-import { api } from '@/shared/api/ApiInstance';
 import type {
    PlayerControllerGetPlayerResponse,
    PlayerRelationshipControllerGetRelationshipsResponse,
@@ -25,8 +24,6 @@ import type {
 } from '@/shared/api/generated/ApiParams';
 import { Icons } from '@/shared/components/icons';
 import { formatNumber } from '@/shared/format/helpers';
-import { queryApiData } from '@/shared/result/api';
-import { toInt64PathParam } from '@/shared/url-state/params';
 
 const PAGE_SIZE = 20;
 
@@ -39,18 +36,19 @@ export function PlayerRelationships({ player }: { player: PlayerControllerGetPla
 
    const relationships = useInfiniteQuery({
       queryKey: ['playerRelationships', player.id, type],
-      queryFn: ({ pageParam, signal }) =>
-         queryApiData(
-            api.player.playerRelationshipControllerGetRelationships(
-               {
-                  id: toInt64PathParam(player.id),
-                  type,
-                  page: pageParam,
-                  limit: PAGE_SIZE
-               },
-               { signal }
-            )
-         ),
+      queryFn: async ({ pageParam, signal }) => {
+         const params = new URLSearchParams({ type, page: String(pageParam), limit: String(PAGE_SIZE) });
+         const response = await fetch(`/api/v2/player/${encodeURIComponent(player.id)}/relationships?${params}`, {
+            credentials: 'include',
+            signal,
+            headers: { accept: 'application/json' }
+         });
+         if (!response.ok) {
+            const payload = await response.json().catch(() => null);
+            throw new Error(typeof payload?.message === 'string' ? payload.message : `Request failed (${response.status})`);
+         }
+         return (await response.json()) as PlayerRelationshipControllerGetRelationshipsResponse;
+      },
       initialPageParam: 1,
       getNextPageParam: (lastPage) => (lastPage.metadata.page < lastPage.metadata.totalPages ? lastPage.metadata.page + 1 : undefined),
       enabled: open && (type !== 'platform-friends' || isOwner),

@@ -2,7 +2,6 @@ import { createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from
 import { defineHandler } from 'nitro';
 import { db } from '../../utils/db';
 
-import { CURATED_BEATSAVER_MAP_KEYS } from "../../beatsaver-curated";
 const SECRET = process.env.SESSION_SECRET || 'snoresaber-development-secret-change-me';
 const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
 const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
@@ -10,11 +9,6 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
 const EMAIL_CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const NOW = () => new Date().toISOString();
-
-// SnoreSaber's initial curated map set. These are BeatSaver map keys, not
-// SnoreSaber's internal numeric map IDs. Keep this list as the source of truth
-// for the public map catalog until more maps are intentionally added.
-const PUBLIC_BEATSAVER_MAP_KEYS = new Set(['25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10']);
 
 // Development/demo data is deliberately kept as a fallback. Once DATABASE_URL is
 // configured, every read/write below uses PostgreSQL instead of these arrays.
@@ -260,6 +254,21 @@ async function fetchSteamProfile(steamId: string) {
 }
 
 
+async function ensurePlayerFollowsTable(sql: any) {
+  if (!sql) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS player_follows (
+      follower_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      following_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (follower_id, following_id),
+      CHECK (follower_id <> following_id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_player_follows_following ON player_follows(following_id, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_player_follows_follower ON player_follows(follower_id, created_at DESC)`;
+}
+
 async function getFollowRelationship(sql: any, viewerId: string, targetId: string) {
   if (!sql || !viewerId || !targetId || viewerId === targetId) return { following: false, followsViewer: false, mutual: false };
   const rows: any[] = await sql`
@@ -275,11 +284,8 @@ async function getFollowRelationship(sql: any, viewerId: string, targetId: strin
 async function relationshipSummary(sql: any, playerId: string, viewerId?: string | null) {
   const empty = { followers: 0, following: 0, platformFriends: 0, recentFollowers: [], recentFollowing: [], viewerRelationship: { following: false, followsViewer: false, mutual: false } };
   if (!sql) return empty;
-  // Profiles must remain readable even if the optional social migration has not
-  // been applied yet. The follow endpoints will become active once the table exists.
   try {
-    const exists: any[] = await sql`SELECT to_regclass('public.player_follows') AS table_name`;
-    if (!exists[0]?.table_name) return empty;
+    await ensurePlayerFollowsTable(sql);
   } catch {
     return empty;
   }
@@ -318,6 +324,7 @@ async function relationshipSummary(sql: any, playerId: string, viewerId?: string
 
 async function userRelationships(sql: any, playerId: string) {
   if (!sql) return { following: [], mutuals: [] };
+  await ensurePlayerFollowsTable(sql);
   const rows: any[] = await sql`
     SELECT f.following_id AS id, p.name,p.country,p.avatar,p.role,p.permissions,
       EXISTS(SELECT 1 FROM player_follows back WHERE back.follower_id=f.following_id AND back.following_id=${playerId}) AS follows_back
@@ -423,6 +430,26 @@ async function resolvePlayerId(sql: any, requestedId: string) {
 }
 
 const BEATSAVER_API = process.env.BEATSAVER_API_URL || 'https://api.beatsaver.com';
+
+function parseBeatSaverMapKey(input: string) {
+  const value = input.trim();
+  if (/^[a-z0-9]{4,16}$/i.test(value)) return value.toLowerCase();
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+
+  const host = url.hostname.toLowerCase();
+  if (!['https:', 'http:'].includes(url.protocol) || (host !== 'beatsaver.com' && host !== 'www.beatsaver.com')) return null;
+
+  const parts = url.pathname.split('/').filter(Boolean);
+  if (parts[0]?.toLowerCase() !== 'maps') return null;
+  const key = (parts[1]?.toLowerCase() === 'id' ? parts[2] : parts[1]) || '';
+  return /^[a-z0-9]{4,16}$/i.test(key) ? key.toLowerCase() : null;
+}
 
 function beatSaverDifficultyValue(value: unknown) {
   switch (String(value || '').toLowerCase()) {
@@ -1268,8 +1295,7 @@ export default defineHandler(async (event: any) => {
     const page = Math.max(1, Number(query.get('page') || 1));
     const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 20)));
     if (!sql) return json({ data: [], metadata: metadata(0, page, limit) });
-    const tableCheck: any[] = await sql`SELECT to_regclass('public.player_follows') AS table_name`;
-    if (!tableCheck[0]?.table_name) return json({ data: [], metadata: metadata(0, page, limit) });
+    await ensurePlayerFollowsTable(sql);
     const targetIdResolved = await resolvePlayerId(sql, requestedId);
     const targetRows: any[] = targetIdResolved ? await sql`SELECT id FROM players WHERE id=${targetIdResolved} LIMIT 1` : [];
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
@@ -1293,7 +1319,8 @@ export default defineHandler(async (event: any) => {
     const requestedId = decodeURIComponent(route.split('/')[2]);
     const viewerId = await authPlayerId(request, sql);
     if (!viewerId) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
-    if (!sql) return json({success:true});
+    if (!sql) return json({statusCode:503,error:'Service Unavailable',code:'DATABASE_UNAVAILABLE',message:'Following requires the SnoreSaber database'},503);
+    await ensurePlayerFollowsTable(sql);
     const targetIdResolved = await resolvePlayerId(sql, requestedId);
     const targetRows: any[] = targetIdResolved ? await sql`SELECT id FROM players WHERE id=${targetIdResolved} LIMIT 1` : [];
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
@@ -1307,7 +1334,8 @@ export default defineHandler(async (event: any) => {
     const requestedId = decodeURIComponent(route.split('/')[2]);
     const viewerId = await authPlayerId(request, sql);
     if (!viewerId) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Not signed in'},401);
-    if (!sql) return json({success:true});
+    if (!sql) return json({statusCode:503,error:'Service Unavailable',code:'DATABASE_UNAVAILABLE',message:'Following requires the SnoreSaber database'},503);
+    await ensurePlayerFollowsTable(sql);
     const targetIdResolved = await resolvePlayerId(sql, requestedId);
     const targetRows: any[] = targetIdResolved ? await sql`SELECT id FROM players WHERE id=${targetIdResolved} LIMIT 1` : [];
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
@@ -1370,6 +1398,22 @@ export default defineHandler(async (event: any) => {
       return json({statusCode:502,error:'Bad Gateway',code:'BEATSAVER_SYNC_FAILED',message:error instanceof Error ? error.message : 'BeatSaver sync failed'},502);
     }
   }
+  if (route === '/cron/auto-unban' && method === 'GET') {
+    const cronSecret = process.env.CRON_SECRET || '';
+    if (!cronSecret) return json({ statusCode: 503, error: 'Service Unavailable', code: 'CRON_NOT_CONFIGURED', message: 'Automatic unban cron is not configured' }, 503);
+    if ((request.headers.get('authorization') || '') !== `Bearer ${cronSecret}`) {
+      return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Cron authorization required' }, 401);
+    }
+    if (!sql) return json({ statusCode: 503, error: 'Service Unavailable', code: 'DATABASE_UNAVAILABLE', message: 'Database is unavailable' }, 503);
+
+    const unbanned: any[] = await sql`
+      UPDATE players
+      SET banned=false, ban_reason=NULL, ban_notes=NULL, ban_created_at=NULL,
+          ban_auto_unban=false, ban_auto_unbans_at=NULL, ban_earliest_appeal_date=NULL
+      WHERE banned=true AND ban_auto_unban=true AND ban_auto_unbans_at IS NOT NULL AND ban_auto_unbans_at <= now()
+      RETURNING id`;
+    return json({ success: true, unbanned: unbanned.length });
+  }
   if (route === '/maps' && method === 'GET') {
     const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
     const search = (query.get('search') || '').toLowerCase(); const verified = query.get('verified');
@@ -1383,14 +1427,15 @@ export default defineHandler(async (event: any) => {
       const lbs: any[] = await sql`SELECT l.*, COUNT(s.id)::int AS total_scores FROM leaderboards l LEFT JOIN scores s ON s.leaderboard_id=l.id GROUP BY l.id ORDER BY l.id`;
       const dataRows = rows.map((r) => ({ r, lbs: lbs.filter((l) => Number(l.map_id) === Number(r.id)) }));
       let filtered = dataRows.filter(({r,lbs}) => {
-        // Every map explicitly added to SnoreSaber is visible in the public Maps page.
-        // The six-map set is only used by the curated/sync tooling, not as a display filter.
-        const curated = true;
-        const ranked = lbs.some((l) => String(l.status || '').toUpperCase() === 'RANKED');
+        const statusMatches = requestedStatuses.length === 0 || requestedStatuses.some((status) =>
+          status === 'RANKED'
+            ? lbs.some((l) => String(l.status || '').toUpperCase() === 'RANKED')
+            : lbs.some((l) => String(l.status || '').toUpperCase() === status)
+        );
         const ai = Boolean(r.is_ai);
         const q = !search || r.song_name.toLowerCase().includes(search) || r.level_author_name.toLowerCase().includes(search) || r.hash.toLowerCase().includes(search) || String(r.bsid || '').toLowerCase().includes(search);
         const stars = lbs.length ? Math.max(...lbs.map((l) => Number(l.stars || 0))) : 0;
-        return curated && !ai && q && stars >= minStars && stars <= maxStars;
+        return statusMatches && !ai && q && stars >= minStars && stars <= maxStars && (verified == null || Boolean(r.verified) === (verified === 'true'));
       });
       const sortBy = query.get('sortBy') || 'trending';
       const sortDirection = query.get('sortDirection') === 'asc' ? 1 : -1;
@@ -1405,12 +1450,12 @@ export default defineHandler(async (event: any) => {
       return json({ data:slice, metadata:metadata(filtered.length,page,limit) });
     }
     let filtered = maps.filter((m) => {
-      // Fallback data follows the same rule: any map added to SnoreSaber can be displayed.
-      const curated = true;
-      const ranked = (m.leaderboards || []).some((l:any) => String(l.realm?.leaderboardStatus || '').toUpperCase() === 'RANKED');
+      const statusMatches = requestedStatuses.length === 0 || requestedStatuses.some((status) =>
+        (m.leaderboards || []).some((l:any) => String(l.realm?.leaderboardStatus || '').toUpperCase() === status)
+      );
       const q = !search || m.songName.toLowerCase().includes(search) || m.levelAuthorName.toLowerCase().includes(search) || m.hash.toLowerCase().includes(search) || String(m.bsid || '').toLowerCase().includes(search);
       const stars = Math.max(0,...(m.leaderboards || []).map((l:any)=>Number(l.realm?.stars||0)));
-      return curated && ranked && q && stars >= minStars && stars <= maxStars;
+      return statusMatches && q && stars >= minStars && stars <= maxStars && (verified == null || Boolean(m.verified) === (verified === 'true'));
     });
     return json({ data:filtered.slice((page-1)*limit,(page-1)*limit+limit), metadata:metadata(filtered.length,page,limit) });
   }
@@ -1675,17 +1720,11 @@ export default defineHandler(async (event: any) => {
     catch { return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Invalid JSON' }, 400); }
 
     const link = String(body.beatSaverLink || '').trim();
-    const keyMatch = link.match(/(?:beatsaver\.com\/maps\/|\/maps\/)([A-Za-z0-9]+)/i);
-    const key = String(body.key || keyMatch?.[1] || '').trim();
+    const key = parseBeatSaverMapKey(String(body.key || link));
 
     if (!key) {
       return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Enter a BeatSaver map link or map key' }, 400);
     }
-    // The public Maps catalog remains restricted to SnoreSaber's curated six maps,
-    // but administrators must be able to load and rank ANY BeatSaver map.
-    // Do not apply PUBLIC_BEATSAVER_MAP_KEYS here: this endpoint is the admin
-    // map-ingestion/ranking workflow, not the public catalog filter.
-
     const preview = body.preview === true;
     const rankings = Array.isArray(body.rankings) ? body.rankings : [];
     for (const item of rankings) {
@@ -1926,6 +1965,16 @@ export default defineHandler(async (event: any) => {
     return json({success:true});
   }
 
+  if (route.startsWith('/admin/user/') && route.endsWith('/unsilence') && method === 'POST') {
+    const targetId = decodeURIComponent(route.split('/')[3]);
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
+    const target = await resolvePlayerId(sql, targetId);
+    if (!target) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
+    await sql`UPDATE players SET silenced=false WHERE id=${target}`;
+    return json({success:true});
+  }
+
 
   // ------------------------- ADMIN SOCIAL / PROFILE ACTIONS -------------------------
   if (route === '/admin/permissions' && method === 'GET') {
@@ -2132,6 +2181,7 @@ export default defineHandler(async (event: any) => {
   // payload in `data` and the replay in `zr`. The game session established by
   // /game/auth is the only authentication required for this endpoint.
   if (route === '/game/upload' && method === 'POST') {
+    if (!sql) return json({statusCode:503,error:'Service Unavailable',code:'DATABASE_UNAVAILABLE',message:'Score submission requires the SnoreSaber database'},503);
     const session = await getGameSession(request, sql);
     if (!session) {
       return json({
@@ -2201,10 +2251,6 @@ export default defineHandler(async (event: any) => {
         code: 'INVALID_SCORE_DATA',
         message: 'Map hash, difficulty and score are required'
       }, 400);
-    }
-
-    if (!sql) {
-      return json({ success: true, accepted: true, personalBest: true });
     }
 
     const playerRows: any[] = await sql`SELECT id FROM players WHERE id=${playerId} LIMIT 1`;
@@ -2838,6 +2884,7 @@ export default defineHandler(async (event: any) => {
 
   // ------------------------- GAME AUTH -------------------------
   if (route === '/game/auth' && method === 'POST') {
+    if (!sql) return json({statusCode:503,error:'Service Unavailable',code:'DATABASE_UNAVAILABLE',message:'Game authentication requires the SnoreSaber database'},503);
     let body: any = {};
     try { body = JSON.parse(await request.text() || '{}'); }
     catch { return json({statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid JSON'},400); }

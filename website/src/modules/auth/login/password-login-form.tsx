@@ -16,6 +16,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Label } from '@/components/ui/label';
 
 import { useEmailChallenge } from '@/hooks/use-email-challenge';
+import { useAuth } from '@/modules/auth';
 import { completePasswordReset, loginWithPassword, startPasswordReset, type CredentialAuthActionValue } from '@/modules/auth/actions/credentials';
 import { unwrapAction } from '@/shared/result/action';
 
@@ -42,6 +43,7 @@ export function PasswordLoginForm({
 }) {
    const t = useTranslations();
    const router = useRouter();
+   const { refreshAuth } = useAuth();
    const [mode, setMode] = useState<'login' | 'reset'>(initialMode);
    const loginPasswordInputRef = useRef<HTMLInputElement>(null);
    const hasLoginPasswordRef = useRef(false);
@@ -52,7 +54,7 @@ export function PasswordLoginForm({
 
    const onAuthenticated = async (value: CredentialAuthActionValue) => {
       if (value.status === 'authenticated') {
-         await router.invalidate();
+         await refreshAuth();
          await router.navigate({ href: redirectTo, replace: true });
          return;
       }

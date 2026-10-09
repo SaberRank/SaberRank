@@ -1,12 +1,12 @@
 import type { RegisteredRouter, RouteIds } from '@tanstack/react-router';
-import { BookOpen, Heart, Home, MessageSquareText, RadioTower, Search, Smartphone, Users } from 'lucide-react';
+import { BookOpen, Home, MessageSquareText, RadioTower, Search, Smartphone, Users } from 'lucide-react';
 import { FaList, FaMap, FaMedal } from 'react-icons/fa';
 import type { Messages } from 'use-intl';
 
 import { Icons } from '@/shared/components/icons';
 
 type NavKey = keyof Messages['nav'];
-export type AppNavRoute = 'home' | 'maps' | 'rankings' | 'rankRequests' | 'live' | 'questInstaller' | 'team' | 'support';
+export type AppNavRoute = 'home' | 'maps' | 'rankings' | 'rankRequests' | 'live' | 'questInstaller' | 'team';
 type NavItem = { key: NavKey; shortKey: NavKey; icon: React.ReactNode; route: AppNavRoute; disabled?: boolean };
 type SearchNavItem = { key: NavKey; shortKey: NavKey; icon: React.ReactNode; action: 'search' };
 type InternalSecondaryItem = { key: NavKey; icon: React.ReactNode; route: AppNavRoute; external: false };
@@ -89,12 +89,6 @@ export const secondaryItems: (InternalSecondaryItem | ExternalSecondaryItem)[] =
       external: false
    },
    { key: 'team', icon: <Users data-icon className="size-4" aria-hidden="true" />, route: 'team', external: false },
-   {
-      key: 'support',
-      icon: <Heart data-icon className="size-4" aria-hidden="true" />,
-      route: 'support',
-      external: false
-   }
 ];
 
 export const socialLinks = [
@@ -112,8 +106,7 @@ const navRouteIds = {
    rankRequests: '/ranking/requests',
    live: '/live/',
    questInstaller: '/quest',
-   team: '/team',
-   support: '/support'
+   team: '/team'
 } satisfies Record<AppNavRoute, RouteIds<RegisteredRouter['routeTree']>>;
 
 export function isNavActive(pathname: string, route: AppNavRoute) {

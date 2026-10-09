@@ -10,10 +10,10 @@ import {
    MAP_CONTROLLER_GET_MAP_LISTINGS_SORT_BY,
    MAP_CONTROLLER_GET_MAP_LISTINGS_SORT_DIRECTION,
 } from '@/shared/api/generated/ApiParams';
-import { publicApi } from '@/shared/api/server-api';
+import type { MapControllerGetMapListingsResponse } from '@/shared/api/generated/ApiParams';
+import { localApiPageData } from '@/shared/api/local-action.server';
 import { PageError } from '@/shared/components/error/page-error';
 import { Pagination } from '@/shared/components/pagination';
-import { pageApiData } from '@/shared/result/api';
 import { buildSeoHead } from '@/shared/seo/metadata';
 import { isPageNumber } from '@/shared/url-state/params';
 import { mapFilterPreferences } from '@/shared/url-state/persisted-filter-preferences';
@@ -57,18 +57,19 @@ const getMapsPageData = createServerFn({ method: 'GET' })
       const persistedStorage = await readPersistedSearchStorage(mapFilterPreferences.storageKey);
       const search = searchParams.search?.trim();
       const identifierSearch = search ? isMapIdentifierSearch(search) : false;
-      const result = await pageApiData(
-         publicApi.map.mapControllerGetMapListings({
-            page: searchParams.page ?? 1,
-            search: search || undefined,
-            status: !identifierSearch ? ['RANKED'] : undefined,
-            verified: identifierSearch ? undefined : searchParams.verified,
-            minStars: identifierSearch ? undefined : searchParams.minStars,
-            maxStars: identifierSearch ? undefined : searchParams.maxStars,
-            sortBy: searchParams.sortBy ?? 'trending',
-            sortDirection: searchParams.sortDirection ?? 'desc'
-         })
-      );
+      const apiSearch = new URLSearchParams({
+         page: String(searchParams.page ?? 1),
+         sortBy: searchParams.sortBy ?? 'trending',
+         sortDirection: searchParams.sortDirection ?? 'desc'
+      });
+      if (search) apiSearch.set('search', search);
+      if (!identifierSearch) {
+         apiSearch.set('status', 'RANKED');
+         if (searchParams.verified) apiSearch.set('verified', searchParams.verified);
+         if (searchParams.minStars != null) apiSearch.set('minStars', String(searchParams.minStars));
+         if (searchParams.maxStars != null) apiSearch.set('maxStars', String(searchParams.maxStars));
+      }
+      const result = await localApiPageData<MapControllerGetMapListingsResponse>(`/maps?${apiSearch.toString()}`);
 
       return { result, searchParams, persistedStorage };
    });

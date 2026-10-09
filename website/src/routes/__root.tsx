@@ -19,7 +19,7 @@ import { BswcLiveNotice } from '@/modules/home/bswc-promo-section';
 import type { RouterContext } from '@/router';
 import { api } from '@/shared/api/server-api';
 import { cn } from '@/shared/format/helpers';
-import { optionalApi } from '@/shared/result/api';
+import { localApiOptionalData } from '@/shared/api/local-action.server';
 import { absoluteSiteUrl, SITE_DESCRIPTION, SITE_NAME, buildSeoHead } from '@/shared/seo/metadata';
 import { parseServerTheme, THEME_COOKIE_NAME, THEME_MEDIA_QUERY, THEME_STORAGE_KEY } from '@/shared/ui-adjacent/theme';
 import { optionalSearchParamString } from '@/shared/url-state/params';
@@ -54,7 +54,7 @@ const ROOT_SHELL_QUERY_KEY = ['root-shell'];
 const getRootShellData = createServerFn({ method: 'GET' }).handler(async () => {
    const token = readAuthCookie();
    const [user, bswc] = await Promise.all([
-      token ? optionalApi(api.user.userControllerGetMe().then((r) => r.data)) : null,
+      token ? localApiOptionalData<Awaited<ReturnType<typeof api.user.userControllerGetMe>>['data']>('/user/@me') : null,
       BSWC_PROMO_ENABLED ? getHomeBswcPromo() : null
    ]);
    const initialTheme = parseServerTheme(getCookie(THEME_COOKIE_NAME)) ?? null;

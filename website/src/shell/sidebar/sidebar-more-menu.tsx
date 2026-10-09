@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 
-import { getRouteApi, Link, useRouter } from '@tanstack/react-router';
+import { getRouteApi, Link } from '@tanstack/react-router';
 import { Loader2, LogOut, Settings, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 
@@ -25,8 +25,7 @@ type SidebarMoreMenuProps = {
 };
 
 export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: SidebarMoreMenuProps) {
-   const { user } = useAuth();
-   const router = useRouter();
+   const { user, refreshAuth } = useAuth();
    const [mounted, setMounted] = useState(false);
    const [open, setOpen] = useState(false);
    const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -43,7 +42,7 @@ export function SidebarMoreMenu({ trigger, side = 'top', align = 'end' }: Sideba
    function handleLogout() {
       startTransition(async () => {
          await logout();
-         await router.invalidate();
+         await refreshAuth();
       });
    }
 

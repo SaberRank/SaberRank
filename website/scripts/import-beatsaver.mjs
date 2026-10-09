@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-const CURATED_BEATSAVER_MAP_KEYS = new Set(["25198","4fdd2","52dfb","4e692","4d977","51e10"]);
 /**
  * SnoreSaber BeatSaver catalog importer
  *
@@ -107,7 +106,6 @@ async function fetchPage(before = null) {
 
       if (response.ok) {
         const payload = await response.json();
-        if (Array.isArray(payload?.docs)) payload.docs = payload.docs.filter((m) => CURATED_BEATSAVER_MAP_KEYS.has(String(m?.id ?? '')));
         return payload;
       }
 
@@ -238,20 +236,6 @@ async function pruneAiMaps() {
     await sleep(DEFAULT_DELAY_MS);
   }
   console.log(`AI cleanup complete. Removed ${removed.toLocaleString()} maps.`);
-}
-
-async function pruneNonCuratedMaps() {
-  console.log('Deleting every cached map except the six curated BeatSaver maps...');
-  const keep = [...CURATED_BEATSAVER_MAP_KEYS];
-  // leaderboards reference maps with ON DELETE CASCADE in the project schema.
-  // Delete maps in one statement; associated leaderboards/scores cascade.
-  const result = await sql`
-    DELETE FROM maps
-    WHERE COALESCE(bsid, '') NOT IN (
-      ${keep[0]}, ${keep[1]}, ${keep[2]}, ${keep[3]}, ${keep[4]}, ${keep[5]}
-    )
-  `;
-  console.log('Curated cleanup complete. Kept:', keep.join(', '));
 }
 
 async function fullImport() {
@@ -396,60 +380,9 @@ async function incrementalImport() {
 }
 
 
-async function syncCuratedMaps() {
-  console.log('Syncing the six curated BeatSaver maps directly...');
-  const keys = [...CURATED_BEATSAVER_MAP_KEYS];
-
-  for (const key of keys) {
-    const response = await fetch(`${API}/maps/id/${encodeURIComponent(key)}`, {
-      headers: {
-        accept: 'application/json',
-        'user-agent': 'SnoreSaber/3.0 curated map importer',
-      },
-    });
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      throw new Error(`BeatSaver HTTP ${response.status} for map ${key}: ${body.slice(0, 300)}`);
-    }
-
-    const map = await response.json();
-    const result = await upsertMap(map);
-
-    if (result.skipped) {
-      throw new Error(`BeatSaver map ${key} could not be imported (missing published version/hash).`);
-    }
-
-    console.log(`  ✓ ${key} imported/updated`);
-    await sleep(DEFAULT_DELAY_MS);
-  }
-
-  await pruneNonCuratedMaps();
-
-  const rows = await sql`
-    SELECT bsid
-    FROM maps
-    WHERE COALESCE(bsid, '') IN (
-      '25198', '4fdd2', '52dfb', '4e692', '4d977', '51e10'
-    )
-    ORDER BY bsid
-  `;
-
-  const found = new Set(rows.map((r) => String(r.bsid)));
-  const missing = keys.filter((key) => !found.has(key));
-
-  if (missing.length) {
-    throw new Error(`Curated sync finished but these maps are missing from Neon: ${missing.join(', ')}`);
-  }
-
-  console.log(`Done. Neon now contains the six curated BeatSaver maps: ${keys.join(', ')}`);
-}
-
 async function main() {
   await ensureSyncState();
 
-  if (process.argv.includes('--prune-non-curated')) return pruneNonCuratedMaps();
-  if (process.argv.includes('--sync-curated')) return syncCuratedMaps();
   if (process.argv.includes('--prune-ai')) return pruneAiMaps();
   const mode = process.argv.includes('--full') ? 'full' : 'new';
   if (mode === 'full') await fullImport();

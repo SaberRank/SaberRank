@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 
 import type { PlayerReportControllerSubmitProfileReportPayload } from '@/shared/api/generated/Api';
 import { api } from '@/shared/api/server-api';
+import { localApiAction } from '@/shared/api/local-action.server';
 import { actionResultVoid } from '@/shared/result/action';
 import { toInt64PathParam } from '@/shared/url-state/params';
 
@@ -19,24 +20,19 @@ const disableAllAliasesFn = createServerFn({ method: 'POST' })
 
 const followPlayerFn = createServerFn({ method: 'POST' })
    .validator((playerId: string) => playerId)
-   .handler(({ data }) => actionResultVoid(api.player.playerRelationshipControllerFollowPlayer({ id: toInt64PathParam(data) })));
+   .handler(({ data }) => localApiAction<void>(`/player/${encodeURIComponent(data)}/follow`, { method: 'POST' }));
 
 const unfollowPlayerFn = createServerFn({ method: 'POST' })
    .validator((playerId: string) => playerId)
-   .handler(({ data }) => actionResultVoid(api.player.playerRelationshipControllerUnfollowPlayer({ id: toInt64PathParam(data) })));
+   .handler(({ data }) => localApiAction<void>(`/player/${encodeURIComponent(data)}/unfollow`, { method: 'POST' }));
 
 const reportPlayerFn = createServerFn({ method: 'POST' })
    .validator((data: { playerId: string; reason: PlayerReportReason; details?: string }) => data)
    .handler(({ data }) =>
-      actionResultVoid(
-         api.player.playerReportControllerSubmitProfileReport(
-            { id: toInt64PathParam(data.playerId) },
-            {
-               reason: data.reason,
-               details: data.details ?? ''
-            }
-         )
-      )
+      localApiAction<void>(`/player/${encodeURIComponent(data.playerId)}/report`, {
+         method: 'POST',
+         body: { reason: data.reason, details: data.details ?? '' }
+      })
    );
 
 export async function disableAlias(playerId: string, aliasId: number) {

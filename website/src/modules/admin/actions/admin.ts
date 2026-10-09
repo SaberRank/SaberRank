@@ -4,6 +4,7 @@ import { Result } from 'better-result';
 import { readAuthCookie } from '@/modules/auth/actions/session.server';
 import type { AdminBadgeControllerUpdateBadgePayload } from '@/shared/api/generated/Api';
 import { api } from '@/shared/api/server-api';
+import { localApiAction } from '@/shared/api/local-action.server';
 import { actionApiData, actionFailure, actionSuccess } from '@/shared/result/action';
 import { apiResult } from '@/shared/result/api';
 
@@ -19,7 +20,7 @@ const checkAdminAccessFn = createServerFn({ method: 'GET' }).handler(async (): P
 });
 
 const getAdminBadgesFn = createServerFn({ method: 'GET' }).handler(() =>
-   actionApiData(api.adminBadge.adminBadgeControllerGetAllBadges({ cache: 'no-store' }))
+   localApiAction<Awaited<ReturnType<typeof api.adminBadge.adminBadgeControllerGetAllBadges>>['data']>('/admin/badges')
 );
 
 const createBadgeFn = createServerFn({ method: 'POST' })

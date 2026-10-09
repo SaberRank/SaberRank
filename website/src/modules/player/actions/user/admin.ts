@@ -1,8 +1,12 @@
 import { createServerFn } from '@tanstack/react-start';
 
-import { api } from '@/shared/api/server-api';
-import { actionApiData, actionResultVoid } from '@/shared/result/action';
-import { toInt64PathParam } from '@/shared/url-state/params';
+import type {
+   AdminBadgeControllerGetPlayerBadgesResponse,
+   AdminBadgeControllerReplacePlayerBadgesResponse,
+   AdminUserControllerGetActiveBanResponse,
+   AdminUserControllerUpdatePermissionsResponse
+} from '@/shared/api/generated/ApiParams';
+import { localApiAction } from '@/shared/api/local-action.server';
 
 type BanPlayerInput = {
    playerId: string;
@@ -16,73 +20,71 @@ type BanPlayerInput = {
 const banPlayerFn = createServerFn({ method: 'POST' })
    .validator((data: BanPlayerInput) => data)
    .handler(({ data }) => {
-      const apiPlayerId = toInt64PathParam(data.playerId);
-
-      return actionResultVoid(
-         api.adminUser.adminUserControllerBanPlayer(
-            { id: apiPlayerId },
-            {
-               reason: data.reason,
-               ...(data.notes && { notes: data.notes }),
-               ...(data.autoUnban != null && { autoUnban: data.autoUnban }),
-               ...(data.autoUnbansAt && { autoUnbansAt: new Date(data.autoUnbansAt) }),
-               ...(data.earliestAppealDate && { earliestAppealDate: new Date(data.earliestAppealDate) })
-            }
-         )
-      );
+      return localApiAction<void>(`/admin/user/${encodeURIComponent(data.playerId)}/ban`, {
+         method: 'POST',
+         body: {
+            reason: data.reason,
+            ...(data.notes && { notes: data.notes }),
+            ...(data.autoUnban != null && { autoUnban: data.autoUnban }),
+            ...(data.autoUnbansAt && { autoUnbansAt: data.autoUnbansAt }),
+            ...(data.earliestAppealDate && { earliestAppealDate: data.earliestAppealDate })
+         }
+      });
    });
 
 const unbanPlayerFn = createServerFn({ method: 'POST' })
    .validator((playerId: string) => playerId)
-   .handler(({ data }) => actionResultVoid(api.adminUser.adminUserControllerUnbanPlayer({ id: toInt64PathParam(data) })));
+   .handler(({ data }) => localApiAction<void>(`/admin/user/${encodeURIComponent(data)}/unban`, { method: 'POST' }));
 
 const unsilencePlayerFn = createServerFn({ method: 'POST' })
    .validator((playerId: string) => playerId)
-   .handler(({ data }) => actionResultVoid(api.adminUser.adminUserControllerUnsilencePlayer({ id: toInt64PathParam(data) })));
+   .handler(({ data }) => localApiAction<void>(`/admin/user/${encodeURIComponent(data)}/unsilence`, { method: 'POST' }));
 
 const adminResetCountryFn = createServerFn({ method: 'POST' })
    .validator((data: { playerId: string; country: string }) => data)
    .handler(({ data }) =>
-      actionResultVoid(api.adminUser.adminUserControllerAdminResetCountry({ id: toInt64PathParam(data.playerId) }, { country: data.country }))
+      localApiAction<void>(`/admin/user/${encodeURIComponent(data.playerId)}/reset-country`, { method: 'POST', body: { country: data.country } })
    );
 
 const updateRoleTextFn = createServerFn({ method: 'POST' })
    .validator((data: { playerId: string; roleText: string }) => data)
    .handler(({ data }) =>
-      actionResultVoid(api.adminUser.adminUserControllerUpdateRoleText({ id: toInt64PathParam(data.playerId) }, { roleText: data.roleText }))
+      localApiAction<void>(`/admin/user/${encodeURIComponent(data.playerId)}/role-text`, { method: 'POST', body: { roleText: data.roleText } })
    );
 
 const updatePermissionsFn = createServerFn({ method: 'POST' })
    .validator((data: { playerId: string; add?: string[]; remove?: string[] }) => data)
    .handler(({ data }) =>
-      actionApiData(
-         api.adminUser.adminUserControllerUpdatePermissions({ id: toInt64PathParam(data.playerId) }, { add: data.add, remove: data.remove })
-      )
+      localApiAction<AdminUserControllerUpdatePermissionsResponse>(`/admin/user/${encodeURIComponent(data.playerId)}/permissions`, {
+         method: 'POST',
+         body: { add: data.add, remove: data.remove }
+      })
    );
 
 const getPlayerBadgeAssignmentsFn = createServerFn({ method: 'GET' })
    .validator((playerId: string) => playerId)
-   .handler(({ data }) => actionApiData(api.adminBadge.adminBadgeControllerGetPlayerBadges({ playerId: data }, { cache: 'no-store' })));
+   .handler(({ data }) => localApiAction<AdminBadgeControllerGetPlayerBadgesResponse>(`/admin/badges/player/${encodeURIComponent(data)}`));
 
 const replacePlayerBadgeAssignmentsFn = createServerFn({ method: 'POST' })
    .validator((data: { playerId: string; badges: { badgeId: number; descriptionOverride: string | null }[] }) => data)
    .handler(({ data }) =>
-      actionApiData(api.adminBadge.adminBadgeControllerReplacePlayerBadges({ playerId: data.playerId }, { badges: data.badges }))
+      localApiAction<AdminBadgeControllerReplacePlayerBadgesResponse>(`/admin/badges/player/${encodeURIComponent(data.playerId)}`, {
+         method: 'PUT',
+         body: { badges: data.badges }
+      })
    );
 
 const getActiveBanFn = createServerFn({ method: 'GET' })
    .validator((playerId: string) => playerId)
-   .handler(({ data }) => actionApiData(api.adminUser.adminUserControllerGetActiveBan({ id: toInt64PathParam(data) }, { cache: 'no-store' })));
+   .handler(({ data }) => localApiAction<AdminUserControllerGetActiveBanResponse | null>(`/admin/user/${encodeURIComponent(data)}/ban`));
 
 const mergePlayerFn = createServerFn({ method: 'POST' })
    .validator((data: { targetPlayerId: string; sourcePlayerId: string; reason: string }) => data)
    .handler(({ data }) =>
-      actionApiData(
-         api.adminUser.adminUserControllerMergePlayer(
-            { id: toInt64PathParam(data.targetPlayerId) },
-            { sourcePlayerId: data.sourcePlayerId, reason: data.reason }
-         )
-      )
+      localApiAction<void>(`/admin/user/${encodeURIComponent(data.targetPlayerId)}/merge`, {
+         method: 'POST',
+         body: { sourcePlayerId: data.sourcePlayerId, reason: data.reason }
+      })
    );
 
 export async function banPlayer(input: BanPlayerInput) {

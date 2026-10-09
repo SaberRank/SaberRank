@@ -13,11 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { completeSignup } from '@/modules/auth/actions/credentials';
+import { useAuth } from '@/modules/auth';
 import { unwrapAction } from '@/shared/result/action';
 
 export function SignupForm({ redirectTo, onSignInSelect }: { redirectTo: string; onSignInSelect: () => void }) {
    const t = useTranslations();
    const router = useRouter();
+   const { refreshAuth } = useAuth();
    const [email, setEmail] = useState('');
    const [displayName, setDisplayName] = useState('');
    const [password, setPassword] = useState('');
@@ -28,7 +30,7 @@ export function SignupForm({ redirectTo, onSignInSelect }: { redirectTo: string;
       onMutate: () => setFeedback(null),
       onSuccess: async (value) => {
          if (value.status === 'authenticated') {
-            await router.invalidate();
+            await refreshAuth();
             await router.navigate({ href: redirectTo, replace: true });
          }
       },

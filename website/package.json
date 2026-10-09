@@ -8,8 +8,7 @@
     "dev": "vp dev",
     "prepare": "vp config --no-agent",
     "beatsaver:import": "node scripts/import-beatsaver.mjs --full",
-    "beatsaver:sync": "node scripts/import-beatsaver.mjs --new",
-    "beatsaver:reset-rankings": "node --env-file=.env scripts/reset-curated-rankings.mjs"
+    "beatsaver:sync": "node scripts/import-beatsaver.mjs --new"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.0",

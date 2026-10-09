@@ -15,6 +15,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Label } from '@/components/ui/label';
 
 import { useEmailChallenge } from '@/hooks/use-email-challenge';
+import { useAuth } from '@/modules/auth';
 import { startEmailLogin, verifyEmailLogin } from '@/modules/auth/actions/member';
 import { unwrapAction } from '@/shared/result/action';
 
@@ -38,6 +39,7 @@ const metaInfoStrong = (chunks: ReactNode) => <strong className="font-semibold">
 export function EmailLoginForm({ redirectTo, onSignupSelect }: { redirectTo: string; onSignupSelect: () => void }) {
    const t = useTranslations();
    const router = useRouter();
+   const { refreshAuth } = useAuth();
    const [notice, setNotice] = useState<NoticeState>(null);
    const [feedback, setFeedback] = useState<FeedbackState>(null);
    const { email, setEmail, code, setCode, challenge, resendSeconds, expirySeconds, startMutation, verifyMutation } = useEmailChallenge<
@@ -72,7 +74,7 @@ export function EmailLoginForm({ redirectTo, onSignupSelect }: { redirectTo: str
                title: t('login.email.authenticatedToast'),
                description: t('login.email.authenticatedDescription')
             });
-            await router.invalidate();
+            await refreshAuth();
             await router.navigate({ href: redirectTo, replace: true });
             return;
          }

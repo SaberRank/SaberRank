@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, type ReactNode } from 'react';
 
 import { createFileRoute, linkOptions } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { Result } from 'better-result';
 import { FaTrophy } from 'react-icons/fa';
 import { useTranslations } from 'use-intl';
 import { z } from 'zod';
@@ -33,16 +32,18 @@ import type { UserControllerUpdateProfileCustomizationPayload } from '@/shared/a
 import type {
    AdminUserControllerGetActiveBanResponse,
    PlayerControllerGetPlayerResponse,
+   PlayerControllerGetPlayerProfileResponse,
+   PlayerControllerGetPlayerScoresResponse,
    PlayerControllerGetPlayerScoresDataItem,
-   PlayerControllerGetPlayerScoresSort
+   PlayerControllerGetPlayerScoresSort,
+   UserControllerGetConnectionsResponse
 } from '@/shared/api/generated/ApiParams';
-import { api, publicApi } from '@/shared/api/server-api';
+import { localApiOptionalData, localApiPageData } from '@/shared/api/local-action.server';
 import { NotFoundCard } from '@/shared/components/error/not-found-card';
 import { PageError } from '@/shared/components/error/page-error';
 import { Time } from '@/shared/components/time';
 import { cn, formatAccuracy, formatNumber, formatPP } from '@/shared/format/helpers';
 import Permissions from '@/shared/permissions';
-import { apiResult, optionalApi, optionalApiData, pageApiData } from '@/shared/result/api';
 import { hasRichTextContent, sanitizeRichTextHtml } from '@/shared/rich-text/server';
 import { buildSeoHead } from '@/shared/seo/metadata';
 import { isPageNumber, isPlayerId, isVanitySlug, ScoreEnum, requestOrNotFound } from '@/shared/url-state/params';
@@ -85,21 +86,19 @@ const getPlayerProfilePageData = createServerFn({ method: 'GET' })
    .validator((data: PlayerProfileRouteInput) => data)
    .handler(async ({ data }) => {
       const token = readAuthCookie();
-      const profileApi = token ? api : publicApi;
       const playerId = isPlayerId.safeParse(data.playerId).success ? data.playerId : data.playerId.toLowerCase();
+      const encodedPlayerId = encodeURIComponent(playerId);
+      const scoreSearch = new URLSearchParams({
+         limit: '8',
+         page: String(data.search.page ?? 1),
+         sort: data.search.sort ?? 'top'
+      });
+      if (data.search.search) scoreSearch.set('search', data.search.search);
 
       const [profileResult, scores, connections] = await Promise.all([
-         pageApiData(profileApi.player.playerControllerGetPlayerProfile({ id: playerId })),
-         optionalApiData(
-            profileApi.player.playerControllerGetPlayerScores({
-               id: playerId,
-               limit: 8,
-               page: data.search.page ?? 1,
-               sort: data.search.sort ?? 'top',
-               search: data.search.search
-            })
-         ),
-         token ? optionalApi(api.user.userControllerGetConnections().then((r) => r.data)) : null
+         localApiPageData<PlayerControllerGetPlayerProfileResponse>(`/players/${encodedPlayerId}/profile`),
+         localApiOptionalData<PlayerControllerGetPlayerScoresResponse>(`/players/${encodedPlayerId}/scores?${scoreSearch.toString()}`),
+         token ? localApiOptionalData<UserControllerGetConnectionsResponse>('/user/connections') : null
       ]);
 
       if (!profileResult.ok) {
@@ -153,8 +152,8 @@ const getPlayerProfilePageData = createServerFn({ method: 'GET' })
       const sanitizedBio = sanitizeRichTextHtml(player.bio ?? '');
       let banMetadata: BanMetadataAccess = hiddenBanMetadata;
       if (token && player.banned) {
-         const result = await apiResult(api.adminUser.adminUserControllerGetActiveBan({ id: player.id }, { cache: 'no-store' }));
-         if (Result.isOk(result)) banMetadata = { visible: true, record: result.value.data };
+          const record = await localApiOptionalData<AdminUserControllerGetActiveBanResponse>(`/admin/user/${encodeURIComponent(player.id)}/ban`);
+          if (record) banMetadata = { visible: true, record };
       }
 
       return {

@@ -47,26 +47,4 @@ Start in:
 
 Set the trigger to daily at midnight.
 
-The website itself reads the cached map catalog from Neon, so browsing `/maps` does not need to contact BeatSaver.
-
-## Sync exactly the six curated maps
-
-After installing dependencies and restoring `.env`, run:
-
-    node --env-file=.env scripts/import-beatsaver.mjs --sync-curated
-
-This directly fetches these six BeatSaver map keys:
-25198, 4fdd2, 52dfb, 4e692, 4d977, 51e10
-
-It upserts each one, deletes every other cached map, and verifies that all six
-are present in Neon before exiting successfully.
-
-## Reset the six maps so SnoreSaber can use its own rankings
-
-Run this once after deploying the ranking-source change:
-
-    npm run beatsaver:reset-rankings
-
-This sets every leaderboard on the six curated maps to UNRANKED with 0 stars.
-After that, use the **Map Admin** button on the Maps page to paste a curated
-BeatSaver link and assign SnoreSaber star values per difficulty.
+The website reads the cached map catalog from Neon, so browsing `/maps` does not need to contact BeatSaver. To add an individual map and assign SnoreSaber-owned rankings, use **Map Admin** on the Maps page; it accepts any valid BeatSaver map key or map link.

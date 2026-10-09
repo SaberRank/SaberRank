@@ -1,10 +1,8 @@
 import { createServerFn } from '@tanstack/react-start';
 
 import { clearAuthCookie, setAuthCookie } from '@/modules/auth/actions/session.server';
-import { getClientRequestHeaders } from '@/shared/api/client-request.server';
-import { api } from '@/shared/api/server-api';
-import { actionApiData, actionSuccess, type ActionResult } from '@/shared/result/action';
-import { apiResult } from '@/shared/result/api';
+import { localApiAction } from '@/shared/api/local-action.server';
+import { actionSuccess, type ActionResult } from '@/shared/result/action';
 
 type EmailLoginVerificationActionValue =
    | { status: 'authenticated'; playerId: string }
@@ -12,9 +10,7 @@ type EmailLoginVerificationActionValue =
    | { status: 'support-required' };
 
 const logoutFn = createServerFn({ method: 'POST' }).handler(async () => {
-   // don't care if this fails, still clear cookie
-   await apiResult(api.auth.authControllerLogout());
-
+   await localApiAction<void>('/auth/logout', { method: 'POST' });
    clearAuthCookie();
 });
 
@@ -24,17 +20,7 @@ export async function logout() {
 
 const startEmailLoginFn = createServerFn({ method: 'POST' })
    .validator((email: string) => email)
-   .handler(async ({ data: email }) =>
-      actionApiData(
-         api.auth.authControllerStartEmailLogin(
-            { email },
-            {
-               cache: 'no-store',
-               headers: getClientRequestHeaders()
-            }
-         )
-      )
-   );
+   .handler(({ data: email }) => localApiAction<{ challengeId: string; expiresAt: string; resendAvailableAt: string }>('/auth/email/start', { method: 'POST', body: { email } }));
 
 export async function startEmailLogin(email: string) {
    return startEmailLoginFn({ data: email });
@@ -43,15 +29,10 @@ export async function startEmailLogin(email: string) {
 const verifyEmailLoginFn = createServerFn({ method: 'POST' })
    .validator((data: { challengeId: string; code: string }) => data)
    .handler(async ({ data }): Promise<ActionResult<EmailLoginVerificationActionValue>> => {
-      const result = await actionApiData(
-         api.auth.authControllerVerifyEmailLogin(
-            { challengeId: data.challengeId, code: data.code },
-            {
-               cache: 'no-store',
-               headers: getClientRequestHeaders()
-            }
-         )
-      );
+      const result = await localApiAction<{ status: string; token: string; playerId: string }>('/auth/email/verify', {
+         method: 'POST',
+         body: { challengeId: data.challengeId, code: data.code }
+      });
 
       if (result.ok && result.value.status === 'authenticated') {
          setAuthCookie(result.value.token);

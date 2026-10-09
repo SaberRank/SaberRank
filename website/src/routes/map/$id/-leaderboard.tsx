@@ -7,12 +7,14 @@ import type { LeaderboardSearchParams, MapLeaderboard } from '@/modules/maps/det
 import { getDisplayLeaderboards } from '@/modules/maps/map-leaderboards';
 import { getDefaultMapLeaderboardId, getRankRequestDisplayStatus, getRankRequestStatusLabel } from '@/modules/rank-requests/lib/model';
 import { LEADERBOARD_CONTROLLER_GET_LEADERBOARD_SCORES_BY_ID_PIVOT } from '@/shared/api/generated/ApiParams';
+import type { MapControllerGetMapByIdResponse } from '@/shared/api/generated/ApiParams';
+import { localApiPageData } from '@/shared/api/local-action.server';
 import { api, publicApi } from '@/shared/api/server-api';
 import { countryRegionSearchSchema, formatCountryRegionParam } from '@/shared/country-region';
 import { formatStars } from '@/shared/format/helpers';
 import { getDifficultyLabel, getDifficultyShortLabel } from '@/shared/format/strings';
 import { getStatusLabel } from '@/shared/format/styling';
-import { optionalApiData, pageApiData, pageDataOk } from '@/shared/result/api';
+import { optionalApiData, pageDataOk } from '@/shared/result/api';
 import { buildSeoHead } from '@/shared/seo/metadata';
 import { isNumber, isPageNumber } from '@/shared/url-state/params';
 import { leaderboardFilterPreferences } from '@/shared/url-state/persisted-filter-preferences';
@@ -136,9 +138,8 @@ async function loadMapLeaderboardPageData({
    hasSession: boolean;
 }) {
    const page = searchParams.page ?? 1;
-   const mapApi = hasSession ? api : publicApi;
    const scoreApi = searchParams.pivot || searchParams.scope === 'country' || searchParams.scope === 'region' ? api : publicApi;
-   const mapResultPromise = pageApiData(mapApi.map.mapControllerGetMapById({ id: mapId }));
+   const mapResultPromise = localApiPageData<MapControllerGetMapByIdResponse>(`/maps/${mapId}`);
 
    if (leaderboardId == null) {
       const mapResult = await mapResultPromise;

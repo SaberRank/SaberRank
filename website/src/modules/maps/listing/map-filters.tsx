@@ -19,7 +19,7 @@ import type { RouteLocationBuilder } from '@/shared/url-state/route-location';
 import type { SearchParamsRecord } from '@/shared/url-state/search-params';
 import { updateSearchParams } from '@/shared/url-state/update-search-params';
 import { mapFilterPreferences } from '@/shared/url-state/persisted-filter-preferences';
-import { CuratedMapAdmin } from '@/modules/maps/listing/curated-map-admin';
+import { MapAdmin } from '@/modules/maps/listing/map-admin';
 
 const SORT_OPTIONS: { value: MapControllerGetMapListingsSortBy }[] = [
    { value: 'trending' },
@@ -130,7 +130,7 @@ export function MapFilters<TLocation>({
                );
             })}
             {trailingAction}
-            <CuratedMapAdmin />
+            <MapAdmin />
          </div>
       </div>
    );

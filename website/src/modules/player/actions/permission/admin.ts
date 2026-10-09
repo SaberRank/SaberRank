@@ -1,11 +1,8 @@
 import { createServerFn } from '@tanstack/react-start';
 
-import { api } from '@/shared/api/server-api';
-import { actionApiData } from '@/shared/result/action';
+import { localApiAction } from '@/shared/api/local-action.server';
 
-const getPermissionsListFn = createServerFn({ method: 'GET' }).handler(() =>
-   actionApiData(api.adminPermission.adminPermissionControllerListPermissions())
-);
+const getPermissionsListFn = createServerFn({ method: 'GET' }).handler(() => localApiAction<{ name: string; value: number }[]>('/admin/permissions'));
 
 export async function getPermissionsList() {
    return getPermissionsListFn();
