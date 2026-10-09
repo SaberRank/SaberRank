@@ -74,7 +74,10 @@ type PlayerProfileRouteInput = {
 
 type ParsePlayerSearch = (search: SearchParamsRecord) => PlayerProfileSearch | null;
 
-type BanMetadataAccess = { visible: false } | { visible: true; record: AdminUserControllerGetActiveBanResponse };
+type PublicBanRecord = Pick<AdminUserControllerGetActiveBanResponse, 'reason' | 'earliestAppealDate'>;
+type BanMetadataAccess =
+   | { visible: false }
+   | { visible: true; record: PublicBanRecord; adminRecord: AdminUserControllerGetActiveBanResponse | null };
 
 const hiddenBanMetadata: BanMetadataAccess = { visible: false };
 
@@ -151,9 +154,12 @@ const getPlayerProfilePageData = createServerFn({ method: 'GET' })
       const aliases = profileResult.data.aliases ?? [];
       const sanitizedBio = sanitizeRichTextHtml(player.bio ?? '');
       let banMetadata: BanMetadataAccess = hiddenBanMetadata;
-      if (token && player.banned) {
-          const record = await localApiOptionalData<AdminUserControllerGetActiveBanResponse>(`/admin/user/${encodeURIComponent(player.id)}/ban`);
-          if (record) banMetadata = { visible: true, record };
+      if (player.banned) {
+         const [record, adminRecord] = await Promise.all([
+            localApiOptionalData<PublicBanRecord>(`/players/${encodedPlayerId}/ban`),
+            token ? localApiOptionalData<AdminUserControllerGetActiveBanResponse>(`/admin/user/${encodeURIComponent(player.id)}/ban`) : null
+         ]);
+         if (record) banMetadata = { visible: true, record, adminRecord };
       }
 
       return {
@@ -310,33 +316,26 @@ function PlayerProfileRouteContent({
                                     {restricted && <p className="text-muted-foreground text-sm">{t('player.bannedProfileUnavailable')}</p>}
                                     {banMetadata.visible && (
                                        <div className="border-destructive/25 bg-destructive/5 mx-auto mt-4 max-w-2xl rounded-md border p-4 text-left">
-                                          {banMetadata.record ? (
-                                             <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-                                                <BanMetadata label={t('player.reason')}>{banMetadata.record.reason}</BanMetadata>
-                                                <BanMetadata label={t('player.banMetadata.created')}>
-                                                   <Time date={banMetadata.record.createdAt} />
-                                                </BanMetadata>
-                                                <BanMetadata label={t('player.internalNotes')}>
-                                                   {banMetadata.record.notes || t('player.banMetadata.none')}
-                                                </BanMetadata>
-                                                <BanMetadata label={t('player.banMetadata.automaticUnban')}>
-                                                   {banMetadata.record.autoUnban && banMetadata.record.autoUnbansAt ? (
-                                                      <Time date={banMetadata.record.autoUnbansAt} />
-                                                   ) : (
-                                                      t('player.banMetadata.disabled')
-                                                   )}
-                                                </BanMetadata>
-                                                <BanMetadata label={t('player.earliestAppealDate')}>
-                                                   {banMetadata.record.earliestAppealDate ? (
-                                                      <Time date={banMetadata.record.earliestAppealDate} />
-                                                   ) : (
-                                                      t('player.banMetadata.none')
-                                                   )}
-                                                </BanMetadata>
-                                             </dl>
-                                          ) : (
-                                             <p className="text-muted-foreground text-sm">{t('player.banMetadata.legacy')}</p>
-                                          )}
+                                          <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                                             <BanMetadata label={t('player.reason')}>{banMetadata.record.reason}</BanMetadata>
+                                             <BanMetadata label={t('player.earliestAppealDate')}>
+                                                {banMetadata.record.earliestAppealDate ? (
+                                                   <Time date={banMetadata.record.earliestAppealDate} />
+                                                ) : (
+                                                   t('player.banMetadata.none')
+                                                )}
+                                             </BanMetadata>
+                                             {banMetadata.adminRecord && (
+                                                <>
+                                                   <BanMetadata label={t('player.banMetadata.created')}>
+                                                      <Time date={banMetadata.adminRecord.createdAt} />
+                                                   </BanMetadata>
+                                                   <BanMetadata label={t('player.internalNotes')}>
+                                                      {banMetadata.adminRecord.notes || t('player.banMetadata.none')}
+                                                   </BanMetadata>
+                                                </>
+                                             )}
+                                          </dl>
                                        </div>
                                     )}
                                  </div>

@@ -12,8 +12,6 @@ type BanPlayerInput = {
    playerId: string;
    reason: string;
    notes?: string;
-   autoUnban?: boolean;
-   autoUnbansAt?: string;
    earliestAppealDate?: string;
 };
 
@@ -25,8 +23,6 @@ const banPlayerFn = createServerFn({ method: 'POST' })
          body: {
             reason: data.reason,
             ...(data.notes && { notes: data.notes }),
-            ...(data.autoUnban != null && { autoUnban: data.autoUnban }),
-            ...(data.autoUnbansAt && { autoUnbansAt: data.autoUnbansAt }),
             ...(data.earliestAppealDate && { earliestAppealDate: data.earliestAppealDate })
          }
       });

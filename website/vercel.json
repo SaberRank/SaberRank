@@ -2,11 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "pnpm build",
-  "installCommand": "corepack pnpm@11.21.0 install --no-frozen-lockfile",
-  "crons": [
-    {
-      "path": "/api/v2/cron/auto-unban",
-      "schedule": "0 * * * *"
-    }
-  ]
+  "installCommand": "corepack pnpm@11.21.0 install --no-frozen-lockfile"
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 
 import { useTranslations } from 'use-intl';
 
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,15 +45,11 @@ export function PlayerAdminOperations({
    const t = useTranslations();
    const [banReason, setBanReason] = useState('');
    const [banNotes, setBanNotes] = useState('');
-   const [autoUnban, setAutoUnban] = useState(false);
-   const [autoUnbansAt, setAutoUnbansAt] = useState('');
    const [earliestAppealDate, setEarliestAppealDate] = useState('');
    const [countryValue, setCountryValue] = useState('');
    const [roleTextValue, setRoleTextValue] = useState(playerRole ?? '');
    const pending = action.isPending;
    const trimmedBanReason = banReason.trim();
-   const autoUnbanDate = autoUnbansAt ? new Date(autoUnbansAt) : null;
-   const autoUnbanDateInvalid = autoUnban && (!autoUnbanDate || Number.isNaN(autoUnbanDate.getTime()) || autoUnbanDate <= new Date());
    const appealDate = earliestAppealDate ? new Date(earliestAppealDate) : null;
    const appealDateInvalid = appealDate != null && Number.isNaN(appealDate.getTime());
 
@@ -69,15 +64,13 @@ export function PlayerAdminOperations({
    }
 
    function handleBan() {
-      if (!trimmedBanReason || autoUnbanDateInvalid || appealDateInvalid) return;
+      if (!trimmedBanReason || appealDateInvalid) return;
       action.run(
          () =>
             banPlayer({
                playerId,
                reason: trimmedBanReason,
                notes: banNotes || undefined,
-               autoUnban,
-               autoUnbansAt: autoUnban && autoUnbansAt ? new Date(autoUnbansAt).toISOString() : undefined,
                earliestAppealDate: appealDate?.toISOString()
             }),
          t('player.playerBanned'),
@@ -86,8 +79,6 @@ export function PlayerAdminOperations({
             closeDialog();
             setBanReason('');
             setBanNotes('');
-            setAutoUnban(false);
-            setAutoUnbansAt('');
             setEarliestAppealDate('');
          }
       );
@@ -149,7 +140,7 @@ export function PlayerAdminOperations({
             confirmLabel={t('player.banPlayer')}
             pending={pending}
             variant="destructive"
-            disabled={!trimmedBanReason || autoUnbanDateInvalid || appealDateInvalid}
+            disabled={!trimmedBanReason || appealDateInvalid}
             onConfirmAction={handleBan}
          >
             <div className="flex flex-col gap-3">
@@ -175,24 +166,6 @@ export function PlayerAdminOperations({
                      resize="none"
                   />
                </div>
-               <label className="flex items-center gap-2 text-sm font-medium">
-                  <Checkbox checked={autoUnban} onCheckedChange={(value) => setAutoUnban(value === true)} />
-                  {t('player.automaticallyUnban')}
-               </label>
-               {autoUnban && (
-                  <div className="flex flex-col gap-1.5">
-                     <Label htmlFor="auto-unban-date">{t('player.automaticUnbanDate')}</Label>
-                     <Input
-                        id="auto-unban-date"
-                        type="datetime-local"
-                        value={autoUnbansAt}
-                        onChange={(event) => setAutoUnbansAt(event.target.value)}
-                        required
-                        aria-invalid={autoUnbanDateInvalid}
-                     />
-                     {autoUnbanDateInvalid && <p className="text-destructive text-sm">{t('player.automaticUnbanDateError')}</p>}
-                  </div>
-               )}
                <div className="flex flex-col gap-1.5">
                   <Label htmlFor="earliest-appeal-date">{t('player.earliestAppealDate')}</Label>
                   <Input

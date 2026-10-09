@@ -1350,6 +1350,10 @@ export default defineHandler(async (event: any) => {
       const pr: any[] = resolvedId ? await sql`SELECT * FROM players WHERE id=${resolvedId} LIMIT 1` : [];
       if (!pr[0]) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
       const p = dbPlayer(pr[0]);
+      if (seg[3] === 'ban') {
+        if (!p.banned) return json(null);
+        return json({ reason: String(pr[0].ban_reason || ''), earliestAppealDate: pr[0].ban_earliest_appeal_date ? new Date(pr[0].ban_earliest_appeal_date).toISOString() : null });
+      }
       if (seg[3] === 'scores') {
         const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Number(query.get('limit') || 50));
         const rows: any[] = await sql`
@@ -1373,6 +1377,7 @@ export default defineHandler(async (event: any) => {
     }
     const p = players.find((x) => x.id === id);
     if (!p) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
+    if (seg[3] === 'ban') return json(null);
     if (seg[3] === 'scores') {
       const limit = Math.min(100, Number(query.get('limit') || 8)); const ps = scores.filter((s) => s.player.id === p.id);
       return json({ data: ps.slice(0,limit), metadata: metadata(ps.length,1,limit) });
@@ -1384,12 +1389,9 @@ export default defineHandler(async (event: any) => {
   // ------------------------- MAPS -------------------------
   if (route === '/maps/sync' && (method === 'POST' || method === 'GET')) {
     if (!sql) return json({ synced: 0, source: 'fallback' });
-    const cronSecret = process.env.CRON_SECRET || '';
-    const authHeader = request.headers.get('authorization') || '';
-    const cronAuthorized = cronSecret && authHeader === `Bearer ${cronSecret}`;
     const viewerId = await authPlayerId(request, sql);
     const adminAuthorized = viewerId ? await isAdmin(sql, viewerId) : false;
-    if (!cronAuthorized && !adminAuthorized) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Map sync requires admin access'},401);
+    if (!adminAuthorized) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Map sync requires admin access'},401);
     try {
       const result = await syncBeatSaverMaps(sql, { maxPages: Number(query.get('pages') || 50), forceBootstrap: query.get('bootstrap') === '1' });
       return json(result);
@@ -1397,22 +1399,6 @@ export default defineHandler(async (event: any) => {
       console.error('[SnoreSaber] BeatSaver sync failed', error);
       return json({statusCode:502,error:'Bad Gateway',code:'BEATSAVER_SYNC_FAILED',message:error instanceof Error ? error.message : 'BeatSaver sync failed'},502);
     }
-  }
-  if (route === '/cron/auto-unban' && method === 'GET') {
-    const cronSecret = process.env.CRON_SECRET || '';
-    if (!cronSecret) return json({ statusCode: 503, error: 'Service Unavailable', code: 'CRON_NOT_CONFIGURED', message: 'Automatic unban cron is not configured' }, 503);
-    if ((request.headers.get('authorization') || '') !== `Bearer ${cronSecret}`) {
-      return json({ statusCode: 401, error: 'Unauthorized', code: 'UNAUTHORIZED', message: 'Cron authorization required' }, 401);
-    }
-    if (!sql) return json({ statusCode: 503, error: 'Service Unavailable', code: 'DATABASE_UNAVAILABLE', message: 'Database is unavailable' }, 503);
-
-    const unbanned: any[] = await sql`
-      UPDATE players
-      SET banned=false, ban_reason=NULL, ban_notes=NULL, ban_created_at=NULL,
-          ban_auto_unban=false, ban_auto_unbans_at=NULL, ban_earliest_appeal_date=NULL
-      WHERE banned=true AND ban_auto_unban=true AND ban_auto_unbans_at IS NOT NULL AND ban_auto_unbans_at <= now()
-      RETURNING id`;
-    return json({ success: true, unbanned: unbanned.length });
   }
   if (route === '/maps' && method === 'GET') {
     const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
@@ -1931,11 +1917,13 @@ export default defineHandler(async (event: any) => {
   // ------------------------- ADMIN MODERATION -------------------------
   if (route.startsWith('/admin/user/') && route.endsWith('/ban') && method === 'GET') {
     const targetId = decodeURIComponent(route.split('/')[3]);
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await isAdmin(sql, viewerId))) return json({statusCode:403,error:'Forbidden',code:'FORBIDDEN',message:'Administrator permission required'},403);
     if (!sql) return json(null);
-    const rows: any[] = await sql`SELECT banned,ban_reason,ban_notes,ban_created_at,ban_auto_unban,ban_auto_unbans_at,ban_earliest_appeal_date FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
+    const rows: any[] = await sql`SELECT banned,ban_reason,ban_notes,ban_created_at,ban_earliest_appeal_date FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
     if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     if (!rows[0].banned) return json(null);
-    return json({reason:rows[0].ban_reason || '',notes:rows[0].ban_notes || null,createdAt:rows[0].ban_created_at ? new Date(rows[0].ban_created_at).toISOString() : NOW(),autoUnban:Boolean(rows[0].ban_auto_unban),autoUnbansAt:rows[0].ban_auto_unbans_at ? new Date(rows[0].ban_auto_unbans_at).toISOString() : null,earliestAppealDate:rows[0].ban_earliest_appeal_date ? new Date(rows[0].ban_earliest_appeal_date).toISOString() : null});
+    return json({reason:rows[0].ban_reason || '',notes:rows[0].ban_notes || null,createdAt:rows[0].ban_created_at ? new Date(rows[0].ban_created_at).toISOString() : NOW(),earliestAppealDate:rows[0].ban_earliest_appeal_date ? new Date(rows[0].ban_earliest_appeal_date).toISOString() : null});
   }
 
   if (route.startsWith('/admin/user/') && route.endsWith('/ban') && method === 'POST') {
@@ -1946,11 +1934,10 @@ export default defineHandler(async (event: any) => {
     let body:any = {}; try { body = JSON.parse(await request.text() || '{}'); } catch { return json({error:'Invalid JSON'},400); }
     const reason = String(body.reason || '').trim();
     if (!reason) return json({error:'reason is required'},400);
-    const autoUnban = Boolean(body.autoUnban);
     const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     const target = targetRows[0].id;
-    await sql`UPDATE players SET banned=true, ban_reason=${reason}, ban_notes=${body.notes ? String(body.notes) : null}, ban_created_at=now(), ban_auto_unban=${autoUnban}, ban_auto_unbans_at=${body.autoUnbansAt ? new Date(body.autoUnbansAt) : null}, ban_earliest_appeal_date=${body.earliestAppealDate ? new Date(body.earliestAppealDate) : null} WHERE id=${target}`;
+    await sql`UPDATE players SET banned=true, ban_reason=${reason}, ban_notes=${body.notes ? String(body.notes) : null}, ban_created_at=now(), ban_auto_unban=false, ban_auto_unbans_at=null, ban_earliest_appeal_date=${body.earliestAppealDate ? new Date(body.earliestAppealDate) : null} WHERE id=${target}`;
     return json({success:true});
   }
 
