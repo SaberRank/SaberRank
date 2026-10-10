@@ -43,7 +43,7 @@ namespace SnoreSaber.Features.ScoreSubmission.Services {
             }
 
             float outcomeTime = GetPlayOutcomeTime(results, playOutcomeTime, replay.FailTime);
-            ScoreUploadPayload payload = _payloadBuilder.Build(beatmapLevel, beatmapKey, results, _gameSessionService.LocalPlayerInfo, outcomeTime, playOutcomeOverride);
+            ScoreUploadPayload payload = _payloadBuilder.Build(beatmapLevel, beatmapKey, results, _gameSessionService.LocalPlayerInfo, _gameSessionService.GameSession?.PlayerId, outcomeTime, playOutcomeOverride);
 
             Plugin.Log.Debug($"Upload payload size: data={payload.EncryptedScoreData.Length} chars, replay={replay.Replay.Length} bytes");
             ScoreUploadResult result = await UploadWithRetries(payload.EncryptedScoreData, payload.ScoreData.InfoHash, replay.Replay, statusChanged, notifyAuthenticationStatus, cancellationToken);

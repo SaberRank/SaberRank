@@ -1917,6 +1917,10 @@ namespace SnoreSaber.Core.Api.Generated
         [Newtonsoft.Json.JsonProperty("uploadVersionHash", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string UploadVersionHash { get; set; }
 
+        // Canonical SnoreSaber player ID resolved by the server (may differ from the platform ID).
+        [Newtonsoft.Json.JsonProperty("playerId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string PlayerId { get; set; }
+
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]

@@ -54,14 +54,15 @@ namespace SnoreSaber.Core.Api {
                         SnoreSaberApiError.FromMessage("Missing sessionId or key"));
                 }
 
+                string canonicalPlayerId = string.IsNullOrWhiteSpace(response.PlayerId) ? request.PlayerId : response.PlayerId;
                 var session = new GameSession {
-                    PlayerId = request.PlayerId,
+                    PlayerId = canonicalPlayerId,
                     PlayerName = request.PlayerName,
                     SessionId = response.SessionId,
                     SessionKey = response.Key,
                     UploadTrust = _uploadTrustClient.CreateSession(response),
                     Player = new PlayerSummary {
-                        Id = request.PlayerId,
+                        Id = canonicalPlayerId,
                         Name = request.PlayerName
                     }
                 };

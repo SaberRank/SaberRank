@@ -1,4 +1,4 @@
-﻿import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:http';
 
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf';
@@ -14,13 +14,13 @@ import { ConnectAcceptedSchema, ErrorResponseSchema, HeartbeatAckSchema } from '
 const protocolVersion = 1;
 const heartbeatIntervalMs = 10_000;
 const publicEventsChannel = 'snoresaber:ludus:public:v1';
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.LUDUS_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.LUDUS_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || process.env.LUDUS_REDIS_REST_URL;
+const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || process.env.LUDUS_REDIS_REST_TOKEN;
 const pubsub = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
 const ludusSecret = process.env.LUDUS_SESSION_SECRET || '';
 const snoreApiUrl = (process.env.SNORE_API_URL || 'https://snoresaber.vercel.app').replace(/\/$/, '');
-const connections = new Map<string, { socket: WebSocket; playerId: string; clientType: LudusClientType; roomContext: LudusRoomContextType; publicOptOut: boolean; currentRoomId: string; latestPresence?: { playState: number; currentRoomId: string; currentMapHash: string } }>();
-const publicPresence = new Map<string, { playState: number; currentRoomId: string; currentMapHash: string }>();
+const connections = new Map<string, { socket: WebSocket; playerId: string; clientType: LudusClientType; roomContext: LudusRoomContextType; publicOptOut: boolean; currentRoomId: string; latestPresence?: { playState: number; currentRoomId: string; currentMapHash: string; lastSeen?: number } }>();
+const publicPresence = new Map<string, { playState: number; currentRoomId: string; currentMapHash: string; lastSeen: number }>();
 let subscriberReady: Promise<void> | null = null;
 
 const server = createServer((_request, response) => {
@@ -104,9 +104,9 @@ async function ensureSubscriber() {
          subscription.on('message', (messageEvent: any) => {
             try {
                const raw = messageEvent && typeof messageEvent === 'object' && 'message' in messageEvent ? messageEvent.message : messageEvent;
-               const event = (typeof raw === 'string' ? JSON.parse(raw) : raw) as { kind: 'presence' | 'replay'; sender: string; playerId: string; matchId?: string; bytes?: string; state?: { playState: number; currentRoomId: string; currentMapHash: string }; online?: boolean };
+               const event = (typeof raw === 'string' ? JSON.parse(raw) : raw) as { kind: 'presence' | 'replay'; sender: string; playerId: string; matchId?: string; bytes?: string; state?: { playState: number; currentRoomId: string; currentMapHash: string; lastSeen?: number }; online?: boolean };
                if (event.kind === 'presence') {
-                  if (event.online && event.state) publicPresence.set(event.playerId, event.state);
+                  if (event.online && event.state) publicPresence.set(event.playerId, { ...event.state, lastSeen: event.state.lastSeen || Date.now() });
                   else publicPresence.delete(event.playerId);
                   for (const [id, entry] of connections) {
                      if (id !== event.sender && !entry.publicOptOut && entry.roomContext === LudusRoomContextType.PUBLIC_PRESENCE && entry.socket.readyState === WebSocket.OPEN) {
@@ -117,7 +117,11 @@ async function ensureSubscriber() {
                   const packet = Buffer.from(event.bytes, 'base64');
                   for (const [id, entry] of connections) {
                      if (id === event.sender || entry.publicOptOut || entry.roomContext !== LudusRoomContextType.PUBLIC_PRESENCE) continue;
-                     if (entry.currentRoomId && event.matchId && entry.currentRoomId !== event.matchId) continue;
+                     // Public-presence rooms are addressed as `player:<playerId>`, while replay packets
+                     // carry the player's actual gameplay match ID. Route by selected player first.
+                     const followingPlayer = entry.currentRoomId === `player:${event.playerId}`;
+                     const followingMatch = Boolean(entry.currentRoomId && event.matchId && entry.currentRoomId === event.matchId);
+                     if (entry.currentRoomId && !followingPlayer && !followingMatch) continue;
                      if (entry.socket.readyState === WebSocket.OPEN) entry.socket.send(packet);
                   }
                }
@@ -135,6 +139,10 @@ async function publishPublicEvent(sender: string, playerId: string, bytes: Uint8
 }
 
 function getPublicRooms() {
+   const now = Date.now();
+   for (const [playerId, state] of publicPresence) {
+      if (now - (state.lastSeen || now) > 40_000) publicPresence.delete(playerId);
+   }
    return [...publicPresence.entries()].map(([playerId, state]) => create(LiveMatchRoomStateSchema, {
       matchId: `player:${playerId}`,
       roomId: state.currentRoomId,
@@ -155,7 +163,7 @@ function getPublicRooms() {
    }));
 }
 
-async function publishPresence(sender: string, playerId: string, state: { playState: number; currentRoomId: string; currentMapHash: string }, online: boolean) {
+async function publishPresence(sender: string, playerId: string, state: { playState: number; currentRoomId: string; currentMapHash: string; lastSeen?: number }, online: boolean) {
    if (!pubsub) throw new Error('Ludus shared Redis is not connected');
    await pubsub.publish(publicEventsChannel, JSON.stringify({ kind: 'presence', sender, playerId, state, online }));
 }
@@ -210,7 +218,8 @@ websocketServer.on('connection', (socket) => {
                         await pubsub!.srem('snoresaber:ludus:online:v1', String(playerIds[index]));
                         continue;
                      }
-                     publicPresence.set(String(playerIds[index]), typeof serialized === 'string' ? JSON.parse(serialized) : serialized as any);
+                     const state = (typeof serialized === 'string' ? JSON.parse(serialized) : serialized) as any;
+                     publicPresence.set(String(playerIds[index]), { ...state, lastSeen: Number(state.lastSeen) || Date.now() });
                   }
                } catch { /* the stream can still connect and receive fresh events */ }
                send(socket, { case: 'roomSnapshot', value: create(RoomSnapshotSchema, { rooms: getPublicRooms() }) }, connectionId, ++currentSequence);
@@ -225,8 +234,16 @@ websocketServer.on('connection', (socket) => {
          if (body.case === 'heartbeat') {
             const connection = connections.get(connectionId);
             if (connection && connection.clientType === LudusClientType.PLAYER && connection.latestPresence && !connection.publicOptOut) {
+               connection.latestPresence.lastSeen = Date.now();
                await pubsub!.set(`snoresaber:ludus:player:v1:${connectedPlayerId}`, JSON.stringify(connection.latestPresence), { ex: 35 });
                await pubsub!.sadd('snoresaber:ludus:online:v1', connectedPlayerId);
+               const latestPresence = {
+                  ...connection.latestPresence,
+                  lastSeen: Number(connection.latestPresence.lastSeen) || Date.now(),
+               };
+               connection.latestPresence = latestPresence;
+               publicPresence.set(connectedPlayerId, latestPresence);
+               await publishPresence(connectionId, connectedPlayerId, connection.latestPresence, true);
             }
             send(socket, { case: 'heartbeatAck', value: create(HeartbeatAckSchema, { highestSeenSequence: currentSequence }) }, connectionId, ++currentSequence);
             return;
@@ -242,7 +259,7 @@ websocketServer.on('connection', (socket) => {
             const update = body.value;
             connection.currentRoomId = update.currentRoomId || connection.currentRoomId;
             if (!connection.publicOptOut) {
-               const state = { playState: update.playState, currentRoomId: connection.currentRoomId, currentMapHash: update.currentMapHash || '' };
+               const state = { playState: update.playState, currentRoomId: connection.currentRoomId, currentMapHash: update.currentMapHash || '', lastSeen: Date.now() };
                connection.latestPresence = state;
                await pubsub!.set(`snoresaber:ludus:player:v1:${connectedPlayerId}`, JSON.stringify(state), { ex: 35 });
                await pubsub!.sadd('snoresaber:ludus:online:v1', connectedPlayerId);
@@ -276,9 +293,7 @@ websocketServer.on('connection', (socket) => {
          void publishPresence(connectionId, connection.playerId, { playState: LudusPlayState.IN_MENUS, currentRoomId: '', currentMapHash: '' }, false);
       }
    });
-   socket.on('error', () => {
-      if (connectionId) connections.delete(connectionId);
-   });
+   socket.on('error', () => { /* close handler performs presence cleanup */ });
 });
 
 export default server;

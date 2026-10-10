@@ -15,8 +15,9 @@ namespace SnoreSaber.Features.ScoreSubmission.Services {
             _runtimeInfo = runtimeInfo;
         }
 
-        internal ScoreUploadPayload Build(BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LevelCompletionResults results, LocalPlayerInfo playerInfo, float playOutcomeTime, SnoreSaberPlayOutcome? playOutcomeOverride) {
+        internal ScoreUploadPayload Build(BeatmapLevel beatmapLevel, BeatmapKey beatmapKey, LevelCompletionResults results, LocalPlayerInfo playerInfo, string authenticatedPlayerId, float playOutcomeTime, SnoreSaberPlayOutcome? playOutcomeOverride) {
             SnoreSaberUploadData scoreData = SnoreSaberUploadData.Create(beatmapLevel, beatmapKey, results, playerInfo, _runtimeInfo.UploadVersionHash, playOutcomeTime, playOutcomeOverride);
+            if (!string.IsNullOrWhiteSpace(authenticatedPlayerId)) scoreData.PlayerId = authenticatedPlayerId;
             string serializedScore = JsonConvert.SerializeObject(scoreData);
             return new ScoreUploadPayload {
                 ScoreData = scoreData,

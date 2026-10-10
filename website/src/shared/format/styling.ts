@@ -188,10 +188,6 @@ function resolvePlayerRole(player: PlayerRoleSource): [RoleKey, string | null] {
    if (Permissions.checkPermissionNumber(player.permissions, Permissions.security.CCT)) {
       return ['cct', 'Content Creation Team'];
    }
-   if (Permissions.isSupporter(player.permissions)) {
-      return ['supporter', 'SnoreSaber Supporter'];
-   }
-
    if (player.role) {
       const roleText = normalizePlayerRoleText(player.role);
       for (const role of ROLE_TEXT_PRIORITY) {
@@ -201,7 +197,7 @@ function resolvePlayerRole(player: PlayerRoleSource): [RoleKey, string | null] {
       }
       return ['default', roleText];
    }
-   return ['default', player.name];
+   return ['default', 'Player'];
 }
 
 export function getPlayerRoleStyleAndTitle(player: PlayerRoleSource | null, prefix: RolePrefix = 'text'): [string, string | null] {

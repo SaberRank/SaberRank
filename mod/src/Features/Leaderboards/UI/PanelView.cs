@@ -45,6 +45,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
         [UIComponent("content-root")]
         protected readonly RectTransform _contentRoot = null;
         private string _promptText = string.Empty;
+        private string _starsText = string.Empty;
         private bool _promptActive;
         private bool _promptLoading;
         private bool _competeButtonActive;
@@ -104,6 +105,15 @@ namespace SnoreSaber.Features.Leaderboards.UI {
         [UIValue("content-active")]
         protected bool contentActive => true;
 
+        [UIValue("stars-text")]
+        protected string starsText {
+            get => _starsText;
+            set {
+                _starsText = value ?? string.Empty;
+                NotifyPropertyChanged();
+            }
+        }
+
         [UIValue("prompt-loader-active")]
         protected bool promptLoading {
             get => _promptLoading;
@@ -135,6 +145,7 @@ namespace SnoreSaber.Features.Leaderboards.UI {
             backgroundColor = _snoreSaberPurple;
             topText = LoadingRankingText;
             bottomText = FormatRankedStatus(LoadingRankedStatusText);
+            starsText = string.Empty;
             Plugin.Log.Debug("PanelView Setup!");
         }
 
@@ -195,7 +206,17 @@ namespace SnoreSaber.Features.Leaderboards.UI {
 
         protected override void OnBottomClicked() => StatusSelected?.Invoke();
 
-        public void SetRankedStatus(string rankedStatus) => bottomText = FormatRankedStatus(rankedStatus);
+        public void SetRankedStatus(string rankedStatus) {
+            string status = rankedStatus ?? string.Empty;
+            int starsIndex = status.IndexOf("\nStars:", StringComparison.OrdinalIgnoreCase);
+            if (starsIndex >= 0) {
+                starsText = status.Substring(starsIndex + 1).Trim();
+                status = status.Substring(0, starsIndex).TrimEnd();
+            } else {
+                starsText = string.Empty;
+            }
+            bottomText = FormatRankedStatus(status);
+        }
 
         public void SetPromptInfo(string status, bool showLoadingIndicator, float dismissTime = PromptDismissNever) => SetPrompt(status, showLoadingIndicator, dismissTime);
 

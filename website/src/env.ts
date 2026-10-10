@@ -59,7 +59,7 @@ export const env = createEnv({
    client: {
       NEXT_PUBLIC_API_URL: publicBrowserUrlSchema.default('https://snoresaber.vercel.app'),
       NEXT_PUBLIC_ARCVIEWER_URL: publicBrowserUrlSchema.default('https://snoresaber-watch.vercel.app/'),
-      NEXT_PUBLIC_LUDUS_URL: publicBrowserUrlSchema.default('https://live.snoresaber.com'),
+      NEXT_PUBLIC_LUDUS_URL: publicBrowserUrlSchema.default('https://snoresaber-ludus.vercel.app'),
       NEXT_PUBLIC_SITE_URL: publicBrowserUrlSchema.default('https://snoresaber.vercel.app')
    },
    runtimeEnvStrict: {

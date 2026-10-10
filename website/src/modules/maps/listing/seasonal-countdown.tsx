@@ -3,15 +3,38 @@ import { CalendarClock } from 'lucide-react';
 
 type SeasonStatus = { seasonKey: string; nextReset: string; secondsUntilReset: number };
 
+function fallbackSeasonStatus(now = new Date()): SeasonStatus {
+   const year = now.getUTCFullYear();
+   const quarterMonth = Math.floor(now.getUTCMonth() / 3) * 3;
+   const nextMonth = quarterMonth + 3;
+   const reset = new Date(Date.UTC(year + Math.floor(nextMonth / 12), nextMonth % 12, 1));
+   const seasonStart = new Date(Date.UTC(year, quarterMonth, 1));
+   const seasonKey = `${seasonStart.getUTCFullYear()}-Q${Math.floor(quarterMonth / 3) + 1}`;
+   return { seasonKey, nextReset: reset.toISOString(), secondsUntilReset: Math.max(0, Math.floor((reset.getTime() - now.getTime()) / 1000)) };
+}
+
 export function SeasonalCountdown() {
    const [status, setStatus] = useState<SeasonStatus | null>(null);
    const [secondsLeft, setSecondsLeft] = useState(0);
    useEffect(() => {
       let active = true;
-      fetch('/api/v2/seasons/status', { cache: 'no-store' }).then((response) => response.ok ? response.json() : null).then((data) => {
-         if (!active || !data) return;
-         setStatus(data);
-         setSecondsLeft(Math.max(0, Number(data.secondsUntilReset || 0)));
+      // Render a local UTC-quarter countdown immediately, then prefer the API value.
+      // If the endpoint fails, the card still works instead of remaining on "Loading".
+      const fallback = fallbackSeasonStatus();
+      setStatus(fallback);
+      setSecondsLeft(fallback.secondsUntilReset);
+      fetch('/api/v2/seasons/status', { cache: 'no-store' }).then(async (response) => {
+         if (!response.ok) throw new Error(`Season status returned HTTP ${response.status}`);
+         return response.json();
+      }).then((data) => {
+         if (!active || !data || typeof data.nextReset !== 'string') return;
+         const nextReset = new Date(data.nextReset);
+         if (!Number.isFinite(nextReset.getTime())) return;
+         const secondsUntilReset = Number.isFinite(Number(data.secondsUntilReset))
+            ? Math.max(0, Number(data.secondsUntilReset))
+            : Math.max(0, Math.floor((nextReset.getTime() - Date.now()) / 1000));
+         setStatus({ seasonKey: String(data.seasonKey || fallback.seasonKey), nextReset: nextReset.toISOString(), secondsUntilReset });
+         setSecondsLeft(secondsUntilReset);
       }).catch(() => undefined);
       return () => { active = false; };
    }, []);

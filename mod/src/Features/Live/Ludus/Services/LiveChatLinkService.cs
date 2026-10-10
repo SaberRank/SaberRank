@@ -48,6 +48,7 @@ namespace SnoreSaber.Features.Live.Ludus.Services {
         private readonly LiveChatSongNavigator _songNavigator;
         private readonly LudusSessionService _ludusSession;
         private readonly Dictionary<string, string> _playerNames = new Dictionary<string, string>();
+        private readonly Dictionary<string, DateTime> _playerNameRetryAfter = new Dictionary<string, DateTime>();
         private readonly Dictionary<string, string> _mapNames = new Dictionary<string, string>();
         private readonly HashSet<string> _pendingPlayerNames = new HashSet<string>();
         private readonly HashSet<string> _pendingMapNames = new HashSet<string>();
@@ -94,7 +95,7 @@ namespace SnoreSaber.Features.Live.Ludus.Services {
                 return "Unknown";
             }
 
-            return FirstNonEmpty(ResolvedPlayerName(entry.SenderPlayerId), "Loading player");
+            return FirstNonEmpty(ResolvedPlayerName(entry.SenderPlayerId), FallbackPlayerName(entry.SenderPlayerId));
         }
 
         internal string DisplayText(LiveChatEntry entry) {
@@ -132,7 +133,7 @@ namespace SnoreSaber.Features.Live.Ludus.Services {
 
             string playerId = FirstNonEmpty(fallbackPlayerId, entry?.SenderPlayerId);
             if (!string.IsNullOrWhiteSpace(playerId)) {
-                return FirstNonEmpty(ResolvedPlayerName(playerId), "Loading player");
+                return FirstNonEmpty(ResolvedPlayerName(playerId), FallbackPlayerName(playerId));
             }
 
             string fallback = CleanDisplayName(fallbackName);
@@ -268,6 +269,9 @@ namespace SnoreSaber.Features.Live.Ludus.Services {
             if (_pendingPlayerNames.Contains(playerId) || _playerNames.ContainsKey(playerId)) {
                 return;
             }
+            if (_playerNameRetryAfter.TryGetValue(playerId, out DateTime retryAfter) && DateTime.UtcNow < retryAfter) {
+                return;
+            }
 
             _pendingPlayerNames.Add(playerId);
             _ = ResolvePlayerName(playerId);
@@ -284,7 +288,14 @@ namespace SnoreSaber.Features.Live.Ludus.Services {
 
             await UnityMainThreadTaskScheduler.Factory.StartNew(() => {
                 _pendingPlayerNames.Remove(playerId);
-                _playerNames[playerId] = name;
+                if (!string.IsNullOrWhiteSpace(name)) {
+                    _playerNames[playerId] = name;
+                    _playerNameRetryAfter.Remove(playerId);
+                } else {
+                    // Do not permanently cache a failed lookup as an empty name.
+                    // A temporary API/network failure should recover automatically.
+                    _playerNameRetryAfter[playerId] = DateTime.UtcNow.AddSeconds(30);
+                }
                 ResolvedTextChanged?.Invoke();
             });
         }
@@ -322,6 +333,15 @@ namespace SnoreSaber.Features.Live.Ludus.Services {
         private static string NormalizeLogSuffix(string suffix) {
             suffix = string.Join(" ", (suffix ?? string.Empty).Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries));
             return string.IsNullOrEmpty(suffix) ? string.Empty : $" {suffix}";
+        }
+
+        private static string FallbackPlayerName(string playerId) {
+            if (string.IsNullOrWhiteSpace(playerId)) {
+                return "Unknown player";
+            }
+
+            string suffix = playerId.Length <= 4 ? playerId : playerId.Substring(playerId.Length - 4);
+            return $"Player #{suffix}";
         }
 
         private static string FirstNonEmpty(params string[] values) {

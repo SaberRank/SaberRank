@@ -75,6 +75,9 @@ namespace SnoreSaber {
                 // LeaderboardCore must initialize after SnoreSaber. Patch its broken
                 // 1.7.0 TargetMethod before LeaderboardCore runs PatchAll().
                 Features.Leaderboards.Adapters.LeaderboardCore.LeaderboardCorePanelViewCompatibilityPatch.Install(harmony);
+                // Ensure SnoreSaber takes priority over ScoreSaber when a supported song is selected.
+                // The patch is not marked with [HarmonyPatch] and therefore must be installed explicitly.
+                Features.Leaderboards.Adapters.LeaderboardCore.LeaderboardCoreSnoreSaberPriorityPatch.Install(harmony);
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
                 PlayerPrefs.SetInt("lbPatched", 1);
             }

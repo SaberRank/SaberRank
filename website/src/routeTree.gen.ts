@@ -24,8 +24,8 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as legacyLeaderboardsRouteImport } from './routes/(legacy)/leaderboards'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminBadgesRouteImport } from './routes/admin/badges'
-import { Route as AdminVersionsRouteImport } from './routes/admin/versions'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminVersionsRouteImport } from './routes/admin/versions'
 import { Route as AuthDiscordRouteImport } from './routes/auth/discord'
 import { Route as AuthPatreonRouteImport } from './routes/auth/patreon'
 import { Route as AuthSteamRouteImport } from './routes/auth/steam'
@@ -138,14 +138,14 @@ const AdminBadgesRoute = AdminBadgesRouteImport.update({
   path: '/badges',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminVersionsRoute = AdminVersionsRouteImport.update({
-  id: '/versions',
-  path: '/versions',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminVersionsRoute = AdminVersionsRouteImport.update({
+  id: '/versions',
+  path: '/versions',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AuthDiscordRoute = AuthDiscordRouteImport.update({
@@ -351,8 +351,8 @@ export interface FileRoutesByFullPath {
   '/u/$playerId': typeof UPlayerIdRouteRoute
   '/leaderboards': typeof legacyLeaderboardsRoute
   '/admin/badges': typeof AdminBadgesRoute
-  '/admin/versions': typeof AdminVersionsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/versions': typeof AdminVersionsRoute
   '/auth/discord': typeof AuthDiscordRouteWithChildren
   '/auth/patreon': typeof AuthPatreonRouteWithChildren
   '/auth/steam': typeof AuthSteamRoute
@@ -403,8 +403,8 @@ export interface FileRoutesByTo {
   '/u/$playerId': typeof UPlayerIdRouteRoute
   '/leaderboards': typeof legacyLeaderboardsRoute
   '/admin/badges': typeof AdminBadgesRoute
-  '/admin/versions': typeof AdminVersionsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/versions': typeof AdminVersionsRoute
   '/auth/discord': typeof AuthDiscordRouteWithChildren
   '/auth/patreon': typeof AuthPatreonRouteWithChildren
   '/auth/steam': typeof AuthSteamRoute
@@ -456,8 +456,8 @@ export interface FileRoutesById {
   '/u/$playerId': typeof UPlayerIdRouteRoute
   '/(legacy)/leaderboards': typeof legacyLeaderboardsRoute
   '/admin/badges': typeof AdminBadgesRoute
-  '/admin/versions': typeof AdminVersionsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/versions': typeof AdminVersionsRoute
   '/auth/discord': typeof AuthDiscordRouteWithChildren
   '/auth/patreon': typeof AuthPatreonRouteWithChildren
   '/auth/steam': typeof AuthSteamRoute
@@ -513,6 +513,7 @@ export interface FileRouteTypes {
     | '/u/$playerId'
     | '/leaderboards'
     | '/admin/badges'
+    | '/admin/reports'
     | '/admin/versions'
     | '/auth/discord'
     | '/auth/patreon'
@@ -564,6 +565,7 @@ export interface FileRouteTypes {
     | '/u/$playerId'
     | '/leaderboards'
     | '/admin/badges'
+    | '/admin/reports'
     | '/admin/versions'
     | '/auth/discord'
     | '/auth/patreon'
@@ -615,6 +617,7 @@ export interface FileRouteTypes {
     | '/u/$playerId'
     | '/(legacy)/leaderboards'
     | '/admin/badges'
+    | '/admin/reports'
     | '/admin/versions'
     | '/auth/discord'
     | '/auth/patreon'
@@ -794,18 +797,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBadgesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/versions': {
-      id: '/admin/versions'
-      path: '/versions'
-      fullPath: '/admin/versions'
-      preLoaderRoute: typeof AdminVersionsRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
       fullPath: '/admin/reports'
       preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/versions': {
+      id: '/admin/versions'
+      path: '/versions'
+      fullPath: '/admin/versions'
+      preLoaderRoute: typeof AdminVersionsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/auth/discord': {
@@ -1065,15 +1068,15 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminBadgesRoute: typeof AdminBadgesRoute
-  AdminVersionsRoute: typeof AdminVersionsRoute
   AdminReportsRoute: typeof AdminReportsRoute
+  AdminVersionsRoute: typeof AdminVersionsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminBadgesRoute: AdminBadgesRoute,
-  AdminVersionsRoute: AdminVersionsRoute,
   AdminReportsRoute: AdminReportsRoute,
+  AdminVersionsRoute: AdminVersionsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
