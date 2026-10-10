@@ -1,0 +1,220 @@
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
+import { useTranslations } from 'use-intl';
+import { z } from 'zod';
+
+import { BSWC_PROMO_ENABLED, type HomeBswcPromo } from '@/modules/home/actions/bswc';
+import { getHomeBswcPromo } from '@/modules/home/actions/bswc.server';
+import type { HomeNewsFeed } from '@/modules/home/actions/news';
+import { getHomeNewsFeed } from '@/modules/home/actions/news.server';
+import { BeatSaberPageBackground } from '@/modules/home/beat-saber-background';
+import { BswcPromoSection } from '@/modules/home/bswc-promo-section';
+import { HomeColumn, HomeColumnLink } from '@/modules/home/home-column';
+import { HOME_TRENDING_MAP_SEARCH, TOP_PLAYER_COUNT, TRENDING_MAP_COUNT } from '@/modules/home/home-constants';
+import { InstallSection } from '@/modules/home/install-section';
+import { NewsColumn, NewsColumnActions } from '@/modules/home/news-column';
+import { RankedBatchSection } from '@/modules/home/ranked-batch-section';
+import { TopPlayersColumn } from '@/modules/home/top-players-column';
+import { TrendingMapsColumn } from '@/modules/home/trending-maps-column';
+import type { MapControllerGetMapListingsDataItem, PlayerControllerGetPlayersDataItem } from '@/shared/api/generated/ApiParams';
+import { publicApi } from '@/shared/api/server-api';
+import { optionalApi } from '@/shared/result/api';
+import { buildSeoHead } from '@/shared/seo/metadata';
+import { optionalSearchParamString } from '@/shared/url-state/params';
+
+const BSWC_PROMO_PRIORITY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const RANKED_BATCH_PRIORITY_WINDOW_MS = 48 * 60 * 60 * 1000;
+const HOME_AGGREGATES_CACHE_MS = 60 * 1000;
+const HOME_AGGREGATES_RETRY_MS = 15 * 1000;
+
+const homeSearchSchema = z.object({
+   accountMergeChallengeId: optionalSearchParamString,
+   bswcLive: optionalSearchParamString
+});
+
+type HomePageData = {
+   topPlayers: PlayerControllerGetPlayersDataItem[];
+   trendingMaps: MapControllerGetMapListingsDataItem[];
+   news: HomeNewsFeed;
+   bswc: HomeBswcPromo | null;
+   prioritizeBswc: boolean;
+   prioritizeRankedBatch: boolean;
+};
+
+type HomeAggregates = Pick<HomePageData, 'topPlayers' | 'trendingMaps'>;
+
+let cachedHomeAggregates: { expiresAt: number; data: HomeAggregates } | null = null;
+let pendingHomeAggregatesRefresh: Promise<HomeAggregates> | null = null;
+
+const getHomePageData = createServerFn({ method: 'GET' }).handler(async (): Promise<HomePageData> => {
+   const [aggregates, news, bswc] = await Promise.all([getHomeAggregates(), getHomeNewsFeed(), BSWC_PROMO_ENABLED ? getHomeBswcPromo() : null]);
+   const now = Date.now();
+
+   return {
+      ...aggregates,
+      news,
+      bswc,
+      prioritizeBswc:
+         bswc?.liveMatch != null || (bswc?.nextMatch != null && Date.parse(bswc.nextMatch.startsAt) <= now + BSWC_PROMO_PRIORITY_WINDOW_MS),
+      prioritizeRankedBatch:
+         news.latestRankedBatchVideo != null && Date.parse(news.latestRankedBatchVideo.publishedAt) >= now - RANKED_BATCH_PRIORITY_WINDOW_MS
+   };
+});
+
+async function getHomeAggregates() {
+   if (cachedHomeAggregates && cachedHomeAggregates.expiresAt > Date.now()) return cachedHomeAggregates.data;
+
+   if (!pendingHomeAggregatesRefresh) {
+      pendingHomeAggregatesRefresh = refreshHomeAggregates().finally(() => {
+         pendingHomeAggregatesRefresh = null;
+      });
+   }
+
+   // retain stale data during refresh, but let the first request populate the page normally
+   return cachedHomeAggregates?.data ?? pendingHomeAggregatesRefresh;
+}
+
+async function refreshHomeAggregates(): Promise<HomeAggregates> {
+   const [playersResponse, mapsResponse] = await Promise.all([
+      optionalApi(
+         publicApi.player
+            .playerControllerGetPlayers({
+               page: 1,
+               limit: TOP_PLAYER_COUNT,
+               includeInactive: 'false',
+               sort: 'rank',
+               sortDirection: 'asc'
+            })
+            .then((response) => response.data)
+      ),
+      optionalApi(
+         publicApi.map
+            .mapControllerGetMapListings({
+               page: 1,
+               limit: TRENDING_MAP_COUNT,
+               status: [HOME_TRENDING_MAP_SEARCH.status],
+               verified: 'true',
+               sortBy: HOME_TRENDING_MAP_SEARCH.sortBy,
+               sortDirection: HOME_TRENDING_MAP_SEARCH.sortDirection
+            })
+            .then((response) => response.data)
+      )
+   ]);
+   const data = {
+      topPlayers: playersResponse?.data ?? [],
+      trendingMaps: mapsResponse?.data ?? []
+   };
+
+   cachedHomeAggregates = {
+      expiresAt: Date.now() + (playersResponse || mapsResponse ? HOME_AGGREGATES_CACHE_MS : HOME_AGGREGATES_RETRY_MS),
+      data
+   };
+
+   return data;
+}
+
+export const Route = createFileRoute('/')({
+   validateSearch: (search) => homeSearchSchema.parse(search),
+   loaderDeps: ({ search }) => search,
+   loader: ({ deps }) => {
+      if (deps.accountMergeChallengeId) {
+         throw redirect({ to: '/settings/connections', search: { accountMergeChallengeId: deps.accountMergeChallengeId } });
+      }
+
+      return getHomePageData();
+   },
+   staleTime: 60 * 1000,
+   head: () => {
+      const head = buildSeoHead({
+         title: 'Home',
+         description: 'The original leaderboard system for Beat Saber custom songs, built for competitive players worldwide',
+         path: '/'
+      });
+
+      // X rejects video CDN requests that include a non-X referer
+      return {
+         ...head,
+         meta: [...head.meta, { name: 'referrer', content: 'no-referrer' }]
+      };
+   },
+   component: HomeRoute
+});
+
+function HomeRoute() {
+   const data = Route.useLoaderData();
+   const search = Route.useSearch();
+   const t = useTranslations('home');
+   const previewBswcLive = search.bswcLive === '1';
+   const showBswcFirst = BSWC_PROMO_ENABLED && (previewBswcLive || data.prioritizeBswc);
+
+   return (
+      <div className="dark bg-background text-foreground relative flex-1 overflow-hidden">
+         <BeatSaberPageBackground />
+
+         <section className="relative z-10 mx-auto w-full max-w-[1180px] px-4 pt-12 pb-10 sm:px-6 lg:px-10 lg:pt-14">
+            <div className="flex flex-col items-center gap-4 text-center">
+               <h1 className="snoresaber-gradient-title text-4xl font-semibold tracking-tight sm:text-5xl">SnoreSaber</h1>
+               <p className="text-muted-foreground max-w-2xl text-base leading-relaxed sm:text-[16.5px]">
+                  Your independent Beat Saber leaderboard for snores, rankings, maps, and player progress.
+               </p>
+            </div>
+         </section>
+
+         <div className="relative z-10 mx-auto flex w-full max-w-[1180px] flex-col gap-14 px-4 pb-16 sm:px-6 lg:px-10">
+            {data.prioritizeRankedBatch && (
+               <section>
+                  <RankedBatchSection video={data.news.latestRankedBatchVideo} />
+               </section>
+            )}
+
+            {showBswcFirst && (
+               <section>
+                  <BswcPromoSection promo={data.bswc} previewLive={previewBswcLive} />
+               </section>
+            )}
+
+            <section className="grid items-stretch gap-4 lg:grid-cols-[minmax(18rem,1.45fr)_minmax(0,1fr)_minmax(19rem,1.08fr)]">
+               <HomeColumn title={t('sections.news')} action={<NewsColumnActions posts={data.news.posts} />}>
+                  <NewsColumn posts={data.news.posts} />
+               </HomeColumn>
+
+               <HomeColumn
+                  title={t('sections.topPlayers')}
+                  action={
+                     <HomeColumnLink to="/rankings" search={{ page: 1 }}>
+                        {t('sections.rankings')}
+                     </HomeColumnLink>
+                  }
+               >
+                  <TopPlayersColumn players={data.topPlayers} />
+               </HomeColumn>
+
+               <HomeColumn
+                  title={t('sections.trendingMaps')}
+                  action={
+                     <HomeColumnLink to="/maps" search={HOME_TRENDING_MAP_SEARCH}>
+                        {t('sections.browse')}
+                     </HomeColumnLink>
+                  }
+               >
+                  <TrendingMapsColumn maps={data.trendingMaps} />
+               </HomeColumn>
+            </section>
+
+            {BSWC_PROMO_ENABLED && !showBswcFirst && (
+               <section>
+                  <BswcPromoSection promo={data.bswc} previewLive={previewBswcLive} />
+               </section>
+            )}
+
+            {!data.prioritizeRankedBatch && (
+               <section>
+                  <RankedBatchSection video={data.news.latestRankedBatchVideo} />
+               </section>
+            )}
+
+            <InstallSection />
+         </div>
+      </div>
+   );
+}

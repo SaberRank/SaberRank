@@ -1,0 +1,2 @@
+-- Steam ID is the permanent public SnoreSaber player ID.
+-- No player_number column or migration is required.

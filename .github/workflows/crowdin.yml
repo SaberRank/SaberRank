@@ -1,0 +1,53 @@
+name: Crowdin
+
+on:
+   schedule:
+      - cron: '17 3 * * *'
+   workflow_dispatch:
+
+permissions:
+   contents: write
+   pull-requests: write
+
+jobs:
+   synchronize:
+      name: synchronize translations
+      runs-on: ubuntu-latest
+
+      steps:
+         - name: checkout
+           uses: actions/checkout@v5
+
+         - name: setup Vite+
+           uses: voidzero-dev/setup-vp@v1
+           with:
+              node-version: '24.15.0'
+              cache: true
+
+         - name: install dependencies
+           run: vp install --frozen-lockfile
+
+         - name: sync with Crowdin
+           uses: crowdin/github-action@v2
+           with:
+              upload_sources: true
+              upload_translations: false
+              download_translations: true
+              skip_untranslated_files: false
+              skip_untranslated_strings: true
+              localization_branch_name: l10n/crowdin
+              create_pull_request: true
+              pull_request_title: 'i18n: update translations'
+              pull_request_body: 'Automated Crowdin translation sync'
+              pull_request_base_branch_name: main
+              commit_message: 'i18n: update translations'
+           env:
+              GITHUB_TOKEN: ${{ github.token }}
+              CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+              CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+         - name: sync Crowdin context
+           run: vp run crowdin:context -- --apply
+           env:
+              CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+              CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
