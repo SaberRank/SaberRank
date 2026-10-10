@@ -52,11 +52,18 @@ export function LeaderboardScoresTable({
 }: LeaderboardScoresTableProps) {
    const isRanked = isLeaderboardRanked(leaderboard);
    const isScoped = scopedPage != null && scopedPageSize != null;
+   const orderedScores = scores
+      .map((score, sourceIndex) => ({ score, sourceIndex }))
+      .sort((a, b) => {
+         const aRank = a.score.rank > 0 ? a.score.rank : Number.POSITIVE_INFINITY;
+         const bRank = b.score.rank > 0 ? b.score.rank : Number.POSITIVE_INFINITY;
+         return aRank - bRank || a.sourceIndex - b.sourceIndex;
+      });
 
    return (
       <PlayerLivePresenceProvider enabled={scores.length > 0}>
          <div className="flex flex-col gap-1.5">
-            {scores.map((score, index) => (
+            {orderedScores.map(({ score }, index) => (
                <LeaderboardScoreCard
                   key={score.id}
                   score={score}

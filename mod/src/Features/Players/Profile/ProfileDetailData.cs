@@ -23,7 +23,7 @@ namespace SnoreSaber.Features.Players.Profile {
                 DisplayName = player.Name,
                 Avatar = player.Avatar,
                 RankText = $"#{string.Format("{0:n0}", player.Stats.Rank)}",
-                PPText = $"<color=#6772E5>{string.Format("{0:n0}", player.Stats.TotalPP)}pp</color>",
+                PPText = $"<color=#6772E5>{string.Format("{0:n0}", player.Stats.TotalPP)} ZZ</color>",
                 RankedAccuracyText = $"{Math.Round(player.Stats.AverageAccuracy, 2)}%",
                 TotalScoreText = string.Format("{0:n0}", player.Stats.TotalScore),
                 UsesFurryFont = PlayerPresentation.UsesFurryFont(player.Id),

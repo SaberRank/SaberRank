@@ -1,0 +1,90 @@
+<bg horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+  <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="2">
+    <horizontal bg="panel-top" horizontal-fit="PreferredSize" pref-width="72">
+      <text id="roomTitleText" text="Room" align="Center" font-size="6.5" overflow-mode="Ellipsis" />
+    </horizontal>
+
+    <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="72" spacing="2">
+      <vertical bg="round-rect-panel" bg-color="grey" pref-width="70" pref-height="52" pad="2" spacing="1" child-align="MiddleCenter">
+        <text text="Selected Song" align="Center" font-size="5" />
+        <vertical id="songContentObject" pref-width="64" pref-height="34" child-align="MiddleCenter" spacing="1.2">
+          <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" child-align="MiddleCenter" child-control-width="true" child-control-height="true" child-expand-width="false" child-expand-height="false" spacing="2">
+            <image id="songCover" pref-width="14" pref-height="14" preserve-aspect="true" />
+            <vertical id="songTextColumn" pref-width="34" child-align="MiddleLeft" child-control-width="true" child-expand-width="false">
+              <text id="songNameText" text="" align="Left" font-size="3.9" overflow-mode="Ellipsis" />
+              <text id="songDetailText" text="" align="Left" font-size="2.6" overflow-mode="Ellipsis" />
+              <text id="songDifficultyText" text="" align="Left" font-size="2.6" overflow-mode="Ellipsis" />
+            </vertical>
+          </horizontal>
+          <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="0.6">
+            <vertical pref-width="6.3">
+              <image src="#ClockIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songDurationText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#MetronomeIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songBpmText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#NPSIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songNpsText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#GameNoteIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songNotesText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#ObstacleIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songObstaclesText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#BombIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songBombsText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#FastNotesIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songNjsText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <image src="#MeasureIcon" preserve-aspect="true" pref-width="2.6" pref-height="2.6" />
+              <text id="songJumpDistanceText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+            <vertical pref-width="6.3">
+              <text text="*" align="Center" font-size="2.6" pref-height="2.6" />
+              <text id="songStarsText" text="--" align="Center" font-size="1.9" />
+            </vertical>
+          </horizontal>
+        </vertical>
+        <vertical id="songStatusObject" pref-width="60" pref-height="34" child-align="MiddleCenter">
+          <text id="songStatusText" text="" align="Center" font-size="4.2" word-wrapping="true" pref-width="52" />
+        </vertical>
+        <vertical id="songEmptyObject" pref-width="60" pref-height="34" child-align="MiddleCenter">
+          <text text="No song has been selected yet." align="Center" font-size="3.8" word-wrapping="true" />
+        </vertical>
+        <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="1">
+          <button text="Players" on-click="ShowPlayersClicked" pref-width="18" pref-height="8" />
+          <button text="Leaderboard" on-click="ShowLeaderboardClicked" pref-width="24" pref-height="8" />
+          <button id="readyButton" text="Ready" on-click="ToggleReadyClicked" pref-width="21" pref-height="8" />
+        </horizontal>
+      </vertical>
+    </horizontal>
+  </vertical>
+
+  <modal show-event="show-organiser-prompt" hide-event="hide-organiser-prompt" size-delta-x="82" size-delta-y="42" click-off-closes="false">
+    <vertical pref-width="78" pref-height="34" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pad="2" spacing="2">
+      <text id="promptMessageText" text="" align="Center" font-size="3.8" word-wrapping="true" pref-width="70" pref-height="16" />
+      <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="2">
+        <button id="promptSecondaryButton" text="Dismiss" on-click="PromptSecondaryClicked" pref-width="28" pref-height="8" />
+        <button id="promptPrimaryButton" text="Confirm" on-click="PromptPrimaryClicked" pref-width="28" pref-height="8" />
+      </horizontal>
+    </vertical>
+  </modal>
+
+  <modal show-event="show-map-start-countdown" hide-event="hide-map-start-countdown" size-delta-x="64" size-delta-y="44" click-off-closes="false">
+    <vertical pref-width="60" pref-height="40" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pad="2" spacing="1.5" child-align="MiddleCenter">
+      <text text="Map starting" align="Center" font-size="6" overflow-mode="Ellipsis" />
+      <text id="countdownNumberText" text="0" align="Center" font-size="16" />
+      <text id="countdownDetailText" text="seconds" align="Center" font-size="4" overflow-mode="Ellipsis" />
+    </vertical>
+  </modal>
+</bg>

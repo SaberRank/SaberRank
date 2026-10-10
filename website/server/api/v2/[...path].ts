@@ -7,6 +7,7 @@ const INGEST_KEY = process.env.SNORE_INGEST_KEY || '';
 const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || '';
+const LUDUS_SESSION_SECRET = process.env.LUDUS_SESSION_SECRET || '';
 const EMAIL_CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const NOW = () => new Date().toISOString();
 
@@ -44,7 +45,7 @@ function player(id: string, name: string, country: string, rank: number, pp: num
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank, countryRank: rank, rankChange: 0,
       totalPP: pp, plusOnePP: pp + 1, totalScore: '0', totalRankedScore: '0',
-      totalPlayedLeaderboards: 5, totalPlayedRankedLeaderboards: 5, totalSubmittedPlays: 1,
+      totalPlayedLeaderboards: 5, totalSubmittedPlays: 1,
       totalReplayViews: 0, averageAccuracy: 97.1, weightedAverageAccuracy: 97.1,
       completionAccuracy: 97.1, device: { hmd: 'Quest 2', controllerLeft: 'Touch', controllerRight: 'Touch' }
     }, bio: null, vanity: null,
@@ -788,6 +789,17 @@ async function ensureModerationTables(sql: any) {
   }
 }
 
+async function ensureScoreReplayTable(sql: any) {
+  await sql`
+    CREATE TABLE IF NOT EXISTS score_replays (
+      score_id BIGINT PRIMARY KEY REFERENCES scores(id) ON DELETE CASCADE,
+      replay_data BYTEA NOT NULL,
+      replay_size INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+}
+
 async function getPlayerBadges(sql: any, playerId: string) {
   if (!sql) return [];
   await ensureModerationTables(sql);
@@ -907,7 +919,7 @@ function dbPlayer(r: any) {
     stats: {
       realmId: 1, realmName: 'SnoreSaber', rank: Number(r.rank || 0), countryRank: Number(r.country_rank || 0), rankChange: 0,
       totalPP: Number(r.pp || 0), plusOnePP: Number(r.pp || 0), totalScore: String(r.total_score || 0), totalRankedScore: String(r.total_ranked_score || 0),
-      totalPlayedLeaderboards: Number(r.total_plays || 0), totalPlayedRankedLeaderboards: Number(r.total_ranked_plays || 0),
+      totalPlayedLeaderboards: Number(r.total_plays || 0),
       totalSubmittedPlays: Number(r.total_plays || 0), totalReplayViews: 0, averageAccuracy: Number(r.average_accuracy || 0),
       weightedAverageAccuracy: Number(r.average_accuracy || 0), completionAccuracy: Number(r.average_accuracy || 0),
       device: { hmd: null, controllerLeft: null, controllerRight: null }
@@ -1106,8 +1118,6 @@ async function recalculatePlayerStats(sql: any, playerId: string) {
   for (const row of bestAll.values()) allScore += Number(row.score || 0);
 
   const average = rankedBest.length ? accuracySum / rankedBest.length : 0;
-  const totalPlays = rows.length;
-  const rankedPlays = rows.filter((r) => r.status === 'RANKED').length;
   const totalLeaderboards = bestAll.size;
   const rankedLeaderboards = bestRanked.size;
 
@@ -1116,8 +1126,8 @@ async function recalculatePlayerStats(sql: any, playerId: string) {
       pp=${pp},
       total_score=${Math.round(allScore)},
       total_ranked_score=${Math.round(rankedScore)},
-      total_plays=${totalPlays},
-      total_ranked_plays=${rankedPlays},
+      total_played_leaderboards=${totalLeaderboards},
+      total_played_ranked_leaderboards=${rankedLeaderboards},
       average_accuracy=${average},
       last_seen_at=now()
     WHERE id=${playerId}`;
@@ -1130,6 +1140,70 @@ async function recalculatePlayerStats(sql: any, playerId: string) {
     countryCounters.set(country, cr);
     await sql`UPDATE players SET rank=${i + 1}, country_rank=${cr} WHERE id=${all[i].id}`;
   }
+}
+
+
+let lastQuarterlySeasonCheck = '';
+function quarterWindow(now = new Date()) {
+  const year = now.getUTCFullYear();
+  const quarter = Math.floor(now.getUTCMonth() / 3) + 1;
+  const startMonth = (quarter - 1) * 3;
+  const start = new Date(Date.UTC(year, startMonth, 1));
+  const end = new Date(Date.UTC(year, startMonth + 3, 1));
+  return {
+    key: `${year}-Q${quarter}`,
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+    nextReset: end.toISOString()
+  };
+}
+
+async function ensureQuarterlySeason(sql: any) {
+  if (!sql) return;
+  const window = quarterWindow();
+  if (lastQuarterlySeasonCheck === window.key) return;
+  await sql`CREATE TABLE IF NOT EXISTS snore_seasons (season_key TEXT PRIMARY KEY, starts_at DATE NOT NULL, ends_at DATE NOT NULL, activated_at TIMESTAMPTZ NOT NULL DEFAULT now())`;
+  await sql`CREATE TABLE IF NOT EXISTS snore_season_maps (season_key TEXT NOT NULL REFERENCES snore_seasons(season_key) ON DELETE CASCADE, leaderboard_id BIGINT NOT NULL, stars DOUBLE PRECISION NOT NULL DEFAULT 0, PRIMARY KEY (season_key, leaderboard_id))`;
+  await sql`CREATE TABLE IF NOT EXISTS score_history (id BIGSERIAL PRIMARY KEY, original_score_id BIGINT NOT NULL UNIQUE, leaderboard_id BIGINT NOT NULL, player_id TEXT NOT NULL, score INTEGER NOT NULL, accuracy DOUBLE PRECISION NOT NULL, pp DOUBLE PRECISION NOT NULL DEFAULT 0, weight DOUBLE PRECISION NOT NULL DEFAULT 1, mods TEXT NOT NULL DEFAULT '', bad_cuts INTEGER NOT NULL DEFAULT 0, missed_notes INTEGER NOT NULL DEFAULT 0, max_combo INTEGER NOT NULL DEFAULT 0, full_combo BOOLEAN NOT NULL DEFAULT false, has_replay BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMPTZ NOT NULL, archived_at TIMESTAMPTZ NOT NULL DEFAULT now())`;
+
+  await sql`CREATE TABLE IF NOT EXISTS snore_next_season_maps (leaderboard_id BIGINT PRIMARY KEY, stars DOUBLE PRECISION NOT NULL DEFAULT 0, added_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`;
+  // A single PostgreSQL function call makes the rollover atomic on Neon HTTP too (no background worker or cron).
+  try {
+    await sql`CREATE OR REPLACE FUNCTION snoresaber_roll_quarter(p_season_key TEXT, p_start DATE, p_end DATE) RETURNS VOID LANGUAGE plpgsql AS $quarter$
+    DECLARE active_key TEXT;
+    BEGIN
+      PERFORM pg_advisory_xact_lock(827364109);
+      SELECT season_key INTO active_key FROM snore_seasons ORDER BY starts_at DESC LIMIT 1 FOR UPDATE;
+      IF active_key = p_season_key THEN RETURN; END IF;
+      IF active_key IS NULL THEN
+        INSERT INTO snore_seasons (season_key, starts_at, ends_at) VALUES (p_season_key, p_start, p_end) ON CONFLICT (season_key) DO NOTHING;
+        INSERT INTO snore_season_maps (season_key, leaderboard_id, stars) SELECT p_season_key, id, stars FROM leaderboards WHERE upper(status)='RANKED' ON CONFLICT DO NOTHING;
+        RETURN;
+      END IF;
+      INSERT INTO score_history (original_score_id, leaderboard_id, player_id, score, accuracy, pp, weight, mods, bad_cuts, missed_notes, max_combo, full_combo, has_replay, created_at)
+        SELECT id, leaderboard_id, player_id, score, accuracy, pp, weight, mods, bad_cuts, missed_notes, max_combo, full_combo, has_replay, created_at FROM scores
+        ON CONFLICT (original_score_id) DO NOTHING;
+      UPDATE leaderboards SET status='UNRANKED', ranked_at=NULL WHERE upper(status)='RANKED';
+      UPDATE leaderboards l SET status='RANKED', stars=n.stars, ranked_at=now() FROM snore_next_season_maps n WHERE l.id=n.leaderboard_id;
+      DELETE FROM scores;
+      UPDATE players SET pp=0, rank=0, country_rank=0, total_score=0, total_ranked_score=0, total_plays=0, total_ranked_plays=0, total_played_leaderboards=0, total_played_ranked_leaderboards=0, average_accuracy=0;
+      INSERT INTO snore_seasons (season_key, starts_at, ends_at) VALUES (p_season_key, p_start, p_end) ON CONFLICT (season_key) DO NOTHING;
+      INSERT INTO snore_season_maps (season_key, leaderboard_id, stars) SELECT p_season_key, id, stars FROM leaderboards WHERE upper(status)='RANKED' ON CONFLICT DO NOTHING;
+      DELETE FROM snore_next_season_maps;
+    END;
+    $quarter$`;
+    await sql`SELECT snoresaber_roll_quarter(${window.key}, ${window.start}::date, ${window.end}::date)`;
+    lastQuarterlySeasonCheck = window.key;
+  } catch (error) {
+    console.error('[SnoreSaber] quarterly season check failed', error);
+    // Do not mark as checked on failure; the next API request retries.
+  }
+}
+
+async function hasRankingTeamPermission(sql: any, playerId: string | null) {
+  if (!sql || !playerId) return false;
+  const rows: any[] = await sql`SELECT permissions FROM players WHERE id=${playerId} LIMIT 1`;
+  return hasRankTeamPermission(Number(rows[0]?.permissions || 0));
 }
 
 export default defineHandler(async (event: any) => {
@@ -1147,7 +1221,29 @@ export default defineHandler(async (event: any) => {
   const query = url.searchParams;
 
   if (!path.startsWith('api/v2/')) return json({ error: 'SnoreSaber API route not found' }, 404);
+  if (sql) await ensureQuarterlySeason(sql);
   const route = '/' + parts.slice(2).join('/');
+
+  if (route === '/live/ludus/session' && method === 'POST') {
+    const playerId = await authPlayerId(request, sql);
+    if (!playerId) return json({ statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Sign in to connect to live presence' },401);
+    if (LUDUS_SESSION_SECRET.length < 32) {
+      return json({ statusCode:503,error:'Service Unavailable',code:'LUDUS_NOT_CONFIGURED',message:'Live session signing is not configured' },503);
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAtUnixMs = (now + 300) * 1000;
+    const claims = Buffer.from(JSON.stringify({
+      sub: playerId,
+      playerId,
+      aud: 'snoresaber-ludus',
+      clientType: 'WEBSITE',
+      roomContext: 'PUBLIC_PRESENCE',
+      iat: now,
+      exp: now + 300
+    })).toString('base64url');
+    const signature = createHmac('sha256', LUDUS_SESSION_SECRET).update(claims).digest('base64url');
+    return json({ authToken: `${claims}.${signature}`, playerId, expiresAtUnixMs });
+  }
 
   if (route === '/health') return json({ ok: true, service: 'SnoreSaber API', version: '3.0.0', database: Boolean(sql) });
 
@@ -1267,15 +1363,13 @@ export default defineHandler(async (event: any) => {
         SELECT s.leaderboard_id, l.status
         FROM scores s JOIN leaderboards l ON l.id=s.leaderboard_id
         WHERE s.player_id=${pr[0].id}`;
-      const totalPlays = playRows.length;
-      const rankedPlays = playRows.filter((row) => row.status === 'RANKED').length;
+      const totalPlays = Number(pr[0].total_plays || 0);
       const playedLeaderboards = new Set(playRows.map((row) => String(row.leaderboard_id))).size;
-      const rankedLeaderboards = new Set(playRows.filter((row) => row.status === 'RANKED').map((row) => String(row.leaderboard_id))).size;
       const h = pr[0];
       const history = [{
         rank: Number(h.rank || 0), totalPP: Number(h.pp || 0), totalScore: String(h.total_score || 0),
         totalRankedScore: String(h.total_ranked_score || 0), totalPlayedLeaderboards: playedLeaderboards,
-        totalPlayedRankedLeaderboards: rankedLeaderboards, totalSubmittedPlays: totalPlays,
+        totalSubmittedPlays: totalPlays,
         totalReplayViews: 0, averageAccuracy: Number(h.average_accuracy || 0),
         weightedAverageAccuracy: Number(h.average_accuracy || 0), completionAccuracy: Number(h.average_accuracy || 0),
         estimated: true, createdAt: new Date(h.created_at || Date.now()).toISOString()
@@ -1357,12 +1451,19 @@ export default defineHandler(async (event: any) => {
       if (seg[3] === 'scores') {
         const page = Math.max(1, Number(query.get('page') || 1)); const limit = Math.min(100, Number(query.get('limit') || 50));
         const rows: any[] = await sql`
-          SELECT s.*, l.*, l.id AS leaderboard_id, m.*
+          SELECT s.id AS score_id,s.score,s.accuracy,s.pp,s.weight,s.mods,s.bad_cuts,s.missed_notes,s.max_combo,s.full_combo,s.has_replay,s.created_at AS score_created_at,
+                 l.id AS lb_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.created_at AS lb_created_at,
+                 m.id AS map_id,m.hash AS map_hash,m.bsid AS map_bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.created_at AS map_created_at
           FROM scores s JOIN leaderboards l ON l.id=s.leaderboard_id JOIN maps m ON m.id=l.map_id
           WHERE s.player_id=${pr[0].id} ORDER BY s.pp DESC, s.created_at DESC`;
         const best = new Map<number, any>();
-        for (const r of rows) if (!best.has(Number(r.leaderboard_id))) best.set(Number(r.leaderboard_id), r);
-        const data = [...best.values()].slice((page-1)*limit, (page-1)*limit+limit).map((r, i) => dbScore(r, pr[0], r, r, i+1, true));
+        for (const r of rows) if (!best.has(Number(r.lb_id))) best.set(Number(r.lb_id), r);
+        const data = [...best.values()].slice((page-1)*limit, (page-1)*limit+limit).map((r, i) => dbScore(
+          { id:r.score_id, score:r.score, accuracy:r.accuracy, pp:r.pp, weight:r.weight, mods:r.mods, bad_cuts:r.bad_cuts, missed_notes:r.missed_notes, max_combo:r.max_combo, full_combo:r.full_combo, has_replay:r.has_replay, created_at:r.score_created_at },
+          pr[0],
+          { id:r.lb_id, difficulty:r.difficulty, game_mode:r.game_mode, raw_difficulty:r.raw_difficulty, max_score:r.max_score, stars:r.stars, status:r.status, created_at:r.lb_created_at },
+          { id:r.map_id, hash:r.map_hash, bsid:r.map_bsid, song_name:r.song_name, song_sub_name:r.song_sub_name, song_author_name:r.song_author_name, level_author_name:r.level_author_name, bpm:r.bpm, cover_url:r.cover_url, verified:r.verified, created_at:r.map_created_at },
+          i+1, true));
         return json({ data, metadata: metadata(best.size,page,limit) });
       }
       if (seg[3] === 'history' || seg[3] === 'global-history') return json({ data: [], metadata: metadata(0,1,50) });
@@ -1371,9 +1472,9 @@ export default defineHandler(async (event: any) => {
         const viewerId = await authPlayerId(request, sql);
         const rel = await relationshipSummary(sql, pr[0].id, viewerId);
         const badges = await getPlayerBadges(sql, pr[0].id);
-        return json({ ...p, badges, followers: rel.followers, following: rel.following });
+        return json({ ...p, badges, followers: rel.followers, following: rel.following }, 200, { 'access-control-allow-origin': '*' });
       }
-      return json(p);
+      return json(p, 200, { 'access-control-allow-origin': '*' });
     }
     const p = players.find((x) => x.id === id);
     if (!p) return json({ statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found' },404);
@@ -1383,7 +1484,7 @@ export default defineHandler(async (event: any) => {
       return json({ data: ps.slice(0,limit), metadata: metadata(ps.length,1,limit) });
     }
     if (seg[3] === 'history' || seg[3] === 'global-history') return json({ data: [], metadata: metadata(0,1,50) });
-    return json(p);
+    return json(p, 200, { 'access-control-allow-origin': '*' });
   }
 
   // ------------------------- MAPS -------------------------
@@ -1476,10 +1577,12 @@ export default defineHandler(async (event: any) => {
   if (route === '/leaderboards' && method === 'GET') {
     if (sql) {
       const rows:any[] = await sql`
-        SELECT l.*, m.*, COUNT(s.id)::int AS total_scores
+        SELECT l.id AS leaderboard_id,l.map_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.ranked_at,l.created_at AS leaderboard_created_at,
+               m.id,m.hash,m.bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.is_ai,m.created_at,
+               COUNT(s.id)::int AS total_scores
         FROM leaderboards l JOIN maps m ON m.id=l.map_id LEFT JOIN scores s ON s.leaderboard_id=l.id
         GROUP BY l.id,m.id ORDER BY l.id`;
-      const data = rows.map((r) => ({ id:Number(r.id), map:dbMap(r), difficulty:{id:Number(r.id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode}, maxScore:Number(r.max_score),totalScores:Number(r.total_scores||0),dailyScores:0,createdAt:new Date(r.created_at).toISOString(),realm:realm(Number(r.stars||0),r.status) }));
+      const data = rows.map((r) => ({ id:Number(r.leaderboard_id), map:dbMap(r), difficulty:{id:Number(r.leaderboard_id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode}, maxScore:Number(r.max_score),totalScores:Number(r.total_scores||0),dailyScores:0,createdAt:new Date(r.leaderboard_created_at).toISOString(),realm:realm(Number(r.stars||0),r.status) }));
       return json({data,metadata:metadata(data.length,1,data.length||1)});
     }
     const data = maps.flatMap((m) => m.leaderboards.map((l:any) => ({ id:l.id,map:m,difficulty:{id:l.id,difficulty:l.difficulty,rawDifficulty:l.rawDifficulty,gameMode:l.gameMode},maxScore:l.maxScore,totalScores:l.totalScores,dailyScores:l.dailyScores,createdAt:l.createdAt,realm:l.realm })));
@@ -1494,6 +1597,7 @@ export default defineHandler(async (event: any) => {
     const hash = decodeURIComponent(seg[2] || '');
     const mode = decodeURIComponent(seg[3] || '');
     const difficulty = Number(decodeURIComponent(seg[4] || ''));
+    const normalizedMode = normalizeLeaderboardGameMode(mode);
 
     if (seg.length >= 6 && seg[5] === 'scores') {
       if (!sql) {
@@ -1508,15 +1612,17 @@ export default defineHandler(async (event: any) => {
       }
 
       const lbRows:any[] = await sql`
-        SELECT l.*, m.*
+        SELECT l.id AS leaderboard_id,l.map_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.ranked_at,l.created_at AS leaderboard_created_at,
+               m.id,m.hash,m.bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.is_ai,m.created_at
         FROM leaderboards l JOIN maps m ON m.id=l.map_id
         WHERE lower(m.hash)=lower(${hash})
-          AND lower(l.game_mode)=lower(${mode})
+          AND lower(l.game_mode)=lower(${normalizedMode})
           AND l.difficulty=${difficulty}
         LIMIT 1`;
       if (!lbRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
 
       const lb = lbRows[0];
+      const leaderboardId = Number(lb.leaderboard_id);
       const page = Math.max(1, Number(query.get('page') || 1));
       const limit = Math.min(100, Math.max(1, Number(query.get('limit') || 50)));
       const search = (query.get('search') || '').trim().toLowerCase();
@@ -1531,7 +1637,7 @@ export default defineHandler(async (event: any) => {
         JOIN players p ON p.id=s.player_id
         JOIN leaderboards l ON l.id=s.leaderboard_id
         JOIN maps m ON m.id=l.map_id
-        WHERE s.leaderboard_id=${lb.id}
+        WHERE s.leaderboard_id=${leaderboardId}
         ORDER BY s.score DESC, s.accuracy DESC, s.created_at ASC`;
 
       const filtered = search ? rows.filter((r:any) => String(r.name || '').toLowerCase().includes(search)) : rows;
@@ -1577,16 +1683,17 @@ export default defineHandler(async (event: any) => {
       }
 
       const rows:any[] = await sql`
-        SELECT l.*, m.*
+        SELECT l.id AS leaderboard_id,l.map_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.ranked_at,l.created_at AS leaderboard_created_at,
+               m.id,m.hash,m.bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.is_ai,m.created_at
         FROM leaderboards l JOIN maps m ON m.id=l.map_id
         WHERE lower(m.hash)=lower(${hash})
-          AND lower(l.game_mode)=lower(${mode})
+          AND lower(l.game_mode)=lower(${normalizedMode})
           AND l.difficulty=${difficulty}
         LIMIT 1`;
       if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
       const r = rows[0];
-      const count:any[] = await sql`SELECT COUNT(*)::int AS count FROM scores WHERE leaderboard_id=${r.id}`;
-      return json({id:Number(r.id),map:dbMap(r),difficulty:{id:Number(r.id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode},maxScore:Number(r.max_score),totalScores:Number(count[0]?.count||0),dailyScores:0,createdAt:new Date(r.created_at).toISOString(),realm:realm(Number(r.stars||0),r.status)});
+      const count:any[] = await sql`SELECT COUNT(*)::int AS count FROM scores WHERE leaderboard_id=${r.leaderboard_id}`;
+      return json({id:Number(r.leaderboard_id),map:dbMap(r),difficulty:{id:Number(r.leaderboard_id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode},maxScore:Number(r.max_score),totalScores:Number(count[0]?.count||0),dailyScores:0,createdAt:new Date(r.leaderboard_created_at).toISOString(),realm:realm(Number(r.stars||0),r.status)});
     }
 
     // hash-only compatibility route (/leaderboards/hash/{hash})
@@ -1597,7 +1704,7 @@ export default defineHandler(async (event: any) => {
   if (route.startsWith('/leaderboards/')) {
     const seg = route.split('/'); const id = Number(seg[2]);
     if (sql) {
-      const rows:any[] = await sql`SELECT l.*, m.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE l.id=${id} LIMIT 1`;
+      const rows:any[] = await sql`SELECT l.id AS leaderboard_id,l.map_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.ranked_at,l.created_at AS leaderboard_created_at,m.id,m.hash,m.bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.is_ai,m.created_at FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE l.id=${id} LIMIT 1`;
       if (!rows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
       const r=rows[0];
       if (seg[3] === 'scores') {
@@ -1608,7 +1715,7 @@ export default defineHandler(async (event: any) => {
         return json({data,metadata:metadata(ranked.length,page,limit)});
       }
       const count:any[]=await sql`SELECT COUNT(*)::int AS count FROM scores WHERE leaderboard_id=${id}`;
-      return json({id:Number(r.id),map:dbMap(r),difficulty:{id:Number(r.id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode},maxScore:Number(r.max_score),totalScores:Number(count[0]?.count||0),dailyScores:0,createdAt:new Date(r.created_at).toISOString(),realm:realm(Number(r.stars||0),r.status)});
+      return json({id:Number(r.leaderboard_id),map:dbMap(r),difficulty:{id:Number(r.leaderboard_id),difficulty:Number(r.difficulty),rawDifficulty:r.raw_difficulty,gameMode:r.game_mode},maxScore:Number(r.max_score),totalScores:Number(count[0]?.count||0),dailyScores:0,createdAt:new Date(r.leaderboard_created_at).toISOString(),realm:realm(Number(r.stars||0),r.status)});
     }
     const m=maps.find((x)=>x.leaderboards.some((l:any)=>l.id===id)); if(!m)return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Leaderboard not found'},404);
     const lb=m.leaderboards.find((l:any)=>l.id===id)!;
@@ -1937,7 +2044,7 @@ export default defineHandler(async (event: any) => {
     const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
     const target = targetRows[0].id;
-    await sql`UPDATE players SET banned=true, ban_reason=${reason}, ban_notes=${body.notes ? String(body.notes) : null}, ban_created_at=now(), ban_auto_unban=false, ban_auto_unbans_at=null, ban_earliest_appeal_date=${body.earliestAppealDate ? new Date(body.earliestAppealDate) : null} WHERE id=${target}`;
+    await sql`UPDATE players SET banned=true, ban_reason=${reason}, ban_notes=${body.notes ? String(body.notes) : null}, ban_created_at=now(), ban_earliest_appeal_date=${body.earliestAppealDate ? new Date(body.earliestAppealDate) : null} WHERE id=${target}`;
     return json({success:true});
   }
 
@@ -1948,7 +2055,7 @@ export default defineHandler(async (event: any) => {
     if (!sql) return json({success:true});
     const targetRows: any[] = await sql`SELECT id FROM players WHERE id=${targetId} OR steam_id=${targetId} LIMIT 1`;
     if (!targetRows[0]) return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Player not found'},404);
-    await sql`UPDATE players SET banned=false, ban_reason=null, ban_notes=null, ban_created_at=null, ban_auto_unban=false, ban_auto_unbans_at=null, ban_earliest_appeal_date=null WHERE id=${targetRows[0].id}`;
+    await sql`UPDATE players SET banned=false, ban_reason=null, ban_notes=null, ban_created_at=null, ban_earliest_appeal_date=null WHERE id=${targetRows[0].id}`;
     return json({success:true});
   }
 
@@ -2150,7 +2257,15 @@ export default defineHandler(async (event: any) => {
     if (!(await isAdmin(sql,viewerId))) return json({statusCode:401,error:'Unauthorized',code:'UNAUTHORIZED',message:'Administrator permission required'},401);
     await ensureModerationTables(sql);
     const rows:any[]=await sql`
-      SELECT r.*, reporter.name AS reporter_name, target.name AS target_name
+      SELECT r.*,
+        reporter.name AS reporter_name, reporter.country AS reporter_country,
+        reporter.avatar AS reporter_avatar, reporter.role AS reporter_role,
+        reporter.permissions AS reporter_permissions,
+        target.name AS target_name, target.country AS target_country,
+        target.avatar AS target_avatar, target.role AS target_role,
+        target.permissions AS target_permissions,
+        target.banned AS target_banned, target.ban_reason AS target_ban_reason,
+        target.ban_earliest_appeal_date AS target_ban_earliest_appeal_date
       FROM profile_reports r
       JOIN players reporter ON reporter.id=r.reporter_id
       JOIN players target ON target.id=r.target_player_id
@@ -2158,7 +2273,13 @@ export default defineHandler(async (event: any) => {
     `;
     return json(rows.map((r)=>({
       id:Number(r.id), reporterId:String(r.reporter_id), reporterName:r.reporter_name,
+      reporterCountry:r.reporter_country || 'XX', reporterAvatar:r.reporter_avatar || '',
+      reporterRole:r.reporter_role || null, reporterPermissions:Number(r.reporter_permissions || 0),
       targetPlayerId:String(r.target_player_id), targetName:r.target_name,
+      targetCountry:r.target_country || 'XX', targetAvatar:r.target_avatar || '',
+      targetRole:r.target_role || null, targetPermissions:Number(r.target_permissions || 0),
+      targetBanned:Boolean(r.target_banned), targetBanReason:r.target_ban_reason || null,
+      targetAppealAt:r.target_ban_earliest_appeal_date ? new Date(r.target_ban_earliest_appeal_date).toISOString() : null,
       reason:r.reason, details:r.details, status:r.status, createdAt:new Date(r.created_at).toISOString()
     })));
   }
@@ -2302,17 +2423,20 @@ export default defineHandler(async (event: any) => {
     `;
 
     const existing = existingRows[0];
+    const isRankedMap = String(lb.status || '').toUpperCase() === 'RANKED';
+    const outcome = String(body.playOutcome || body.outcome || 'QUIT').toUpperCase();
+    if (outcome !== 'CLEAR') {
+      await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
+      return json({ success: true, accepted: false, personalBest: false, reason: 'incomplete_play', scoreId: existing ? Number(existing.id) : null });
+    }
+    if (isRankedMap && outcome === 'CLEAR') {
+      await sql`UPDATE players SET total_plays=COALESCE(total_plays,0)+1, last_seen_at=now() WHERE id=${playerId}`;
+    } else {
+      await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
+    }
     if (existing && Number(existing.score) >= scoreValue) {
       await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
-      return json({
-        success: true,
-        accepted: true,
-        personalBest: false,
-        reason: 'not_a_personal_best',
-        scoreId: Number(existing.id),
-        score: Number(existing.score),
-        pp: Number(existing.pp || 0)
-      });
+      return json({ success: true, accepted: false, personalBest: false, reason: 'not_a_personal_best', scoreId: Number(existing.id), score: Number(existing.score), pp: Number(existing.pp || 0) });
     }
 
     const mods = Array.isArray(body.modifiers)
@@ -2324,23 +2448,61 @@ export default defineHandler(async (event: any) => {
     const fullCombo = Boolean(body.fullCombo);
     const replayPart = form.get('zr');
     const hasReplay = replayPart instanceof Blob && replayPart.size > 0;
+    const replayMaxBytes = 4 * 1024 * 1024;
+    if (hasReplay && replayPart.size > replayMaxBytes) {
+      return json({ statusCode: 413, error: 'Payload Too Large', code: 'REPLAY_TOO_LARGE', message: 'Replay files must be 4 MB or smaller' }, 413);
+    }
+    if (hasReplay) await ensureScoreReplayTable(sql);
 
-    const inserted: any[] = await sql`
-      INSERT INTO scores
-        (leaderboard_id, player_id, score, accuracy, pp, weight, mods, bad_cuts, missed_notes, max_combo, full_combo, has_replay)
-      VALUES
-        (${Number(lb.id)}, ${playerId}, ${scoreValue}, ${accuracy}, ${pp},
-         ${String(lb.status || '').toUpperCase() === 'RANKED' ? 1 : 0}, ${mods},
-         ${Number.isFinite(badCuts) ? badCuts : 0}, ${Number.isFinite(missedNotes) ? missedNotes : 0},
-         ${Number.isFinite(maxCombo) ? maxCombo : 0}, ${fullCombo}, ${hasReplay})
-      RETURNING id
-    `;
+    let inserted: any[];
+    if (existing) {
+      inserted = await sql`
+        UPDATE scores SET score=${scoreValue}, accuracy=${accuracy}, pp=${pp},
+          weight=${String(lb.status || '').toUpperCase() === 'RANKED' ? 1 : 0}, mods=${mods},
+          bad_cuts=${Number.isFinite(badCuts) ? badCuts : 0}, missed_notes=${Number.isFinite(missedNotes) ? missedNotes : 0},
+          max_combo=${Number.isFinite(maxCombo) ? maxCombo : 0}, full_combo=${fullCombo}, has_replay=${hasReplay}, created_at=now()
+        WHERE id=${Number(existing.id)} AND score < ${scoreValue} RETURNING id
+      `;
+      if (!inserted[0]) return json({ success: true, accepted: false, personalBest: false, reason: 'not_a_personal_best', scoreId: Number(existing.id), score: Number(existing.score), pp: Number(existing.pp || 0) });
+      await sql`DELETE FROM scores WHERE leaderboard_id=${Number(lb.id)} AND player_id=${playerId} AND id<>${Number(inserted[0].id)}`;
+    } else {
+      inserted = await sql`
+        INSERT INTO scores
+          (leaderboard_id, player_id, score, accuracy, pp, weight, mods, bad_cuts, missed_notes, max_combo, full_combo, has_replay)
+        VALUES
+          (${Number(lb.id)}, ${playerId}, ${scoreValue}, ${accuracy}, ${pp},
+           ${String(lb.status || '').toUpperCase() === 'RANKED' ? 1 : 0}, ${mods},
+           ${Number.isFinite(badCuts) ? badCuts : 0}, ${Number.isFinite(missedNotes) ? missedNotes : 0},
+           ${Number.isFinite(maxCombo) ? maxCombo : 0}, ${fullCombo}, ${hasReplay})
+        ON CONFLICT (leaderboard_id, player_id) DO UPDATE SET score=EXCLUDED.score, accuracy=EXCLUDED.accuracy, pp=EXCLUDED.pp, weight=EXCLUDED.weight, mods=EXCLUDED.mods, bad_cuts=EXCLUDED.bad_cuts, missed_notes=EXCLUDED.missed_notes, max_combo=EXCLUDED.max_combo, full_combo=EXCLUDED.full_combo, has_replay=EXCLUDED.has_replay, created_at=now()
+        WHERE scores.score < EXCLUDED.score
+        RETURNING id
+      `;
+      if (!inserted[0]) {
+        const best: any[] = await sql`SELECT id,score,pp FROM scores WHERE leaderboard_id=${Number(lb.id)} AND player_id=${playerId} LIMIT 1`;
+        return json({ success: true, accepted: false, personalBest: false, reason: 'not_a_personal_best', scoreId: Number(best[0]?.id || 0), score: Number(best[0]?.score || 0), pp: Number(best[0]?.pp || 0) });
+      }
+    }
 
-    await sql`
-      UPDATE leaderboards
-      SET total_scores=COALESCE(total_scores,0)+1
-      WHERE id=${Number(lb.id)}
-    `;
+    if (hasReplay && replayPart instanceof Blob) {
+      const encodedReplay = Buffer.from(await replayPart.arrayBuffer()).toString('base64');
+      try {
+        await sql`
+          INSERT INTO score_replays (score_id, replay_data, replay_size)
+          VALUES (${Number(inserted[0].id)}, decode(${encodedReplay}, 'base64'), ${replayPart.size})
+          ON CONFLICT (score_id) DO UPDATE SET
+            replay_data=EXCLUDED.replay_data,
+            replay_size=EXCLUDED.replay_size,
+            created_at=now()
+        `;
+      } catch (error) {
+        // Do not delete a previously accepted PB if a replay blob fails to persist.
+        if (!existing) await sql`DELETE FROM scores WHERE id=${Number(inserted[0].id)}`;
+        else await sql`UPDATE scores SET has_replay=false WHERE id=${Number(inserted[0].id)}`;
+        throw error;
+      }
+    }
+
     await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
     await recalculatePlayerStats(sql, playerId);
 
@@ -2360,15 +2522,110 @@ export default defineHandler(async (event: any) => {
   }
 
   // ------------------------- SCORE DETAIL / SUBMISSION -------------------------
+  if (route.startsWith('/scores/') && route.endsWith('/replay') && method === 'GET') {
+    const id = Number(route.split('/')[2]);
+    if (!Number.isSafeInteger(id) || id <= 0) return json({ statusCode:400,error:'Bad Request',code:'VALIDATION_ERROR',message:'Invalid score ID' },400);
+    if (!sql) return json({ statusCode:503,error:'Service Unavailable',code:'DATABASE_UNAVAILABLE',message:'Replay storage requires the SnoreSaber database' },503);
+    await ensureScoreReplayTable(sql);
+    const rows: any[] = await sql`
+      SELECT replay_data, replay_size FROM score_replays WHERE score_id=${id} LIMIT 1
+    `;
+    if (!rows[0]) return json({ statusCode:404,error:'Not Found',code:'REPLAY_NOT_FOUND',message:'Replay not found' },404);
+    const replayBytes = Buffer.from(rows[0].replay_data);
+    return new Response(replayBytes, {
+      status: 200,
+      headers: {
+        'content-type': 'application/octet-stream',
+        'content-length': String(Number(rows[0].replay_size) || replayBytes.byteLength),
+        'cache-control': 'public, max-age=31536000, immutable',
+        'access-control-allow-origin': '*',
+        'cross-origin-resource-policy': 'cross-origin'
+      }
+    });
+  }
+
   if (route.startsWith('/scores/') && method === 'GET') {
     const id=Number(route.split('/')[2]);
     if (sql) {
       const rows:any[]=await sql`SELECT s.*, p.id AS p_id,p.name,p.country,p.avatar, l.id AS lb_id,l.difficulty,l.game_mode,l.raw_difficulty,l.max_score,l.stars,l.status,l.created_at AS lb_created_at, m.id AS map_id,m.hash AS map_hash,m.bsid AS map_bsid,m.song_name,m.song_sub_name,m.song_author_name,m.level_author_name,m.bpm,m.cover_url,m.verified,m.created_at AS map_created_at FROM scores s JOIN players p ON p.id=s.player_id JOIN leaderboards l ON l.id=s.leaderboard_id JOIN maps m ON m.id=l.map_id WHERE s.id=${id} LIMIT 1`;
       if(!rows[0])return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Score not found'},404);
       const r=rows[0];
-      return json(dbScore(r,{id:r.p_id,name:r.name,country:r.country,avatar:r.avatar},{id:r.lb_id,difficulty:r.difficulty,game_mode:r.game_mode,raw_difficulty:r.raw_difficulty,max_score:r.max_score,stars:r.stars,status:r.status,created_at:r.lb_created_at},{id:r.map_id,hash:r.map_hash,bsid:r.map_bsid,song_name:r.song_name,song_sub_name:r.song_sub_name,song_author_name:r.song_author_name,level_author_name:r.level_author_name,bpm:r.bpm,cover_url:r.cover_url,verified:r.verified,created_at:r.map_created_at},1,true));
+      const scoreData = dbScore(r,{id:r.p_id,name:r.name,country:r.country,avatar:r.avatar},{id:r.lb_id,difficulty:r.difficulty,game_mode:r.game_mode,raw_difficulty:r.raw_difficulty,max_score:r.max_score,stars:r.stars,status:r.status,created_at:r.lb_created_at},{id:r.map_id,hash:r.map_hash,bsid:r.map_bsid,song_name:r.song_name,song_sub_name:r.song_sub_name,song_author_name:r.song_author_name,level_author_name:r.level_author_name,bpm:r.bpm,cover_url:r.cover_url,verified:r.verified,created_at:r.map_created_at},1,true);
+      return json({ score: scoreData, leaderboard: { id: scoreData.leaderboard.id, map: { id: scoreData.map.id, hash: scoreData.map.hash, bsid: scoreData.map.bsid, songName: scoreData.map.songName, songSubName: scoreData.map.songSubName, songAuthorName: scoreData.map.songAuthorName, levelAuthorName: scoreData.map.levelAuthorName }, difficulty: { id: scoreData.leaderboard.id, difficulty: scoreData.leaderboard.difficulty, rawDifficulty: scoreData.leaderboard.rawDifficulty, gameMode: scoreData.leaderboard.gameMode }, realm: scoreData.leaderboard.realm }, scoreStats: null }, 200, { 'access-control-allow-origin': '*' });
     }
-    const s=scores.find((x)=>x.id===id); if(!s)return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Score not found'},404); return json(s);
+    const s=scores.find((x)=>x.id===id); if(!s)return json({statusCode:404,error:'Not Found',code:'NOT_FOUND',message:'Score not found'},404); return json({ score: s, leaderboard: { id:s.leaderboard?.id || 0, map: { id:s.leaderboard?.map?.id || 0, hash:s.leaderboard?.map?.hash || '', bsid:s.leaderboard?.map?.bsid || null, songName:s.leaderboard?.map?.songName || '', songSubName:s.leaderboard?.map?.songSubName || '', songAuthorName:s.leaderboard?.map?.songAuthorName || '', levelAuthorName:s.leaderboard?.map?.levelAuthorName || '' }, difficulty: { id:s.leaderboard?.id || 0, difficulty:s.leaderboard?.difficulty?.difficulty || 0, rawDifficulty:s.leaderboard?.difficulty?.rawDifficulty || '', gameMode:s.leaderboard?.difficulty?.gameMode || 'Standard' }, realm:s.leaderboard?.realm || { stars:0 } }, scoreStats:null });
+  }
+
+  if (route === '/seasons/status' && method === 'GET') {
+    const window = quarterWindow();
+    if (!sql) return json({ seasonKey: window.key, startsAt: window.start, endsAt: window.end, nextReset: window.nextReset, secondsUntilReset: Math.max(0, Math.floor((Date.parse(window.nextReset) - Date.now()) / 1000)) });
+    const rows: any[] = await sql`SELECT season_key, starts_at, ends_at FROM snore_seasons ORDER BY starts_at DESC LIMIT 1`;
+    const active = rows[0];
+    const nextRows: any[] = await sql`SELECT COUNT(*)::int AS count FROM snore_next_season_maps`;
+    return json({ seasonKey: active?.season_key || window.key, startsAt: active?.starts_at || window.start, endsAt: active?.ends_at || window.end, nextReset: window.nextReset, secondsUntilReset: Math.max(0, Math.floor((Date.parse(window.nextReset) - Date.now()) / 1000)), nextSeasonMapCount: Number(nextRows[0]?.count || 0) });
+  }
+
+  if (route === '/seasons/next-maps' && method === 'GET') {
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await hasRankingTeamPermission(sql, viewerId))) return json({ statusCode: 403, error: 'Forbidden', code: 'FORBIDDEN', message: 'Ranking team permission required' }, 403);
+    if (!sql) return json({ maps: [], candidates: [] });
+    const searchTerm = String(query.get('search') || '').trim().slice(0, 80);
+    const nextRows: any[] = await sql`SELECT n.leaderboard_id, n.stars, m.hash, m.bsid, m.song_name, m.song_sub_name, m.song_author_name, l.difficulty, l.game_mode, l.raw_difficulty FROM snore_next_season_maps n JOIN leaderboards l ON l.id=n.leaderboard_id JOIN maps m ON m.id=l.map_id ORDER BY m.song_name, l.difficulty`;
+    const candidateRows: any[] = searchTerm ? await sql`SELECT l.id AS leaderboard_id, l.stars, l.status, m.hash, m.bsid, m.song_name, m.song_sub_name, m.song_author_name, l.difficulty, l.game_mode, l.raw_difficulty FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE (m.song_name ILIKE ${'%' + searchTerm + '%'} OR m.hash ILIKE ${'%' + searchTerm + '%'} OR COALESCE(m.bsid,'') ILIKE ${'%' + searchTerm + '%'}) ORDER BY m.song_name, l.difficulty LIMIT 100` : [];
+    const shape = (r: any) => ({ leaderboardId: Number(r.leaderboard_id), stars: Number(r.stars || 0), status: r.status || 'UNRANKED', hash: r.hash, beatSaverId: r.bsid || null, songName: r.song_name, songSubName: r.song_sub_name || '', songAuthorName: r.song_author_name || '', difficulty: Number(r.difficulty), gameMode: r.game_mode, rawDifficulty: r.raw_difficulty });
+    return json({ maps: nextRows.map(shape), candidates: candidateRows.map(shape) });
+  }
+
+  if (route === '/seasons/next-maps' && method === 'POST') {
+    const viewerId = await authPlayerId(request, sql);
+    if (!(await hasRankingTeamPermission(sql, viewerId))) return json({ statusCode: 403, error: 'Forbidden', code: 'FORBIDDEN', message: 'Ranking team permission required' }, 403);
+    if (!sql) return json({ statusCode: 503, error: 'Service Unavailable', code: 'DATABASE_UNAVAILABLE', message: 'Season curation requires the SnoreSaber database' }, 503);
+    let body: any; try { body = JSON.parse(await request.text() || '{}'); } catch { return json({ error: 'Invalid JSON' }, 400); }
+    const leaderboardId = Number(body.leaderboardId);
+    const action = String(body.action || 'add');
+    if (action === 'import') {
+      const key = parseBeatSaverMapKey(String(body.beatSaverLink || body.key || '').trim());
+      const defaultStars = Number(body.stars ?? 5);
+      if (!key) return json({ statusCode: 400, error: 'Bad Request', code: 'VALIDATION_ERROR', message: 'Enter a BeatSaver map link or map key' }, 400);
+      if (!Number.isFinite(defaultStars) || defaultStars <= 0 || defaultStars > 100) return json({ error: 'Stars must be greater than 0 and at most 100' }, 400);
+      const response = await fetch(`${BEATSAVER_API}/maps/id/${encodeURIComponent(key)}`, { headers: { accept: 'application/json', 'user-agent': 'SnoreSaber/3.0 next season curation' }, cache: 'no-store' });
+      if (!response.ok) return json({ statusCode: 502, error: 'Bad Gateway', code: 'BEATSAVER_FAILED', message: `BeatSaver returned HTTP ${response.status}` }, 502);
+      const beatSaverMap = await response.json();
+      const version = Array.isArray(beatSaverMap?.versions) ? (beatSaverMap.versions.find((v: any) => String(v.state || '').toLowerCase() === 'published') || beatSaverMap.versions[0]) : null;
+      const hash = String(version?.hash || '').trim();
+      if (!hash) return json({ statusCode: 502, error: 'Bad Gateway', code: 'BEATSAVER_INVALID', message: 'BeatSaver did not return a published map version' }, 502);
+      const metadata = beatSaverMap.metadata || {};
+      const coverUrl = String(version?.coverURL || beatSaverMap.coverURL || `https://eu.cdn.beatsaver.com/${hash}.jpg`).trim();
+      const mapRows: any[] = await sql`INSERT INTO maps (hash, bsid, song_name, song_sub_name, song_author_name, level_author_name, bpm, cover_url, verified, is_ai, created_at) VALUES (${hash}, ${key}, ${String(metadata.songName || beatSaverMap.name || 'Unknown')}, ${String(metadata.songSubName || '')}, ${String(metadata.songAuthorName || '')}, ${String(metadata.levelAuthorName || beatSaverMap.uploader?.name || '')}, ${Number(metadata.bpm || 0)}, ${coverUrl}, ${Boolean(beatSaverMap.verified || beatSaverMap.uploader?.verifiedMapper)}, false, COALESCE(${beatSaverMap.uploaded ? new Date(beatSaverMap.uploaded).toISOString() : null}::timestamptz, now())) ON CONFLICT (hash) DO UPDATE SET bsid=EXCLUDED.bsid, song_name=EXCLUDED.song_name, song_sub_name=EXCLUDED.song_sub_name, song_author_name=EXCLUDED.song_author_name, level_author_name=EXCLUDED.level_author_name, bpm=EXCLUDED.bpm, cover_url=EXCLUDED.cover_url, verified=EXCLUDED.verified RETURNING id`;
+      const mapId = Number(mapRows[0]?.id);
+      if (!mapId) return json({ statusCode: 500, error: 'Internal Server Error', code: 'MAP_SAVE_FAILED', message: 'Could not save the BeatSaver map' }, 500);
+      const diffs = Array.isArray(version?.diffs) ? version.diffs : [];
+      const added: number[] = [];
+      for (const diff of diffs) {
+        const difficulty = beatSaverDifficultyValue(diff.difficulty);
+        if (!difficulty) continue;
+        const gameMode = beatSaverGameMode(diff.characteristic);
+        const rawDifficulty = String(diff.difficulty || 'ExpertPlus');
+        const maxScore = Number(diff.maxScore || 1000000);
+        const leaderboardRows: any[] = await sql`INSERT INTO leaderboards (map_id, difficulty, game_mode, raw_difficulty, max_score, stars, status, ranked_at) VALUES (${mapId}, ${difficulty}, ${gameMode}, ${rawDifficulty}, ${maxScore}, 0, 'UNRANKED', NULL) ON CONFLICT (map_id, difficulty, game_mode) DO UPDATE SET raw_difficulty=EXCLUDED.raw_difficulty, max_score=EXCLUDED.max_score RETURNING id`;
+        const id = Number(leaderboardRows[0]?.id);
+        if (!id) continue;
+        await sql`INSERT INTO snore_next_season_maps (leaderboard_id, stars, added_by) VALUES (${id}, ${Number(defaultStars.toFixed(3))}, ${viewerId}) ON CONFLICT (leaderboard_id) DO UPDATE SET stars=EXCLUDED.stars, added_by=EXCLUDED.added_by, created_at=now()`;
+        added.push(id);
+      }
+      return json({ success: true, map: { id: mapId, beatSaverId: key, songName: String(metadata.songName || beatSaverMap.name || 'Unknown') }, leaderboardIds: added, addedCount: added.length });
+    }
+    if (!Number.isSafeInteger(leaderboardId) || leaderboardId <= 0) return json({ error: 'Valid leaderboardId is required' }, 400);
+    const rows: any[] = await sql`SELECT id FROM leaderboards WHERE id=${leaderboardId} LIMIT 1`;
+    if (!rows[0]) return json({ statusCode: 404, error: 'Not Found', code: 'LEADERBOARD_NOT_FOUND', message: 'Leaderboard not found' }, 404);
+    if (action === 'remove') {
+      await sql`DELETE FROM snore_next_season_maps WHERE leaderboard_id=${leaderboardId}`;
+    } else {
+      const stars = Number(body.stars);
+      if (!Number.isFinite(stars) || stars <= 0 || stars > 100) return json({ error: 'Stars must be greater than 0 and at most 100' }, 400);
+      await sql`INSERT INTO snore_next_season_maps (leaderboard_id, stars, added_by) VALUES (${leaderboardId}, ${stars}, ${viewerId}) ON CONFLICT (leaderboard_id) DO UPDATE SET stars=EXCLUDED.stars, added_by=EXCLUDED.added_by, created_at=now()`;
+    }
+    return json({ success: true });
   }
 
   if (route === '/scores/submit' && method === 'POST') {
@@ -2379,22 +2636,48 @@ export default defineHandler(async (event: any) => {
     const playerId=sql ? (await resolveInternalPlayerId(sql, requestedPlayerId || String(authenticatedPlayerId || '')) || '') : (requestedPlayerId || String(authenticatedPlayerId || ''));
     const mapHash=String(body.mapHash||'');
     if(!playerId||!mapHash)return json({error:'playerId and mapHash are required'},400);
-    const scoreValue=Math.max(0,Math.round(Number(body.score||body.modifiedScore||0))); const accuracy=Number(body.accuracy||0); const pp=Number(body.pp||0);
-    if(!Number.isFinite(scoreValue)||!Number.isFinite(accuracy)||!Number.isFinite(pp))return json({error:'score, accuracy and pp must be numeric'},400);
+    const outcome = String(body.playOutcome || body.outcome || 'QUIT').toUpperCase();
+    if (outcome !== 'CLEAR') return json({accepted:false,reason:'incomplete_play',personalBest:false});
+    const scoreValue=Math.max(0,Math.round(Number(body.score||body.modifiedScore||0))); const accuracy=normalizeStoredAccuracy(body.accuracy ?? 0); const suppliedPP=Number(body.pp||0);
+    if(!Number.isFinite(scoreValue)||!Number.isFinite(accuracy)||!Number.isFinite(suppliedPP))return json({error:'score, accuracy and pp must be numeric'},400);
     if(sql){
       const playerRows:any[]=await sql`SELECT * FROM players WHERE id=${playerId} LIMIT 1`; if(!playerRows[0])return json({error:'Unknown player'},404);
-      const lbRows:any[]=await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${mapHash}) ORDER BY l.difficulty DESC LIMIT 1`; if(!lbRows[0])return json({error:'Unknown map'},404);
+      const requestedDifficulty = Number(body.difficulty);
+      const hasDifficulty = Number.isInteger(requestedDifficulty) && requestedDifficulty >= 0;
+      const difficultyParam = hasDifficulty ? requestedDifficulty : 0;
+      const requestedMode = body.gameMode ? normalizeLeaderboardGameMode(body.gameMode) : '';
+      const lbRows:any[]=await sql`SELECT l.* FROM leaderboards l JOIN maps m ON m.id=l.map_id WHERE lower(m.hash)=lower(${mapHash}) AND (${!hasDifficulty} OR l.difficulty=${difficultyParam}) AND (${!requestedMode} OR lower(l.game_mode)=lower(${requestedMode})) ORDER BY l.difficulty DESC LIMIT 1`; if(!lbRows[0])return json({error:'Unknown map or leaderboard difficulty'},404);
       const lb=lbRows[0];
-      const existing:any[]=await sql`SELECT id,score,pp FROM scores WHERE leaderboard_id=${lb.id} AND player_id=${playerId} ORDER BY score DESC LIMIT 1`;
+      const rankedPlay = String(lb.status || 'UNRANKED').toUpperCase() === 'RANKED';
+      const pp = rankedPlay ? Math.max(0, Math.min(Number(lb.stars || 0) * 450 / 10.685333512, Number(lb.stars || 0) * 450 / 10.685333512 * (accuracy / 100))) : 0;
+      const existing:any[]=await sql`SELECT id,score,pp FROM scores WHERE leaderboard_id=${lb.id} AND player_id=${playerId} ORDER BY score DESC, created_at DESC LIMIT 1`;
       const isPB = !existing[0] || Number(existing[0].score) < scoreValue;
-      const rankedPlay = String(lb.status || 'UNRANKED') === 'RANKED';
-      await sql`UPDATE players SET total_plays=COALESCE(total_plays,0)+1, total_ranked_plays=COALESCE(total_ranked_plays,0)+${rankedPlay ? 1 : 0}, last_seen_at=now() WHERE id=${playerId}`;
+      // This endpoint is only reached after a completed play. Count that play once,
+      // independently of whether it improves the active leaderboard record.
+      if (rankedPlay) await sql`UPDATE players SET total_plays=COALESCE(total_plays,0)+1, last_seen_at=now() WHERE id=${playerId}`;
+      else await sql`UPDATE players SET last_seen_at=now() WHERE id=${playerId}`;
       if(!isPB) {
         return json({accepted:false,reason:'not_a_personal_best',scoreId:Number(existing[0].id),score:Number(existing[0].score),pp:Number(existing[0].pp),playCounted:true});
       }
-      const inserted:any[]=await sql`INSERT INTO scores (leaderboard_id,player_id,score,accuracy,pp,weight,mods,bad_cuts,missed_notes,max_combo,full_combo,has_replay) VALUES (${lb.id},${playerId},${scoreValue},${accuracy},${pp},1,${Array.isArray(body.mods)?body.mods.join(','):String(body.mods||'')},${Number(body.badCuts||0)},${Number(body.missedNotes||0)},${Number(body.maxCombo||0)},${Boolean(body.fullCombo)},${Boolean(body.hasReplay)}) RETURNING id`;
+      const mods = Array.isArray(body.mods) ? body.mods.join(',') : String(body.mods || '');
+      let scoreId: number;
+      if (existing[0]) {
+        // Keep a single active row per player/leaderboard: improve the existing
+        // record in place rather than appending a second leaderboard entry.
+        const updated:any[] = await sql`UPDATE scores SET score=${scoreValue},accuracy=${accuracy},pp=${pp},weight=${rankedPlay ? 1 : 0},mods=${mods},bad_cuts=${Number(body.badCuts||0)},missed_notes=${Number(body.missedNotes||0)},max_combo=${Number(body.maxCombo||0)},full_combo=${Boolean(body.fullCombo)},has_replay=false,created_at=now() WHERE id=${existing[0].id} AND score < ${scoreValue} RETURNING id`;
+        if (!updated[0]) return json({accepted:false,reason:'not_a_personal_best',scoreId:Number(existing[0].id),playCounted:true});
+        scoreId = Number(updated[0].id);
+        await sql`DELETE FROM scores WHERE leaderboard_id=${lb.id} AND player_id=${playerId} AND id<>${scoreId}`;
+      } else {
+        const inserted:any[]=await sql`INSERT INTO scores (leaderboard_id,player_id,score,accuracy,pp,weight,mods,bad_cuts,missed_notes,max_combo,full_combo,has_replay) VALUES (${lb.id},${playerId},${scoreValue},${accuracy},${pp},${rankedPlay ? 1 : 0},${mods},${Number(body.badCuts||0)},${Number(body.missedNotes||0)},${Number(body.maxCombo||0)},${Boolean(body.fullCombo)},false) ON CONFLICT (leaderboard_id,player_id) DO UPDATE SET score=EXCLUDED.score,accuracy=EXCLUDED.accuracy,pp=EXCLUDED.pp,weight=EXCLUDED.weight,mods=EXCLUDED.mods,bad_cuts=EXCLUDED.bad_cuts,missed_notes=EXCLUDED.missed_notes,max_combo=EXCLUDED.max_combo,full_combo=EXCLUDED.full_combo,has_replay=false,created_at=now() WHERE scores.score < EXCLUDED.score RETURNING id`;
+        if (!inserted[0]) {
+          const best:any[] = await sql`SELECT id,score,pp FROM scores WHERE leaderboard_id=${lb.id} AND player_id=${playerId} LIMIT 1`;
+          return json({accepted:false,reason:'not_a_personal_best',scoreId:Number(best[0]?.id || 0),score:Number(best[0]?.score || 0),pp:Number(best[0]?.pp || 0),playCounted:true});
+        }
+        scoreId = Number(inserted[0].id);
+      }
       await recalculatePlayerStats(sql,playerId);
-      return json({accepted:true,personalBest:true,playerId,mapHash,score:scoreValue,accuracy,pp,scoreId:Number(inserted[0].id),playCounted:true});
+      return json({accepted:true,personalBest:true,playerId,mapHash,score:scoreValue,accuracy,pp,scoreId,playCounted:true});
     }
     const p=players.find((x)=>x.id===playerId); const m=maps.find((x)=>x.hash.toLowerCase()===mapHash.toLowerCase()); if(!p)return json({error:'Unknown player'},404); if(!m)return json({error:'Unknown map'},404);
     const existing=scores.find((x)=>x.player.id===playerId&&x.leaderboard.id===m.leaderboards[0].id); if(existing&&existing.modifiedScore>=scoreValue)return json({accepted:false,reason:'not_a_personal_best',scoreId:existing.id});

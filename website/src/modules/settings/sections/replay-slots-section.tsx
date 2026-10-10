@@ -263,7 +263,7 @@ function ReplayRow({
          </div>
          <div className="text-muted-foreground hidden text-sm lg:block">{difficulty}</div>
          <div className="text-muted-foreground hidden text-sm tabular-nums lg:block">
-            {score ? `${formatPP(score.pp)}pp` : t('settings.perks.replaySlots.unknownValue')}
+            {score ? `${formatPP(score.pp)} ZZ` : t('settings.perks.replaySlots.unknownValue')}
          </div>
          <div className="text-muted-foreground hidden text-sm tabular-nums lg:block">
             {score ? `#${formatNumber(score.rank)}` : t('settings.perks.replaySlots.unknownValue')}
@@ -302,7 +302,7 @@ function ReplayRow({
                <span>{formatReplayTimeRemaining(item.releasedAt, score?.createdAt, t('settings.perks.replaySlots.unknownValue'))}</span>
             )}
             <span>{difficulty}</span>
-            <span>{score ? `${formatPP(score.pp)}pp` : t('settings.perks.replaySlots.unknownValue')}</span>
+            <span>{score ? `${formatPP(score.pp)} ZZ` : t('settings.perks.replaySlots.unknownValue')}</span>
             <span>{score ? `#${formatNumber(score.rank)}` : t('settings.perks.replaySlots.unknownValue')}</span>
          </div>
       </div>

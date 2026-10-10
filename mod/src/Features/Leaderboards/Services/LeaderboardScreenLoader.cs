@@ -79,7 +79,7 @@ namespace SnoreSaber.Features.Leaderboards.Services {
             bool canPage = CanPageScope(scope, filterAroundCountry);
             string rankedStatus = GetRankedStatus(leaderboard.LeaderboardInfo.Leaderboard);
             if (scope == LeaderboardScreenScope.AroundPlayer && playerScoreIndex == -1 && !filterAroundCountry) {
-                return LeaderboardScreenState.Failed(LeaderboardScreenStatus.NoPlayerScore, "You haven't set a score on this leaderboard", true, leaderboard, rankedStatus, canPage, page);
+                return LeaderboardScreenState.Failed(LeaderboardScreenStatus.NoPlayerScore, "You haven't set a snore on this leaderboard", true, leaderboard, rankedStatus, canPage, page);
             }
 
             if (leaderboard.Scores.Length == 0) {
@@ -117,7 +117,7 @@ namespace SnoreSaber.Features.Leaderboards.Services {
         private int GetPlayerScoreIndex(LeaderboardMap leaderboard) => Array.FindIndex(leaderboard.Scores, score => score.Score.Player.Id == _gameSessionService.LocalPlayerInfo.playerId);
 
         private static string GetRankedStatus(LeaderboardDetails leaderboardInfo) => leaderboardInfo.Status switch {
-            LeaderboardStatus.Ranked => leaderboardInfo.PositiveModifiers ? "Ranked (DA = +0.02, GN +0.04)" : "Ranked (modifiers disabled)",
+            LeaderboardStatus.Ranked => leaderboardInfo.PositiveModifiers ? $"Ranked (DA = +0.02, GN +0.04)\nStars: {leaderboardInfo.Stars:0.00}" : $"Ranked (modifiers disabled)\nStars: {leaderboardInfo.Stars:0.00}",
             LeaderboardStatus.Qualified => "Qualified",
             LeaderboardStatus.Loved => "Loved",
             _ => "Unranked"

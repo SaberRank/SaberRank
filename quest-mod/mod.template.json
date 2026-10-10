@@ -1,0 +1,24 @@
+{
+   "$schema": "https://raw.githubusercontent.com/Lauriethefish/QuestPatcher.QMod/main/QuestPatcher.QMod/Resources/qmod.schema.json",
+   "_QPVersion": "0.1.1",
+   "name": "${mod_name}",
+   "id": "${mod_id}",
+   "author": "Umbranox, Optimus, RedBrumbler, Qwasyx",
+   "version": "${version}",
+   "coverImage": "SnoreSaber.png",
+   "packageId": "com.beatgames.beatsaber",
+   "packageVersion": "1.40.8_7379",
+   "description": "The home of competitive Beat Saber. Ranked maps, PP, replays, detailed stats & more. Est. May 2018.",
+   "modFiles": [],
+   "lateModFiles": [
+      "${binary}"
+   ],
+   "libraryFiles": [],
+   "fileCopies": [
+      {
+         "name": "snoresaber_DO_NOT_SHARE.scary",
+         "destination": "/sdcard/ModData/com.beatgames.beatsaber/Mods/SnoreSaber/snoresaber_DO_NOT_SHARE.scary"
+      }
+   ],
+   "copyExtensions": []
+}

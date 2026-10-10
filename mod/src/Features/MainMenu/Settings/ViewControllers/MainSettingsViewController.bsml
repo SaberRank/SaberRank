@@ -3,7 +3,7 @@
 	<horizontal preferred-width='100' preferred-height='58' pad-top='8'>
 		<tab tab-name='Leaderboard' tags='tabs'>
 			<modifier-container child-expand-width='true' horizontal-fit='PreferredSize'>
-				<toggle-setting text='Show Score PP' id='showScorePPSetting' value='showScorePP' bind-value='true' apply-on-change='true' />
+				<toggle-setting text='Show Snore ZZ' id='showScorePPSetting' value='showScorePP' bind-value='true' apply-on-change='true' />
 				<toggle-setting text='Show Local Player Rank' id='showLocalPlayerRankSetting' value='showLocalPlayerRank' bind-value='true' apply-on-change='true' />
 				<toggle-setting text='Hide NA Scores' id='hideNAScoresSetting' value='hideNAScores' bind-value='true' apply-on-change='true' />
 				<toggle-setting text='Country/Region Around You' id='enableCountryLeaderboardsSetting' value='enableCountryLeaderboards' bind-value='true' apply-on-change='true' />

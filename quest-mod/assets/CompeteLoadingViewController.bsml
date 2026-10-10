@@ -1,0 +1,5 @@
+<bg horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+  <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" child-align="MiddleCenter" spacing="2">
+    <text id="loadingText" text="Loading..." align="Center" font-size="4.2" pref-width="72" pref-height="18" word-wrapping="true" />
+  </vertical>
+</bg>

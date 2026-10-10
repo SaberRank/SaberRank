@@ -50,7 +50,7 @@ export function HeroSection() {
             <div className="flex flex-col gap-4">
                <h1 className="text-4xl leading-tight font-medium sm:text-5xl">SnoreSaber</h1>
                <p className="text-muted-foreground mx-auto max-w-2xl text-base leading-relaxed sm:text-[16.5px]">
-                  Your independent Beat Saber leaderboard for scores, rankings, maps, and player progress.
+                  Your independent Beat Saber leaderboard for snores, rankings, maps, and player progress.
                </p>
             </div>
 

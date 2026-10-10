@@ -100,7 +100,7 @@ namespace SnoreSaber.Features.Leaderboards.Services {
             } catch (OperationCanceledException) {
             } catch (Exception ex) {
                 Plugin.Log.Error($"Failed to load LeaderboardCore SnoreSaber leaderboard: {ex}");
-                Publish(LeaderboardScreenState.Failed(LeaderboardScreenStatus.Error, "Failed to load leaderboard, score won't upload", true, null, string.Empty, false, _page));
+                Publish(LeaderboardScreenState.Failed(LeaderboardScreenStatus.Error, "Failed to load leaderboard, snore won't upload", true, null, string.Empty, false, _page));
             }
         }
 

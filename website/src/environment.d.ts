@@ -9,6 +9,7 @@ interface ImportMetaEnv {
    readonly CF_ACCESS_CLIENT_ID?: string;
    readonly CF_ACCESS_CLIENT_SECRET?: string;
    readonly VISITOR_RATE_LIMIT_SECRET?: string;
+   readonly LUDUS_SESSION_SECRET?: string;
    readonly HOME_NEWS_PATREON_ACCESS_TOKEN?: string;
    readonly HOME_NEWS_PATREON_CAMPAIGN_ID?: string;
    readonly HOME_NEWS_X_BEARER_TOKEN?: string;

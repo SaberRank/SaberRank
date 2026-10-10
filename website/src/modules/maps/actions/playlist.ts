@@ -19,7 +19,7 @@ const playlistInputSchema = z.object({
    maxStars: z.number().nonnegative().optional(),
    sortBy: z.enum(MAP_CONTROLLER_GET_MAP_LISTINGS_SORT_BY).optional(),
    sortDirection: z.enum(MAP_CONTROLLER_GET_MAP_LISTINGS_SORT_DIRECTION).optional(),
-   limit: z.number().int().min(1).max(200).optional(),
+   limit: z.number().int().min(1).max(50000).optional(),
    playlistTitle: z.string().trim().min(1).max(120).optional(),
    playlistAuthor: z.string().trim().min(1).max(120).optional(),
    playlistDescription: z.string().trim().max(300).optional()
@@ -56,7 +56,7 @@ const downloadMapPlaylistFn = createServerFn({ method: 'POST' })
       const search = data.search?.trim();
       const identifierSearch = search ? isMapIdentifierSearch(search) : false;
       const statuses = parseMapListingStatuses(data.status) ?? getImplicitRankedStatuses(data);
-      const requestedLimit = data.limit ?? MAP_LISTING_API_LIMIT;
+      const requestedLimit = data.limit ?? 50000;
       const listingParams = {
          search: search || undefined,
          status: !identifierSearch ? statuses : undefined,
@@ -66,15 +66,23 @@ const downloadMapPlaylistFn = createServerFn({ method: 'POST' })
          sortBy: data.sortBy ?? 'trending',
          sortDirection: data.sortDirection ?? 'desc'
       };
-      const responses = await Promise.all(
-         Array.from({ length: Math.ceil(requestedLimit / MAP_LISTING_API_LIMIT) }, (_, pageIndex) =>
-            publicApi.map.mapControllerGetMapListings({
-               ...listingParams,
-               page: pageIndex + 1,
-               limit: Math.min(MAP_LISTING_API_LIMIT, requestedLimit - pageIndex * MAP_LISTING_API_LIMIT)
+      const responses: Awaited<ReturnType<typeof publicApi.map.mapControllerGetMapListings>>[] = [];
+      const pageCount = Math.ceil(requestedLimit / MAP_LISTING_API_LIMIT);
+      for (let startPage = 0; startPage < pageCount; startPage += 20) {
+         const batch = await Promise.all(
+            Array.from({ length: Math.min(20, pageCount - startPage) }, (_, offset) => {
+               const pageIndex = startPage + offset;
+               return publicApi.map.mapControllerGetMapListings({
+                  ...listingParams,
+                  page: pageIndex + 1,
+                  limit: Math.min(MAP_LISTING_API_LIMIT, requestedLimit - pageIndex * MAP_LISTING_API_LIMIT)
+               });
             })
-         )
-      );
+         );
+         responses.push(...batch);
+         const totalPages = Number(batch[0]?.data.metadata.totalPages || pageCount);
+         if (startPage + batch.length >= totalPages) break;
+      }
 
       const seenKeys = new Set<string>();
       const songs = responses

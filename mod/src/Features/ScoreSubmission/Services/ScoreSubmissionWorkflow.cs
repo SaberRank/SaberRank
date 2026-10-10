@@ -76,7 +76,7 @@ namespace SnoreSaber.Features.ScoreSubmission.Services {
 
         private async Task<ScoreUploadResult> UploadWithRetries(string uploadData, string uploadVersionHash, byte[] replay, Action<ScoreSubmissionStatus> statusChanged, bool notifyAuthenticationStatus, CancellationToken cancellationToken) {
             for (int attempt = 1; attempt <= MaxUploadAttempts; attempt++) {
-                Report(statusChanged, ScoreUploadStatus.Uploading, "Uploading score...");
+                Report(statusChanged, ScoreUploadStatus.Uploading, "Uploading snore...");
                 Plugin.Log.Info("Attempting score upload...");
 
                 ScoreUploadResult result = await _apiClient.UploadScore(_gameSessionService.GameSession, uploadData, uploadVersionHash, replay, cancellationToken);

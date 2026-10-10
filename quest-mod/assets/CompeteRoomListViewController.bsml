@@ -1,0 +1,43 @@
+<bg horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+  <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="2">
+    <horizontal bg="panel-top" horizontal-fit="PreferredSize" pref-width="82">
+      <text id="titleText" text="Rooms" align="Center" font-size="6.5" overflow-mode="Ellipsis" />
+    </horizontal>
+
+    <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="82" spacing="2">
+      <text id="subtitleText" text="Rooms you have permission to join" align="Center" font-size="2.8" pref-width="56" pref-height="9" word-wrapping="true" />
+      <button id="refreshButton" text="Refresh" on-click="RefreshClicked" pref-width="22" pref-height="8" />
+    </horizontal>
+
+    <vertical pref-width="82" pref-height="52" pad-left="0" pad-right="2" pad-top="2" pad-bottom="2">
+      <custom-list id="roomList" list-width="80" visible-cells="4" cell-size="12" contents="rooms" select-cell="SelectRoom" stick-scrolling="true" show-scrollbar="true">
+        <stack pref-width="80" pref-height="12" min-width="80">
+          <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" child-control-width="true" child-expand-width="false" pref-width="80" pref-height="12" min-width="80" spacing="0">
+            <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" child-control-width="true" child-expand-width="false" pref-width="80" pref-height="10.8" min-width="80" spacing="2">
+              <vertical pref-width="57" pref-height="10.2" min-width="57" spacing="0" child-align="MiddleLeft">
+                <text tags="row-title" text="" align="Left" font-size="3.4" pref-width="57" min-width="57" pref-height="5" overflow-mode="Ellipsis" />
+                <text tags="row-detail" text="" align="Left" font-size="2.45" pref-width="57" min-width="57" pref-height="4" overflow-mode="Ellipsis" />
+              </vertical>
+              <vertical pref-width="21" pref-height="10" min-width="21" child-align="MiddleRight">
+                <text tags="row-status" text="" align="Right" font-size="2.8" pref-width="21" min-width="21" pref-height="4.5" overflow-mode="Ellipsis" />
+              </vertical>
+            </horizontal>
+            <stack pref-width="80" min-width="80" pref-height="0.35">
+              <image tags="un-selected-un-hovered" src="#WhitePixel" image-color="#FFFFFF24" pref-width="80" min-width="80" pref-height="0.35" />
+              <image tags="hovered" src="#WhitePixel" image-color="#FFFFFF8C" pref-width="80" min-width="80" pref-height="0.35" />
+              <image tags="selected" src="#WhitePixel" image-color="#FFFFFF8C" pref-width="80" min-width="80" pref-height="0.35" />
+            </stack>
+          </vertical>
+        </stack>
+      </custom-list>
+
+      <vertical id="refreshingStateObject" pref-width="68" pref-height="38" child-align="MiddleCenter">
+        <text text="Refreshing rooms..." align="Center" font-size="4" word-wrapping="true" />
+      </vertical>
+
+      <vertical id="emptyStateObject" pref-width="68" pref-height="38" child-align="MiddleCenter">
+        <text text="No rooms are available for you yet. Ask an organiser to add you when a match is ready." align="Center" font-size="4" word-wrapping="true" />
+      </vertical>
+    </vertical>
+  </vertical>
+</bg>

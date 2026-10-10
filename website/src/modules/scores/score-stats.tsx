@@ -114,14 +114,14 @@ export function ScoreStats({
                            isCompact={isCompact}
                            trigger={
                               <button type="button" className="hover:text-score-pp cursor-pointer rounded-sm text-left">
-                                 {formatPP(score.pp)}pp
+                                 {formatPP(score.pp)} ZZ
                               </button>
                            }
                         />
                      ) : (
                         <Tooltip>
                            <TooltipTrigger asChild>
-                              <span className="cursor-default">{formatPP(score.pp)}pp</span>
+                              <span className="cursor-default">{formatPP(score.pp)} ZZ</span>
                            </TooltipTrigger>
                            <TooltipContent>
                               <p>{t('common.performancePoints')}</p>
@@ -132,7 +132,7 @@ export function ScoreStats({
                         <Tooltip>
                            <TooltipTrigger asChild>
                               <span className={cn('cursor-default opacity-70', isCompact ? 'ml-1 text-[9px]' : 'ml-1.5 text-[10px]')}>
-                                 [{weightedPP}pp]
+                                 [{weightedPP} ZZ]
                               </span>
                            </TooltipTrigger>
                            <TooltipContent>
@@ -287,7 +287,7 @@ function AccuracyPPPopover({
                      ) : previewPP == null ? (
                         '--'
                      ) : (
-                        `${formatPP(previewPP)}pp`
+                        `${formatPP(previewPP)} ZZ`
                      )}
                   </span>
                </div>

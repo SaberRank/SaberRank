@@ -55,7 +55,6 @@ interface SortableColumn {
 const SORTABLE_COLUMNS: SortableColumn[] = [
    { sortField: 'totalPP', icon: FaStar },
    { sortField: 'totalSubmittedPlays', icon: FaPlay },
-   { sortField: 'totalPlayedRankedLeaderboards', icon: FaTrophy },
    { sortField: 'averageAccuracy', icon: FaBullseye }
 ];
 
@@ -148,12 +147,10 @@ export function RankingsTable<TLocation>({
                            onClick={() => handleSort(col.sortField)}
                         >
                            {col.sortField === 'totalPP'
-                              ? t('common.pp')
+                              ? 'ZZ'
                               : col.sortField === 'totalSubmittedPlays'
                                 ? t('rankings.plays')
-                                : col.sortField === 'totalPlayedRankedLeaderboards'
-                                  ? t('rankings.ranked')
-                                  : t('rankings.acc')}
+                                : t('rankings.acc')}
                            {isActive && <SortArrow className="size-2.5" />}
                         </FilterPill>
                      );
@@ -202,12 +199,10 @@ export function RankingsTable<TLocation>({
                               <span className="inline-flex items-center gap-1.5">
                                  <col.icon className="size-3" />
                                  {col.sortField === 'totalPP'
-                                    ? t('common.pp')
+                                    ? 'ZZ'
                                     : col.sortField === 'totalSubmittedPlays'
                                       ? t('rankings.totalPlayCount')
-                                      : col.sortField === 'totalPlayedRankedLeaderboards'
-                                        ? t('rankings.rankedPlayCount')
-                                        : t('rankings.averageRankedAccuracy')}
+                                      : t('rankings.averageRankedAccuracy')}
                                  {isActive && !isPlayerPivot && <SortArrow className="size-3" />}
                               </span>
                            </TableHead>
@@ -320,10 +315,9 @@ function RankingCardDefault({ player, countryFiltered, isDefaultSort, listPositi
 
             <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-1 text-[13px] md:text-xs">
                {[
-                  { key: 'pp', Icon: FaStar, value: `${formatPP(stats.totalPP)}pp`, extra: 'font-semibold text-score-pp' },
+                  { key: 'pp', Icon: FaStar, value: `${formatPP(stats.totalPP)} ZZ`, extra: 'font-semibold text-score-pp' },
                   { key: 'accuracy', Icon: FaBullseye, value: formatAccuracy(stats.averageAccuracy) },
                   { key: 'plays', Icon: FaPlay, value: formatNumber(stats.totalSubmittedPlays) },
-                  { key: 'ranked-plays', Icon: FaTrophy, value: formatNumber(stats.totalPlayedRankedLeaderboards) }
                ].map(({ key, Icon, value, extra }) => (
                   <span key={key} className={cn('inline-flex items-center gap-1', extra)}>
                      <Icon className="size-2.5" />
@@ -367,7 +361,7 @@ function RankingCardSummary({ player, countryFiltered, isDefaultSort, listPositi
                <PlayerLink player={player} variant="inline" className={cn('truncate text-sm font-semibold', player.inactive && 'opacity-50')} />
                <span className="text-score-pp inline-flex min-w-0 items-center gap-1 text-[11px] leading-tight font-semibold">
                   <FaStar className="size-2.5 shrink-0" />
-                  <span className="truncate">{formatPP(stats.totalPP)}pp</span>
+                  <span className="truncate">{formatPP(stats.totalPP)} ZZ</span>
                </span>
             </div>
          </div>
@@ -431,9 +425,8 @@ function RankingRow({ player, countryFiltered, isDefaultSort, listPosition, high
             </div>
          </TableCell>
          {[
-            { key: 'pp', value: `${formatPP(stats.totalPP)}pp`, extra: 'text-score-pp' },
+            { key: 'pp', value: `${formatPP(stats.totalPP)} ZZ`, extra: 'text-score-pp' },
             { key: 'plays', value: formatNumber(stats.totalSubmittedPlays) },
-            { key: 'ranked-plays', value: formatNumber(stats.totalPlayedRankedLeaderboards) },
             { key: 'accuracy', value: formatAccuracy(stats.averageAccuracy), extra: 'rounded-r-lg border-r' }
          ].map(({ key, value, extra }) => (
             <TableCell key={key} className={cn('border-y px-4 py-2.5', extra)}>

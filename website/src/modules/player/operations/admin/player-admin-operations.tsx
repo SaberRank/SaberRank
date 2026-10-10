@@ -71,7 +71,7 @@ export function PlayerAdminOperations({
                playerId,
                reason: trimmedBanReason,
                notes: banNotes || undefined,
-               earliestAppealDate: appealDate?.toISOString()
+               earliestAppealDate: appealDate?.toISOString(),
             }),
          t('player.playerBanned'),
          t('player.failedToBan'),

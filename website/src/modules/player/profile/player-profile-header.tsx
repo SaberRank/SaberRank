@@ -62,7 +62,6 @@ const rankPillAccentClass = cn(
 export type PlayerProfileStatId = NonNullable<UserControllerUpdateProfileCustomizationPayload['statOrder']>[number];
 
 export const PLAYER_PROFILE_STAT_IDS: PlayerProfileStatId[] = [
-   'rankedPlays',
    'rankedScore',
    'rankedAcc',
    'plusOnePP',
@@ -108,13 +107,6 @@ export function PlayerProfileHeader({ player, aliases, actions, customization, p
          : undefined;
    const primaryStatItems: ProfileStatItem[] = [
       {
-         id: 'rankedPlays',
-         icon: FaTrophy,
-         label: t('player.rankedPlays'),
-         value: formatNumber(stats.totalPlayedRankedLeaderboards),
-         primary: true
-      },
-      {
          id: 'rankedScore',
          icon: FaStar,
          label: t('player.rankedScore'),
@@ -134,7 +126,7 @@ export function PlayerProfileHeader({ player, aliases, actions, customization, p
          id: 'plusOnePP',
          icon: FaStar,
          label: t('player.plusOnePP'),
-         value: `${formatPP(plusOneRawPP)}pp`,
+         value: `${formatPP(plusOneRawPP)} ZZ`,
          primary: true,
          tooltip: t('player.plusOnePPHint')
       });
@@ -276,7 +268,7 @@ export function PlayerProfileHeader({ player, aliases, actions, customization, p
                      {!restricted && (
                         <StatusBadge tooltip={t('common.performancePoints')} className={ppBadgeClass} style={accentSurfaceStyle}>
                            {formatPP(stats.totalPP)}
-                           <span className={cn(ppUnitClass, accentSubtleTextClass)}>{denyahMode ? 'pee pee' : 'pp'}</span>
+                           <span className={cn(ppUnitClass, accentSubtleTextClass)}>ZZ</span>
                         </StatusBadge>
                      )}
 

@@ -6,7 +6,7 @@ namespace SnoreSaber.Core {
         private const string DefaultWebsiteBaseUrl = "https://snoresaber.vercel.app";
         private const string DefaultApiBaseUrl = "https://snoresaber.vercel.app";
         private const string DefaultCdnBaseUrl = "https://cdn.saberrank.local";
-        private const string DefaultLudusUrl = "wss://ludus-1.saberrank.local/v1/connect";
+        private const string DefaultLudusUrl = "wss://live.snoresaber.com/v1/connect";
 
         internal static readonly string WebsiteBaseUrl = ConfiguredUrl("SnoreSaberWebsiteBaseUrl", DefaultWebsiteBaseUrl);
         internal static readonly string ApiBaseUrl = ConfiguredUrl("SnoreSaberApiBaseUrl", DefaultApiBaseUrl);

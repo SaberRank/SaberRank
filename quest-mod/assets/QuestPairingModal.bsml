@@ -1,0 +1,25 @@
+<bg horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+  <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="1" pad="2" child-align="MiddleCenter">
+    <text text="Pair ScoreSaber Account" align="Center" font-size="4" pref-width="72" pref-height="5" />
+    <text text="Sign in at scoresaber.com/quest/pair on your phone or PC, then enter the code it shows." align="Center" font-size="2.7" word-wrapping="true" pref-width="72" pref-height="8" />
+
+    <horizontal bg="round-rect-panel" bg-color="#00B8FF22" horizontal-fit="PreferredSize" pref-width="60" pref-height="10">
+      <text id="codeText" text="------------" align="Center" font-size="5" pref-width="56" pref-height="8" overflow-mode="Ellipsis" />
+    </horizontal>
+
+    <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="2">
+      <button text="Enter Code" click-event="open-pairing-keyboard" pref-width="24" pref-height="8" />
+      <button text="Paste" on-click="PasteCode" pref-width="16" pref-height="8" />
+      <button text="Pair" on-click="SubmitCode" pref-width="16" pref-height="8" />
+    </horizontal>
+
+    <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="2">
+      <button text="Open Pairing Page" on-click="OpenPairingPage" pref-width="36" pref-height="8" />
+      <button text="Close" on-click="Close" pref-width="16" pref-height="8" />
+    </horizontal>
+
+    <text id="statusText" text="" align="Center" font-size="2.6" pref-width="72" pref-height="10" word-wrapping="true" />
+  </vertical>
+
+  <modal-keyboard id="pairingKeyboard" show-event="open-pairing-keyboard" click-off-closes="true" value="pairingCode" on-enter="CodeEntered" clear-on-open="false" />
+</bg>

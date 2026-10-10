@@ -312,7 +312,7 @@ function ScoreAccuracyOverview({
             )}
             {fcPP != null && (
                <Stat icon={Star} label={t('score.estFCPP')} className="gap-1.5 px-2 py-0.5 text-[11px]">
-                  {formatPP(fcPP)}pp
+                  {formatPP(fcPP)} ZZ
                </Stat>
             )}
          </div>

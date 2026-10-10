@@ -115,7 +115,7 @@ namespace SnoreSaber.Features.ScoreSubmission {
                     CancellationToken.None);
 
                 if (result.Success) {
-                    Plugin.Log.Info("Score uploaded!");
+                    Plugin.Log.Info("Snore uploaded!");
                 }
                 if (visibleUpload) {
                     Emit(ScoreSubmissionStatus.FromResult(result));

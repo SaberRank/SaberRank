@@ -94,7 +94,7 @@ function rewriteTextNode(node: Node, state: TextEffectState, renderedEffects: Re
    const text = node.nodeValue;
    if (!text || state.rewrittenText.get(node) === text || node.parentElement?.closest(NUMBER_EFFECT_SELECTOR)) return;
 
-   const value = text.replace(/(\d)pp\b/g, '$1 pee pee').replace(/\bpp\b/g, 'pee pee');
+   const value = text.replace(/(\d)pp\b/gi, '$1 ZZ').replace(/\bpp\b/gi, 'ZZ');
    const parts: Array<string | HTMLSpanElement> = [];
    const isVisible = (node.parentElement?.getClientRects().length ?? 0) > 0;
    let hasNumberEffect = false;

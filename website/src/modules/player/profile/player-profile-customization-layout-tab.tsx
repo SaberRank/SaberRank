@@ -65,7 +65,6 @@ export function PlayerProfileCustomizationLayoutTab({
       scores: t('player.customization.layout.sectionScores')
    };
    const statLabels = {
-      rankedPlays: t('player.rankedPlays'),
       rankedScore: t('player.rankedScore'),
       rankedAcc: t('player.rankedAcc'),
       plusOnePP: t('player.plusOnePP'),

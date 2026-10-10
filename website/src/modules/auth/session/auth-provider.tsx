@@ -18,7 +18,7 @@ export function AuthProvider({ initialUser, children }: { initialUser: UserContr
    const router = useRouter();
    const queryClient = useQueryClient();
    const refreshAuth = useCallback(async () => {
-      await queryClient.invalidateQueries({ queryKey: ['root-shell'], exact: true, refetchType: 'none' });
+      await queryClient.invalidateQueries({ queryKey: ['root-shell'], exact: true });
       await router.invalidate();
    }, [queryClient, router]);
 

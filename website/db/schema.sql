@@ -26,8 +26,6 @@ CREATE TABLE IF NOT EXISTS players (
   ban_reason TEXT,
   ban_notes TEXT,
   ban_created_at TIMESTAMPTZ,
-  ban_auto_unban BOOLEAN NOT NULL DEFAULT false,
-  ban_auto_unbans_at TIMESTAMPTZ,
   ban_earliest_appeal_date TIMESTAMPTZ,
   average_accuracy DOUBLE PRECISION NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -86,6 +84,28 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at TIMESTAMPTZ NOT NULL
 );
 
+-- Older PBs are archived by personal-best-scores-migration.sql before the unique
+-- active-score index is applied to an existing installation.
+CREATE TABLE IF NOT EXISTS score_history (
+  id BIGSERIAL PRIMARY KEY,
+  original_score_id BIGINT NOT NULL UNIQUE,
+  leaderboard_id BIGINT NOT NULL,
+  player_id TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  accuracy DOUBLE PRECISION NOT NULL,
+  pp DOUBLE PRECISION NOT NULL DEFAULT 0,
+  weight DOUBLE PRECISION NOT NULL DEFAULT 1,
+  mods TEXT NOT NULL DEFAULT '',
+  bad_cuts INTEGER NOT NULL DEFAULT 0,
+  missed_notes INTEGER NOT NULL DEFAULT 0,
+  max_combo INTEGER NOT NULL DEFAULT 0,
+  full_combo BOOLEAN NOT NULL DEFAULT false,
+  has_replay BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL,
+  archived_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_scores_active_player_leaderboard ON scores(leaderboard_id, player_id);
 CREATE INDEX IF NOT EXISTS idx_players_pp ON players(pp DESC);
 CREATE INDEX IF NOT EXISTS idx_scores_leaderboard ON scores(leaderboard_id, score DESC);
 CREATE INDEX IF NOT EXISTS idx_scores_player ON scores(player_id, created_at DESC);
@@ -194,3 +214,26 @@ ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS bootstrap_complete BOO
 ALTER TABLE beatsaver_sync_state ADD COLUMN IF NOT EXISTS newest_uploaded_at TIMESTAMPTZ;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_players_login_email ON players (lower(login_email)) WHERE login_email IS NOT NULL;
+
+
+-- Fixed calendar-quarter seasonal rankings (UTC quarter boundaries).
+CREATE TABLE IF NOT EXISTS snore_seasons (
+  season_key TEXT PRIMARY KEY,
+  starts_at DATE NOT NULL,
+  ends_at DATE NOT NULL,
+  activated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS snore_season_maps (
+  season_key TEXT NOT NULL REFERENCES snore_seasons(season_key) ON DELETE CASCADE,
+  leaderboard_id BIGINT NOT NULL,
+  stars DOUBLE PRECISION NOT NULL DEFAULT 0,
+  PRIMARY KEY (season_key, leaderboard_id)
+);
+CREATE TABLE IF NOT EXISTS snore_next_season_maps (
+  leaderboard_id BIGINT PRIMARY KEY,
+  stars DOUBLE PRECISION NOT NULL DEFAULT 0,
+  added_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_snore_season_maps_leaderboard ON snore_season_maps(leaderboard_id);

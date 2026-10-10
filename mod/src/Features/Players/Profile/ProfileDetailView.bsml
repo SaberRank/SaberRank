@@ -29,7 +29,7 @@
             <text id="rank-text" text="#0" align="Left" size-delta-y="4" />
           </vertical>
           <vertical vertical-fit="PreferredSize" pref-width="45" pref-height="10">
-            <text text="Performance Points" align="Left" italics="false" bold="true" font-size="4.5" size-delta-y="5" />
+            <text text="ZZ" align="Left" italics="false" bold="true" font-size="4.5" size-delta-y="5" />
             <text id="pp-text" text="0pp" align="Left" size-delta-y="4" />
           </vertical>
           <vertical vertical-fit="PreferredSize" pref-width="45" pref-height="10">
@@ -37,7 +37,7 @@
             <text id="ranked-acc-text" text="0%" align="Left" size-delta-y="4" />
           </vertical>
           <vertical vertical-fit="PreferredSize" pref-width="45" pref-height="10">
-            <text text="Total Score" align="Left" italics="false" bold="true" font-size="4.5" size-delta-y="5" />
+            <text text="Total Snores" align="Left" italics="false" bold="true" font-size="4.5" size-delta-y="5" />
             <text id="total-score-text" text="0" align="Left" size-delta-y="4" />
           </vertical>
         </vertical>

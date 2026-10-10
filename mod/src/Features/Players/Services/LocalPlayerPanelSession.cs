@@ -103,7 +103,7 @@ namespace SnoreSaber.Features.Players.Services {
             }
 
             return ex.snoreSaberError.ErrorMessage == "Player not found"
-                ? LocalPlayerPanelState.Message("Welcome to SnoreSaber! Set a score to create a profile")
+                ? LocalPlayerPanelState.Message("Welcome to SnoreSaber! Set a snore to create a profile")
                 : LocalPlayerPanelState.Message($"Failed to load player ranking: {ex.snoreSaberError.ErrorMessage}");
         }
 
@@ -127,7 +127,7 @@ namespace SnoreSaber.Features.Players.Services {
                 return CurrentState.GlobalRankingText;
             }
 
-            return $"<b><color=#FFDE1A>Global Ranking: </color></b>#{string.Format("{0:n0}", panelData.Player.Stats.Rank)}<size=75%> (<color=#6772E5>{string.Format("{0:n0}", panelData.Player.Stats.TotalPP)}pp</color>)";
+            return $"<b><color=#FFDE1A>Global Ranking: </color></b>#{string.Format("{0:n0}", panelData.Player.Stats.Rank)}<size=75%> (<color=#6772E5>{string.Format("{0:n0}", panelData.Player.Stats.TotalPP)} ZZ</color>)";
         }
 
         private void PublishPlayer(LocalPlayerPanelData panelData) {

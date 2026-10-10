@@ -1,0 +1,3 @@
+<bg horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+  <modal-keyboard id="chatKeyboard" show-event="open-chat-keyboard" hide-event="hide-chat-keyboard" click-off-closes="true" move-to-center="false" value="chatDraft" on-enter="ChatEntered" clear-on-open="false" />
+</bg>

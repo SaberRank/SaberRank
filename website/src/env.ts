@@ -47,6 +47,7 @@ export const env = createEnv({
       CF_ACCESS_CLIENT_ID: z.string().optional(),
       CF_ACCESS_CLIENT_SECRET: z.string().optional(),
       VISITOR_RATE_LIMIT_SECRET: z.string().optional(),
+      LUDUS_SESSION_SECRET: z.string().optional(),
       HOME_NEWS_PATREON_ACCESS_TOKEN: z.string().optional(),
       HOME_NEWS_PATREON_CAMPAIGN_ID: z.string().optional(),
       HOME_NEWS_X_BEARER_TOKEN: z.string().optional(),
@@ -57,8 +58,8 @@ export const env = createEnv({
    clientPrefix: 'NEXT_PUBLIC_',
    client: {
       NEXT_PUBLIC_API_URL: publicBrowserUrlSchema.default('https://snoresaber.vercel.app'),
-      NEXT_PUBLIC_ARCVIEWER_URL: publicBrowserUrlSchema.default('https://snoresaber.vercel.app/watch'),
-      NEXT_PUBLIC_LUDUS_URL: publicBrowserUrlSchema.default('https://snoresaber.vercel.app'),
+      NEXT_PUBLIC_ARCVIEWER_URL: publicBrowserUrlSchema.default('https://snoresaber-watch.vercel.app/'),
+      NEXT_PUBLIC_LUDUS_URL: publicBrowserUrlSchema.default('https://live.snoresaber.com'),
       NEXT_PUBLIC_SITE_URL: publicBrowserUrlSchema.default('https://snoresaber.vercel.app')
    },
    runtimeEnvStrict: {
@@ -70,6 +71,7 @@ export const env = createEnv({
       CF_ACCESS_CLIENT_ID: readEnv('CF_ACCESS_CLIENT_ID'),
       CF_ACCESS_CLIENT_SECRET: readEnv('CF_ACCESS_CLIENT_SECRET'),
       VISITOR_RATE_LIMIT_SECRET: readEnv('VISITOR_RATE_LIMIT_SECRET'),
+      LUDUS_SESSION_SECRET: readEnv('LUDUS_SESSION_SECRET'),
       HOME_NEWS_PATREON_ACCESS_TOKEN: readEnv('HOME_NEWS_PATREON_ACCESS_TOKEN'),
       HOME_NEWS_PATREON_CAMPAIGN_ID: readEnv('HOME_NEWS_PATREON_CAMPAIGN_ID'),
       HOME_NEWS_X_BEARER_TOKEN: readEnv('HOME_NEWS_X_BEARER_TOKEN'),

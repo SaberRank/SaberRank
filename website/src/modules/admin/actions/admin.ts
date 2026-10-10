@@ -23,6 +23,31 @@ const getAdminBadgesFn = createServerFn({ method: 'GET' }).handler(() =>
    localApiAction<Awaited<ReturnType<typeof api.adminBadge.adminBadgeControllerGetAllBadges>>['data']>('/admin/badges')
 );
 
+export type AdminPlayerReport = {
+   id: number;
+   reporterId: string;
+   reporterName: string;
+   reporterCountry: string;
+   reporterAvatar: string;
+   reporterRole: string | null;
+   reporterPermissions: number;
+   targetPlayerId: string;
+   targetName: string;
+   targetCountry: string;
+   targetAvatar: string;
+   targetRole: string | null;
+   targetPermissions: number;
+   targetBanned: boolean;
+   targetBanReason: string | null;
+   targetAppealAt: string | null;
+   reason: string;
+   details: string;
+   status: string;
+   createdAt: string;
+};
+
+const getAdminReportsFn = createServerFn({ method: 'GET' }).handler(() => localApiAction<AdminPlayerReport[]>('/admin/reports'));
+
 const createBadgeFn = createServerFn({ method: 'POST' })
    .validator((formData: FormData) => formData)
    .handler(async ({ data }) => {
@@ -78,6 +103,10 @@ export async function checkAdminAccess() {
 
 export async function getAdminBadges() {
    return getAdminBadgesFn();
+}
+
+export async function getAdminReports() {
+   return getAdminReportsFn();
 }
 
 export async function createBadge(formData: FormData) {

@@ -181,7 +181,7 @@ function ScoreSummary({ score }: { score: PinnedScoreCustomizationScore }) {
       <span className="block min-w-0">
          <span className="block truncate text-sm font-medium">{score.leaderboard.map.songName}</span>
          <span className="text-muted-foreground block truncate text-xs">
-            #{formatNumber(score.score.rank)} / {formatAccuracy(score.score.accuracy * 100)} / {formatPP(score.score.pp)}pp
+            #{formatNumber(score.score.rank)} / {formatAccuracy(score.score.accuracy * 100)} / {formatPP(score.score.pp)} ZZ
          </span>
       </span>
    );

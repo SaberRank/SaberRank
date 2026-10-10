@@ -155,7 +155,7 @@ function HomeRoute() {
             <div className="flex flex-col items-center gap-4 text-center">
                <h1 className="snoresaber-gradient-title text-4xl font-semibold tracking-tight sm:text-5xl">SnoreSaber</h1>
                <p className="text-muted-foreground max-w-2xl text-base leading-relaxed sm:text-[16.5px]">
-                  Your independent Beat Saber leaderboard for scores, rankings, maps, and player progress.
+                  Your independent Beat Saber leaderboard for snores, rankings, maps, and player progress.
                </p>
             </div>
          </section>

@@ -91,8 +91,8 @@ namespace SnoreSaber.Features.Leaderboards.UI.ScoreDetails {
             SetFancyText(_deviceHMDText, "HMD", _currentScore.DeviceHMDText);
             SetFancyText(_deviceControllerLeftText, "Left Controller", _currentScore.DeviceControllerLeftText);
             SetFancyText(_deviceControllerRightText, "Right Controller", _currentScore.DeviceControllerRightText);
-            SetFancyText(_scoreText, "Score", _currentScore.ScoreText);
-            SetFancyText(_ppText, "Performance Points", _currentScore.PPText);
+            SetFancyText(_scoreText, "Snore", _currentScore.ScoreText);
+            SetFancyText(_ppText, "ZZ", _currentScore.PPText);
             SetFancyText(_maxComboText, "Combo", _currentScore.MaxComboText);
             SetFancyText(_fullComboText, "Full Combo", _currentScore.FullComboText);
             SetFancyText(_badCutsText, "Bad Cuts", _currentScore.BadCutsText);

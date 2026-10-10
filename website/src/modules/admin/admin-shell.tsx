@@ -1,7 +1,7 @@
 'use client';
 
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Medal, Blocks } from 'lucide-react';
+import { Medal, Blocks, Flag } from 'lucide-react';
 import { useTranslations } from 'use-intl';
 
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export function AdminShell({ children }: { children: React.ReactNode }) {
    const t = useTranslations('admin');
    const pathname = useRouterState({ select: (state) => state.location.pathname });
-   const activeTab = pathname.startsWith('/admin/versions') ? 'versions' : 'badges';
+   const activeTab = pathname.startsWith('/admin/versions') ? 'versions' : pathname.startsWith('/admin/reports') ? 'reports' : 'badges';
 
    return (
       <div className="relative flex-1 overflow-hidden">
@@ -22,6 +22,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         <Link to="/admin/badges" resetScroll={false}>
                            <Medal />
                            {t('badges.title')}
+                        </Link>
+                     </TabsTrigger>
+                     <TabsTrigger value="reports" asChild>
+                        <Link to="/admin/reports" resetScroll={false}>
+                           <Flag />
+                           Player reports
                         </Link>
                      </TabsTrigger>
                      <TabsTrigger value="versions" asChild>

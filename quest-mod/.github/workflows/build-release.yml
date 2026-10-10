@@ -1,0 +1,262 @@
+name: Build and release
+
+env:
+   module_id: snoresaber
+   qmodName: SnoreSaber
+   CCACHE_BASEDIR: ${{ github.workspace }}
+   CCACHE_COMPILERCHECK: content
+   CCACHE_DIR: /home/runner/.cache/ccache
+   CCACHE_MAXSIZE: 2G
+   CCACHE_NOHASHDIR: "true"
+   SNORESABER_COMPILER_CACHE: ccache
+
+on:
+   workflow_dispatch:
+      inputs:
+         version:
+            description: "Release version, without the v prefix"
+            required: true
+            default: "3.4.1"
+         release:
+            description: "Register official build metadata (not a GitHub release; matrix targets have separate artifacts)"
+            required: true
+            type: boolean
+            default: false
+         prerelease:
+            description: "Mark the GitHub release as a prerelease"
+            required: true
+            type: boolean
+            default: true
+         make_latest:
+            description: "Mark this as the latest release"
+            required: true
+            type: boolean
+            default: false
+         release_body:
+            description: "Release notes"
+            required: true
+            default: "Official SnoreSaber Quest build."
+
+permissions:
+   contents: write
+   id-token: write
+
+concurrency:
+   group: quest-release-${{ github.ref }}
+   cancel-in-progress: false
+
+jobs:
+   build-release:
+      name: Build and release
+      runs-on: ubuntu-latest
+      strategy:
+         fail-fast: false
+         matrix:
+            include:
+               - game_version: "1.29.0"
+                 cordl_version: "2900.0.0"
+                 package_version: "1.29.0"
+               - game_version: "1.37.0"
+                 cordl_version: "3700.0.0"
+                 package_version: "1.37.0_9064817954"
+               - game_version: "1.38.0"
+                 cordl_version: "3800.0.0"
+                 package_version: "1.38.0"
+               - game_version: "1.40.8"
+                 cordl_version: "4008.0.0"
+                 package_version: "1.40.8_7379"
+               - game_version: "1.42.0"
+                 cordl_version: "4200.0.0"
+                 package_version: "1.42.0"
+
+      steps:
+         - name: Guard branch
+           if: github.ref != 'refs/heads/main'
+           run: |
+              echo "This workflow is only intended to run from main."
+              echo "Selected ref: $GITHUB_REF"
+              exit 1
+
+         - uses: actions/checkout@v4
+           name: Checkout
+           with:
+              submodules: true
+              lfs: true
+
+         - uses: seanmiddleditch/gha-setup-ninja@v3
+
+         - name: Create ndkpath.txt
+           run: |
+              echo "$ANDROID_NDK_LATEST_HOME" > "${GITHUB_WORKSPACE}/ndkpath.txt"
+              cat "${GITHUB_WORKSPACE}/ndkpath.txt"
+
+         - name: Install compiler cache
+           run: |
+              if ! command -v ccache >/dev/null 2>&1; then
+                 sudo apt-get update
+                 sudo apt-get install -y ccache
+              fi
+              ccache --version
+
+         - name: Compiler Cache
+           uses: actions/cache@v4
+           with:
+              path: ${{ env.CCACHE_DIR }}
+              key: ${{ runner.os }}-compiler-cache-${{ github.ref_name }}-${{ hashFiles('qpm.json', 'CMakeLists.txt', 'assets_include.cmake', 'extern.cmake', 'qpm_defines.cmake', 'ndkpath.txt') }}
+              restore-keys: |
+                 ${{ runner.os }}-compiler-cache-${{ github.ref_name }}-
+
+         - name: Configure compiler cache
+           run: |
+              mkdir -p "$CCACHE_DIR"
+              ccache --set-config=max_size="$CCACHE_MAXSIZE"
+              ccache --zero-stats
+
+         - name: QPM Dependencies Cache
+           id: cache-qpm-deps
+           uses: actions/cache@v4
+           env:
+              cache-name: cache-qpm-deps
+           with:
+              path: /home/runner/.local/share/QPM-RS/cache
+              key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('qpm.json') }}
+              restore-keys: |
+                 ${{ runner.os }}-build-${{ env.cache-name }}-
+                 ${{ runner.os }}-build-
+                 ${{ runner.os }}-
+
+         - name: Select target game bindings
+           env:
+              GAME_VERSION: ${{ matrix.game_version }}
+              CORDL_VERSION: ${{ matrix.cordl_version }}
+              PACKAGE_VERSION: ${{ matrix.package_version }}
+           run: |
+              node <<'NODE'
+              const fs = require('fs');
+              const qpm = JSON.parse(fs.readFileSync('qpm.json', 'utf8'));
+              const cordl = qpm.dependencies.find(x => x.id === 'bs-cordl');
+              if (!cordl) throw new Error('qpm.json is missing bs-cordl');
+              cordl.versionRange = '^' + process.env.CORDL_VERSION;
+              fs.writeFileSync('qpm.json', JSON.stringify(qpm, null, 2) + '\n');
+              const template = JSON.parse(fs.readFileSync('mod.template.json', 'utf8'));
+              template.packageVersion = process.env.PACKAGE_VERSION;
+              fs.writeFileSync('mod.template.json', JSON.stringify(template, null, 2) + '\n');
+              console.log(`Targeting Beat Saber ${process.env.GAME_VERSION}; bs-cordl ${cordl.versionRange}; packageVersion ${template.packageVersion}`);
+              NODE
+
+         - name: QPM Rust Action
+           uses: Fernthedev/qpm-action@v1
+           with:
+              workflow_token: ${{ secrets.GITHUB_TOKEN }}
+              restore: true
+              cache: true
+
+         - name: List post-restore deps
+           run: |
+              echo includes:
+              ls -la "${GITHUB_WORKSPACE}/extern/includes"
+              echo libs:
+              ls -la "${GITHUB_WORKSPACE}/extern/libs"
+              echo cache:
+              ls -la "$HOME/.local/share/QPM-RS/cache"
+              echo qpm-cache:
+              qpm cache list
+
+         - name: Set release version
+           run: |
+              qpm package edit --version "${{ inputs.version }}"
+
+         - name: Read build metadata
+           id: build-metadata
+           run: |
+              plugin_version=$(jq -r '.info.version' qpm.json)
+              package_version=$(jq -r '.packageVersion' mod.template.json)
+              game_version="${{ matrix.game_version }}"
+              upload_version_hash=$(printf "Quest%s%s" "$plugin_version" "$game_version" | md5sum | awk '{print $1}')
+              supported_versions=$(jq -cn \
+                 --arg gameVersion "$game_version" \
+                 --arg uploadVersionHash "$upload_version_hash" \
+                 '[{ gameVersion: $gameVersion, uploadVersionHash: $uploadVersionHash, platform: "quest" }]')
+
+              echo "Plugin Version: $plugin_version"
+              echo "Game Version: $game_version"
+              echo "Package Version: $package_version"
+              echo "Supported Versions: $supported_versions"
+              echo "plugin_version=$plugin_version" >> "$GITHUB_OUTPUT"
+              echo "game_version=$game_version" >> "$GITHUB_OUTPUT"
+              echo "package_version=$package_version" >> "$GITHUB_OUTPUT"
+              echo "upload_version_hash=$upload_version_hash" >> "$GITHUB_OUTPUT"
+              echo "supported_versions=$supported_versions" >> "$GITHUB_OUTPUT"
+
+         - name: Register official build
+           if: inputs.release
+           id: official-build
+           shell: pwsh
+           run: |
+              $audience = [Uri]::EscapeDataString("snoresaber-upload-build-registration")
+              $oidcResponse = Invoke-RestMethod `
+                -Uri "$env:ACTIONS_ID_TOKEN_REQUEST_URL&audience=$audience" `
+                -Headers @{ Authorization = "Bearer $env:ACTIONS_ID_TOKEN_REQUEST_TOKEN" }
+
+              $supportedVersions = '${{ steps.build-metadata.outputs.supported_versions }}' | ConvertFrom-Json -NoEnumerate
+              $buildId = "snoresaber-quest-${{ steps.build-metadata.outputs.game_version }}-${{ github.run_id }}-${{ github.run_attempt }}"
+              $body = @{
+                buildId = $buildId
+                pluginVersion = "${{ steps.build-metadata.outputs.plugin_version }}"
+                gameVersion = "${{ steps.build-metadata.outputs.game_version }}"
+                uploadVersionHash = "${{ steps.build-metadata.outputs.upload_version_hash }}"
+                platform = "quest"
+                supportedVersions = $supportedVersions
+                protocolVersion = 2
+                commitSha = "${{ github.sha }}"
+                sourceRepository = "${{ github.repository }}"
+                sourceRef = "${{ github.ref }}"
+                sourceWorkflowRef = "${{ github.workflow_ref }}"
+              } | ConvertTo-Json -Depth 8
+
+              $response = Invoke-RestMethod `
+                -Uri "https://snoresaber.com/api/v2/game/official-builds" `
+                -Method Post `
+                -ContentType "application/json" `
+                -Headers @{ Authorization = "Bearer $($oidcResponse.value)" } `
+                -Body $body
+
+              Write-Output "::add-mask::$($response.credential)"
+              "build_id=$($response.build.buildId)" >> $env:GITHUB_OUTPUT
+              "credential=$($response.credential)" >> $env:GITHUB_OUTPUT
+
+         - name: Build
+           env:
+              SnoreSaberOfficialBuildId: ${{ steps.official-build.outputs.build_id }}
+              SnoreSaberOfficialBuildCredential: ${{ steps.official-build.outputs.credential }}
+           run: |
+              cd "${GITHUB_WORKSPACE}"
+              pwsh -Command ./scripts/build.ps1
+              qpm qmod manifest
+              ccache --show-stats
+
+         - name: Create qmod
+           run: |
+              pwsh -Command ./scripts/createqmod.ps1 "${{ env.qmodName }}"
+
+         - name: Get library name
+           id: libname
+           run: |
+              cd ./build/
+              pattern="lib${module_id}*.so"
+              files=( $pattern )
+              echo "NAME=${files[0]}" >> "$GITHUB_OUTPUT"
+
+         - name: Upload qmod artifact
+           uses: actions/upload-artifact@v4
+           with:
+              name: SnoreSaber-Quest-${{ matrix.game_version }}.qmod
+              path: ./${{ env.qmodName }}.qmod
+              if-no-files-found: error
+
+         - name: Upload binary artifact
+           uses: actions/upload-artifact@v4
+           with:
+              name: SnoreSaber-Quest-${{ matrix.game_version }}-${{ steps.libname.outputs.NAME }}
+              path: ./build/${{ steps.libname.outputs.NAME }}
+              if-no-files-found: error

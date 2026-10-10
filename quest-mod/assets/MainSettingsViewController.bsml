@@ -1,0 +1,43 @@
+<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
+    <tab-selector tab-tag='tabs'/>
+    <horizontal preferred-width='100' preferred-height='58' pad-top='8'>
+        <tab tab-name='Leaderboard' tags='tabs'>
+            <modifier-container child-expand-width='true' horizontal-fit='PreferredSize'>
+                <toggle-setting text='Show Score PP' id='showScorePPSetting' value='showScorePP' bind-value='true' apply-on-change='true' />
+                <toggle-setting text='Show Local Player Rank' id='showLocalPlayerRankSetting' value='showLocalPlayerRank' bind-value='true' apply-on-change='true' />
+                <toggle-setting text='Hide NA Scores' id='hideNAScoresSetting' value='hideNAScores' bind-value='true' apply-on-change='true' />
+                <toggle-setting text='Country/Region Around You' id='enableCountryLeaderboardsSetting' value='enableCountryLeaderboards' bind-value='true' apply-on-change='true' />
+                <dropdown-list-setting preferred-width='30' text="Location Filter" options="locationFilterOptions" value="locationFilterMode" bind-value='true' apply-on-change='true'/>
+            </modifier-container>
+        </tab>
+        <tab tab-name='Live' tags='tabs'>
+            <vertical>
+                <modifier-container child-expand-width='true' horizontal-fit='PreferredSize'>
+                    <toggle-setting text='Public Live Presence' id='publicLivePresenceSetting' value='publicLivePresenceEnabled' apply-on-change='true' hover-hint='Publish your public live presence.' />
+                    <toggle-setting text='Spectator Chat Overlay' id='liveChatOverlaySetting' value='liveChatOverlayEnabled' apply-on-change='true' hover-hint='Show spectator chat after messages arrive.' />
+                    <toggle-setting text='Spectator Chat In Gameplay' id='liveChatOverlayGameplaySetting' value='liveChatOverlayGameplayEnabled' apply-on-change='true' hover-hint='Show spectator chat while playing after messages arrive.' />
+                    <toggle-setting text='Share HSV Profile' id='shareLiveHsvProfilesSetting' value='shareHsvProfiles' apply-on-change='true' hover-hint='Include your selected HitScoreVisualizer profile when streaming live replays.' />
+                    <slider-setting show-buttons='true' increment='0.05' min='0.85' max='1.75' text='Chat Window Scale' value='liveChatOverlayScale' apply-on-change='true' hover-hint='Resize the floating spectator chat window.' />
+                    <slider-setting show-buttons='true' increment='0.05' min='0.9' max='1.8' text='Chat Text Scale' value='liveChatOverlayTextScale' apply-on-change='true' hover-hint='Resize the floating spectator chat text.' />
+                </modifier-container>
+            </vertical>
+        </tab>
+        <tab tab-name='Account' tags='tabs'>
+            <vertical spacing='2' child-align='MiddleCenter'>
+                <text id='accountStatusText' text='' align='Center' font-size='3.5' pref-width='80' pref-height='6' />
+                <button text='Sign Out' on-click='SignOut' pref-width='30' pref-height='9' />
+                <text text='Signing out removes the ScoreSaber credential stored on this headset. Pair again from the leaderboard panel to sign back in.' align='Center' font-size='2.6' word-wrapping='true' pref-width='80' pref-height='10' />
+            </vertical>
+        </tab>
+        <tab tab-name='Replays' tags='tabs'>
+            <vertical>
+                <modifier-container child-expand-width='true' horizontal-fit='PreferredSize'>
+                    <toggle-setting  text='Save Local Replays' id='saveLocalReplaysSetting' value='saveLocalReplays' apply-on-change='true' />
+                    <toggle-setting  text='Override handedness' id='replayOverrideHandednessSetting' value='replayOverrideHandedness' apply-on-change='true' hover-hint='This might break replays with modded requirements!'/>
+                    <toggle-setting  text='Use Recorded Player Settings' id='useRecordedPlayerSettingsSetting' value='useRecordedPlayerSettings' apply-on-change='true' hover-hint='Use recorded colors, jump distance, environment, lights, and arc preferences when available.' />
+                    <toggle-setting  text='Share HSV Profile' id='shareReplayHsvProfilesSetting' value='shareHsvProfiles' apply-on-change='true' hover-hint='Include your selected HitScoreVisualizer profile in replay files and live streams.' />
+                </modifier-container>
+            </vertical>
+        </tab>
+    </horizontal>
+</bg>

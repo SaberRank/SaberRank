@@ -24,7 +24,7 @@ interface Permission {
 }
 
 const permissionDescriptions: Record<string, string> = {
-   RT: 'Ranking Team — review ranking requests and manage ranked map status, stars and PP.',
+   RT: 'Ranking Team — review ranking requests and manage ranked map status, stars and ZZ.',
    RTR: 'Ranking Team Reviewer — review ranking work and perform the same map-ranking actions as RT.',
    QAT: 'Quality Assurance Team — review and approve map quality/ranking requests.',
    QATHead: 'Quality Assurance Team Lead — manage QAT decisions and quality review.',
@@ -36,7 +36,7 @@ const permissionDescriptions: Record<string, string> = {
    CCTHead: 'Community Content Team Lead — lead community/content moderation.',
    CAT: 'Community Administration Team — community administration tools.',
    SUPPORTER: 'Supporter — supporter features and profile extras.',
-   PPFARMER: 'PP Farmer — PP/profile tooling access.',
+   PPFARMER: 'ZZ Farmer — ZZ/profile tooling access.',
    EXTERNAL_DEV: 'External Developer — approved external developer tools.',
    TOURNAMENT_ORGANIZER: 'Tournament Organizer — tournament management tools.'
 };
@@ -72,7 +72,7 @@ function permissionDisplayName(name: string) {
    const names: Record<string, string> = {
       RT: 'Ranking Team', RTR: 'Ranking Team Reviewer', QAT: 'Quality Assurance Team', QATHead: 'Quality Assurance Team Lead',
       NAT: 'Nominations / Admin Team', ADMIN: 'Administrator', PANDA: 'Panda / Super Admin', DEV: 'Developer', CCT: 'Community Content Team',
-      CCTHead: 'Community Content Team Lead', CAT: 'Community Administration Team', SUPPORTER: 'Supporter', PPFARMER: 'PP Farmer',
+      CCTHead: 'Community Content Team Lead', CAT: 'Community Administration Team', SUPPORTER: 'Supporter', PPFARMER: 'ZZ Farmer',
       EXTERNAL_DEV: 'External Developer', TOURNAMENT_ORGANIZER: 'Tournament Organizer'
    };
    return names[name] ?? name;

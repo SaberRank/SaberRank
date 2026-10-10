@@ -1,7 +1,7 @@
 import Permissions from '@/shared/permissions';
 
-const LIVE_PLATFORM_PERMISSION_MASK = Permissions.security.ADMIN | Permissions.security.TOURNAMENT_ORGANIZER;
+const NEXT_SEASON_PERMISSION_MASK = Permissions.security.RT | Permissions.security.RTR | Permissions.security.ADMIN | Permissions.security.PANDA;
 
 export function canUseLivePlatform(permissions: number | undefined) {
-   return Permissions.checkPermissionNumber(permissions ?? 0, LIVE_PLATFORM_PERMISSION_MASK);
+   return Permissions.checkPermissionNumber(permissions ?? 0, NEXT_SEASON_PERMISSION_MASK);
 }

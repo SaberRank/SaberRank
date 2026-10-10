@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from '@tanstack/react-router';
 
 import { Loader2, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ function difficultyLabel(value: number) {
 
 export function CuratedMapAdmin() {
    const { user } = useAuth();
+   const router = useRouter();
    const canAdmin =
       Permissions.checkPermissionNumber(user?.permissions ?? 0, Permissions.security.RT) ||
       Permissions.checkPermissionNumber(user?.permissions ?? 0, Permissions.security.RTR) ||
@@ -106,6 +108,7 @@ export function CuratedMapAdmin() {
             stars: Number(d.stars || 0)
          })));
          toast.success('SnoreSaber rankings saved');
+         await router.invalidate();
       } catch (error) {
          toast.error(error instanceof Error ? error.message : 'Failed to save rankings');
       } finally {

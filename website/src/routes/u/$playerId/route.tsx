@@ -501,7 +501,7 @@ export function buildPlayerProfileHead(loaderData: Awaited<ReturnType<typeof get
       noindex: player.banned,
       description: [
          `${globalRank} / ${countryRank}`,
-         `Performance Points: ${formatPP(stats.totalPP)}pp`,
+         `ZZ: ${formatPP(stats.totalPP)} ZZ`,
          `Average Ranked Accuracy: ${formatAccuracy(stats.averageAccuracy)}`,
          `Replay Views: ${formatNumber(stats.totalReplayViews)}`
       ].join('\n')

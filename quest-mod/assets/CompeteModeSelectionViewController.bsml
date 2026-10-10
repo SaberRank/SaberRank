@@ -1,0 +1,8 @@
+<bg horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+  <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="4" anchor-pos-y="8">
+    <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" spacing="4">
+      <button text="BROWSER" on-click="SelectBrowser" pref-width="30" pref-height="21" font-size="5.5" />
+      <button text="JOIN VIA CODE" on-click="SelectJoinViaCode" pref-width="30" pref-height="21" font-size="5.5" />
+    </horizontal>
+  </vertical>
+</bg>

@@ -21,8 +21,8 @@ interface MapDownloadActionsProps {
    search: PlaylistInput;
 }
 
-const DEFAULT_PLAYLIST_LIMIT = 100;
-const MAX_PLAYLIST_LIMIT = 200;
+const DEFAULT_PLAYLIST_LIMIT = 50000;
+const MAX_PLAYLIST_LIMIT = 50000;
 
 export function MapDownloadActions({ search }: MapDownloadActionsProps) {
    const t = useTranslations();

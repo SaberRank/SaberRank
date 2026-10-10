@@ -40,8 +40,8 @@
 
   <modal show-event="show-faq" hide-event="hide-faq" size-delta-x="80" size-delta-y="60" clickerino-offerino-closerino="true" >
     <vertical pref-width="80" pref-height="60" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pad="2">
-      <text text="What is &#60;color=#555EBC&#62;PP&#60;/color&#62;?" bold="true" word-wrapping="true" />
-      <text text="Performance Points (&#60;color=#6772E5&#62;PP&#60;/color&#62;) are earned through playing ranked maps. Harder maps and higher scores will increase the amount of &#60;color=#6772E5&#62;PP&#60;/color&#62; you receive from beating a map. Performance Points determine your rank on the SnoreSaber global leaderboards, the more &#60;color=#6772E5&#62;PP&#60;/color&#62; you have the higher your rank will be." font-size="2.5" word-wrapping="true" />
+      <text text="What is &#60;color=#555EBC&#62;ZZ&#60;/color&#62;?" bold="true" word-wrapping="true" />
+      <text text="ZZ are earned through playing ranked maps. Harder maps and higher snores increase the amount of &#60;color=#6772E5&#62;ZZ&#60;/color&#62; you receive from beating a map. ZZ determine your rank on the SnoreSaber global leaderboards; the more &#60;color=#6772E5&#62;ZZ&#60;/color&#62; you have, the higher your rank will be." font-size="2.5" word-wrapping="true" />
       <text text="How Does Ranking Work? " bold="true" word-wrapping="true" />
       <text text="Ranked maps are maps passed through a ranking system that judges maps to make sure they are objectively fair. The Ranking Team votes based on the Ranking Criteria, a document that goes over the rules a map must follow to be ranked. The Quality Assurance Team votes to either speed up or slow down maps in queue based on whether the map meets their quality standards, however they cannot fully block a map that meets the criteria from being ranked." font-size="2.5" word-wrapping="true" />
       <horizontal>

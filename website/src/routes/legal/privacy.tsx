@@ -77,8 +77,8 @@ function PrivacyPolicyPage() {
                      email sign-in. If you use Discord there, we collect the email address Discord provides.
                   </li>
                   <li>
-                     <strong>Game, score, replay, and API information:</strong> platform authentication data, platform player IDs, platform friend
-                     IDs, game and plugin versions, map and leaderboard identifiers, scores, modifiers, misses, bad cuts, combo, PP, ranks, score
+                     <strong>Game, snore, replay, and API information:</strong> platform authentication data, platform player IDs, platform friend
+                     IDs, game and plugin versions, map and leaderboard identifiers, snores, modifiers, misses, bad cuts, combo, ZZ, ranks, snore
                      history, replay files, replay-derived statistics, gameplay telemetry needed to validate and display replays, API requests, replay
                      views, device or headset identifiers, IP address, and detected country.
                   </li>
@@ -133,7 +133,7 @@ function PrivacyPolicyPage() {
                      operate SnoreSaber Hub, SnoreSaber Wiki, and SnoreSaber Cloud, including sign-in, documentation, file sharing, sync, and team
                      production workflows;
                   </li>
-                  <li>validate scores, detect cheating, investigate abuse, enforce rules, moderate content, and protect leaderboard integrity;</li>
+                  <li>validate snores, detect cheating, investigate abuse, enforce rules, moderate content, and protect leaderboard integrity;</li>
                   <li>provide account linking, supporter benefits, Discord role sync, email login codes, and service notifications;</li>
                   <li>remember preferences, maintain sessions, rate-limit traffic, prevent fraud or automated abuse, and secure the service;</li>
                   <li>monitor reliability, debug errors, improve performance, and keep operational records;</li>
@@ -173,7 +173,7 @@ function PrivacyPolicyPage() {
                <ul>
                   <li>player IDs, display names, avatars, country, bio, badges, roles, selected profile details, follows, and supporter status;</li>
                   <li>
-                     scores, ranks, PP, score history, leaderboard positions, maps, replay availability, replay files, and replay-derived statistics;
+                     snores, ranks, ZZ, snore history, leaderboard positions, maps, replay availability, replay files, and replay-derived statistics;
                   </li>
                   <li>rank request descriptions, comments, votes, statuses, reviewer actions, and public moderation states where shown.</li>
                </ul>

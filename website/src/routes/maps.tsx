@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 
 import { MapCard } from '@/modules/maps/listing/map-card';
+import { SeasonalCountdown } from '@/modules/maps/listing/seasonal-countdown';
 import { MapDownloadActions } from '@/modules/maps/listing/map-download-actions';
 import { MapFilters } from '@/modules/maps/listing/map-filters';
 import { isMapIdentifierSearch } from '@/modules/maps/shared/map-search';
@@ -80,8 +81,8 @@ export const Route = createFileRoute('/maps')({
    loader: ({ deps, location }) => getMapsPageData({ data: { search: deps, rawSearch: location.search } }),
    head: () =>
       buildSeoHead({
-         title: 'Maps',
-         description: 'Browse Beat Saber maps on SnoreSaber',
+         title: 'Seasonal Maps',
+         description: 'Browse the current SnoreSaber seasonal ranked map pool',
          path: '/maps'
       }),
    component: MapsRoute
@@ -106,6 +107,7 @@ function MapsRoute() {
          {bgCandidates.length > 0 && <SetPageBackground src={bgCandidates[0]} candidates={bgCandidates} />}
 
          <div className="app-container relative z-10 flex flex-col gap-4 p-4 md:p-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-2xl font-semibold">Seasonal Maps</h1><p className="text-muted-foreground text-sm">Ranked maps for the current calendar-quarter season.</p></div><SeasonalCountdown /></div>
             <MapFilters
                currentPage={currentPage}
                totalPages={meta.totalPages}

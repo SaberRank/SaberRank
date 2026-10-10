@@ -23,7 +23,7 @@ const banPlayerFn = createServerFn({ method: 'POST' })
          body: {
             reason: data.reason,
             ...(data.notes && { notes: data.notes }),
-            ...(data.earliestAppealDate && { earliestAppealDate: data.earliestAppealDate })
+            ...(data.earliestAppealDate && { earliestAppealDate: data.earliestAppealDate }),
          }
       });
    });

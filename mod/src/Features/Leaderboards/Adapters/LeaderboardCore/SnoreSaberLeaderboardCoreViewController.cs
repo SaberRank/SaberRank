@@ -240,7 +240,7 @@ namespace SnoreSaber.Features.Leaderboards.Adapters.LeaderboardCore {
             bool hasMods = !string.IsNullOrEmpty(scoreMap.ModifierText);
             string name = $"<size=80%>{scoreMap.Score.Player.Name}</size>";
             string accuracy = $"<size=70%>(<color=#FFD42A>{scoreMap.Accuracy}%</color>)</size>";
-            string pp = $"<size=70%>(<color=#6772E5>{scoreMap.Score.PP}<size=45%>pp</size></color>)</size>";
+            string pp = $"<size=70%>(<color=#6772E5>{scoreMap.Score.PP}<size=45%> ZZ</size></color>)</size>";
             string modifiers = $"<size=70%><color=#6F6F6F>[{scoreMap.ModifierText}]</color></size>";
 
             string formattedName = $"{name} - {accuracy}";
@@ -254,7 +254,7 @@ namespace SnoreSaber.Features.Leaderboards.Adapters.LeaderboardCore {
         private static string GetErrorTitle(LeaderboardScreenStatus status) => status switch {
             LeaderboardScreenStatus.Empty => "No Scores",
             LeaderboardScreenStatus.NoLeaderboard => "No Leaderboard Yet",
-            LeaderboardScreenStatus.NoPlayerScore => "No Score Yet",
+            LeaderboardScreenStatus.NoPlayerScore => "No Snore Yet",
             _ => "SnoreSaber Unavailable"
         };
 

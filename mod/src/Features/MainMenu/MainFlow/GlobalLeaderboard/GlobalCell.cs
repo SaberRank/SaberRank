@@ -41,7 +41,7 @@ namespace SnoreSaber.Features.MainMenu.MainFlow.GlobalLeaderboard {
             _materials = materials;
             _identifier = id;
             _avatarUrl = avatarUrl;
-            _ppText = string.Format("<color=#6772E5>{0:n0}pp</color>", pp);
+            _ppText = string.Format("<color=#6772E5>{0:n0} ZZ</color>", pp);
             _username = username;
             _globalRank = rank;
             _profileClicked = onActivateProfile;

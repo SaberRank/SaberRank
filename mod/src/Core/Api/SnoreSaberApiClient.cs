@@ -114,7 +114,7 @@ namespace SnoreSaber.Core.Api {
                 return new ScoreUploadResult {
                     Status = success ? ScoreUploadStatus.Success : ScoreUploadStatus.Error,
                     Success = success,
-                    Message = success ? "Score uploaded!" : "Failed to upload score"
+                    Message = success ? "Snore uploaded!" : "Failed to upload snore"
                 };
             } catch (HttpErrorException ex) {
                 string message = GetHttpErrorMessage(ex);

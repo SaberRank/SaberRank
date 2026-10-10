@@ -1,0 +1,126 @@
+{
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.schema.json",
+  "version": "0.4.0",
+  "sharedDir": "shared",
+  "dependenciesDir": "extern",
+  "info": {
+    "name": "SnoreSaber",
+    "id": "snoresaber",
+    "version": "3.4.1",
+    "url": null,
+    "additionalData": {
+      "overrideSoName": "libsnoresaber.so",
+      "cmake": true
+    }
+  },
+  "workspace": {
+    "scripts": {
+      "build": [
+        "bash ./scripts/build.sh"
+      ],
+      "clean": [
+        "bash ./scripts/build.sh --clean"
+      ],
+      "copy": [
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/copy.ps1 $0:?"
+      ],
+      "logcat": [
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-logging.ps1 $0:?"
+      ],
+      "qmod": [
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/build.ps1",
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/createqmod.ps1"
+      ],
+      "restart": [
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/restart-game.ps1"
+      ],
+      "stack": [
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/ndk-stack.ps1"
+      ],
+      "tomb": [
+        "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File ./scripts/pull-tombstone.ps1"
+      ]
+    },
+    "ndk": "^27.2.12479018",
+    "qmodIncludeDirs": [
+      "./build",
+      "./extern/libs"
+    ],
+    "qmodIncludeFiles": [],
+    "qmodOutput": "./SnoreSaber.qmod"
+  },
+  "dependencies": [
+    {
+      "id": "beatsaber-hook",
+      "versionRange": "^6.4.2",
+      "additionalData": {}
+    },
+    {
+      "id": "scotland2",
+      "versionRange": "^0.1.6",
+      "additionalData": {
+        "includeQmod": false
+      }
+    },
+    {
+      "id": "bs-cordl",
+      "versionRange": "^4008.0.0",
+      "additionalData": {}
+    },
+    {
+      "id": "custom-types",
+      "versionRange": "^0.18.3",
+      "additionalData": {}
+    },
+    {
+      "id": "config-utils",
+      "versionRange": "^2.0.3",
+      "additionalData": {}
+    },
+    {
+      "id": "libcurl",
+      "versionRange": "=8.5.0",
+      "additionalData": {}
+    },
+    {
+      "id": "gif-lib",
+      "versionRange": "^5.2.2",
+      "additionalData": {}
+    },
+    {
+      "id": "lapiz",
+      "versionRange": "^0.2.23",
+      "additionalData": {}
+    },
+    {
+      "id": "bsml",
+      "versionRange": "^0.4.55",
+      "additionalData": {}
+    },
+    {
+      "id": "tinyxml2",
+      "versionRange": "^10.0.0",
+      "additionalData": {}
+    },
+    {
+      "id": "paper2_scotland2",
+      "versionRange": "^4.6.4",
+      "additionalData": {}
+    },
+    {
+      "id": "metacore",
+      "versionRange": "^1.4.0",
+      "additionalData": {}
+    },
+    {
+      "id": "zip",
+      "versionRange": "^1.7.4",
+      "additionalData": {}
+    },
+    {
+      "id": "songcore",
+      "versionRange": "~1.1.26",
+      "additionalData": {}
+    }
+  ]
+}
