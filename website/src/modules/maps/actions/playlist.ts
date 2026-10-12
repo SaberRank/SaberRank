@@ -137,6 +137,7 @@ function getImplicitRankedStatuses(input: PlaylistInput): MapControllerGetMapLis
 
 export function getMapPlaylistTitle(input: PlaylistInput) {
    if (input.playlistTitle) return input.playlistTitle;
+   if (input.status?.split(',').some((status) => status.trim().toUpperCase() === 'RANKED')) return 'SnoreSaber ranked maps';
    if (input.sortBy === 'latestRankedAt') return 'SnoreSaber recent ranked maps';
    if (input.minStars != null || input.maxStars != null) {
       const min = input.minStars?.toFixed(1) ?? '0.0';
