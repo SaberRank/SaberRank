@@ -115,7 +115,7 @@ function MapsRoute() {
                buildLocation={buildMapsLocation}
                parseSearch={parseMapsSearch}
                initialFiltersOpen={persistedStorage.filtersOpen === 'true'}
-               trailingAction={<MapDownloadActions search={searchParams} />}
+               trailingAction={<MapDownloadActions search={{ status: 'RANKED' }} />}
             />
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
